@@ -1,0 +1,45 @@
+name: build
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'compiler/**'
+      - 'stack*.yaml'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: haskell/actions/setup@v1
+        with:
+          ghc-version: "8.10.4"
+          enable-stack: true
+          stack-version: "latest"
+
+      - name: Install system dependencies
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 12
+
+      - name: Cache .stack
+        uses: actions/cache@v1
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-${{ hashFiles('stack.yaml') }}
+          restore-keys:
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: |
+          stack --no-terminal build --only-dependencies --fast --system-ghc
+
+      - name: Build
+        run: |
+          stack --no-terminal build --fast --system-ghc
