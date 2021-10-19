@@ -7,7 +7,7 @@ allow-newer: true
 
 ghc-options:
   # llvm-12 requires c++17 to compile successfully
-  llvm-hs: '-optcxx -std=c++17 -optcxx -stdlib=libc++'
+  llvm-hs: '-pgmc clang -optcxx -std=c++17 -optcxx -stdlib=libc++'
 
 extra-deps:
   # LLVM-related dependencies
