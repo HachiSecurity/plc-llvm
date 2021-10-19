@@ -7,7 +7,7 @@ allow-newer: true
 
 ghc-options:
   # llvm-12 requires c++17 to compile successfully
-  llvm-hs: '-optcxx -std=c++17 -optcxx -stdlib=libc++'
+  # llvm-hs: '-pgmc clang -pgma clang -pgml clang -optcxx -std=c++17 -optcxx -stdlib=libc++'
 
 extra-deps:
   # LLVM-related dependencies
@@ -59,9 +59,9 @@ extra-deps:
   - vector-0.12.3.1@sha256:672884b271c15501f1398dc1755c435d3659cf9aa77144c0316d055b5fbdfa82,7932
   - witherable-0.4.2@sha256:f15fef5f9453722c7baf5beb562d536d153366af6a631cc53e60b76fedee90f2,2260
 
-extra-lib-dirs:
-- /usr/local/opt/llvm@12/lib
-extra-include-dirs:
-- /usr/local/opt/llvm@12/include
-extra-path:
-- /usr/local/opt/llvm@12/bin
+# extra-lib-dirs:
+# - /usr/local/opt/llvm@12/lib
+# extra-include-dirs:
+# - /usr/local/opt/llvm@12/include
+# extra-path:
+# - /usr/local/opt/llvm@12/bin
