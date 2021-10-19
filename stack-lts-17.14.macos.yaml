@@ -1,0 +1,18 @@
+resolver: lts-17.14.custom.yaml
+
+packages:
+- ./compiler
+
+allow-newer: true
+
+ghc-options:
+  # llvm-12 requires c++17 to compile successfully, which requires us to pass
+  # some extra flags to clang on macOS, which defaults to an older version
+  llvm-hs: '-optcxx -std=c++17 -optcxx -stdlib=libc++'
+
+extra-lib-dirs:
+- /usr/local/opt/llvm@12/lib
+extra-include-dirs:
+- /usr/local/opt/llvm@12/include
+extra-path:
+- /usr/local/opt/llvm@12/bin
