@@ -31,7 +31,7 @@ jobs:
           sudo ./llvm.sh 12
 
       - name: Cache .stack
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
           path: ~/.stack
           key: ${{ runner.os }}-${{ hashFiles('stack.yaml') }}
