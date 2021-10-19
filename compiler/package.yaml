@@ -1,0 +1,17 @@
+name:               plc-llvm
+version:            0.1.0.0
+github:             "HachiSecurity/plc-llvm"
+author:             "Michael B. Gale"
+maintainer:         "michael.gale@tweag.io"
+
+dependencies:
+- base
+- llvm-hs
+- llvm-hs-pure
+- optparse-applicative
+- plutus-core
+
+library:
+  source-dirs: src
+  ghc-options:
+  - -Wall
