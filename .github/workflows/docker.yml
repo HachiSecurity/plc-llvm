@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - feature/docker # remove after testing
 
 jobs:
   docker:
