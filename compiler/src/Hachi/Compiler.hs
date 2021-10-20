@@ -4,9 +4,12 @@ module Hachi.Compiler ( compile ) where
 
 -------------------------------------------------------------------------------
 
-import Control.Monad.Trans.Except
+import Control.Monad (void)
+import Control.Monad.Trans.Except ( runExceptT )
 
 import qualified Data.ByteString.Lazy as BSL
+
+import System.Exit ( exitFailure )
 
 import Flat
 
@@ -15,6 +18,7 @@ import qualified UntypedPlutusCore as UPLC
 import qualified UntypedPlutusCore.Parser as UPLC
 
 import Hachi.Compiler.Config (Config(..))
+import Hachi.Compiler.CodeGen
 
 -------------------------------------------------------------------------------
 
@@ -34,10 +38,14 @@ parseUntyped
   -> Either (DefaultError AlexPosn) (UntypedProgram AlexPosn)
 parseUntyped = runQuote . runExceptT . UPLC.parseProgram
 
-compileUntyped :: Config -> BSL.ByteString -> IO ()
-compileUntyped MkConfig{..} xs
-  | cfgDeserialise = print $ deserialiseUntyped xs
-  | otherwise = print $ parseUntyped xs
+loadUntyped :: Config -> BSL.ByteString -> IO (UntypedProgram ())
+loadUntyped MkConfig{..} xs
+  | cfgDeserialise = case deserialiseUntyped xs of
+    Left err -> print err >> exitFailure
+    Right p -> pure p
+  | otherwise = case parseUntyped xs of
+    Left err -> print err >> exitFailure
+    Right p -> pure $ void p
 
 -------------------------------------------------------------------------------
 
@@ -59,6 +67,10 @@ compile cfg fp = do
 
   if cfgTyped cfg
   then compileTyped cfg xs
-  else compileUntyped cfg xs
+  else do
+    p <- loadUntyped cfg xs 
+    putStrLn "Generating code for:"
+    print p
+    generateCode "out.ll" p
 
 -------------------------------------------------------------------------------
