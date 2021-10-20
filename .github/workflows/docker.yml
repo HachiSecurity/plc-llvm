@@ -1,0 +1,19 @@
+name: docker
+
+on:
+  push:
+    branches:
+      - master
+      - feature/docker # remove after testing
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v2
+
+      - name: Build plc-llvm image
+        run: |
+          docker build . -t plc-llvm:latest
