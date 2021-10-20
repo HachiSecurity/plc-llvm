@@ -1,0 +1,25 @@
+name: style
+
+on:
+  pull_request:
+  push:
+    branches:
+    - master
+
+jobs:
+  style:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install HLint
+      uses: rwe/actions-hlint-setup@v1
+      with:
+        version: '3.3.4'
+
+    - name: Run HLint
+      uses: rwe/actions-hlint-run@v1
+      with:
+        path: compiler/
+        fail-on: suggestion
