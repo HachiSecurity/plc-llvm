@@ -6,12 +6,25 @@ maintainer:         "michael.gale@tweag.io"
 
 dependencies:
 - base
+- bytestring
+- flat
 - llvm-hs
 - llvm-hs-pure
+- mtl
 - optparse-applicative
 - plutus-core
+- transformers
 
 library:
   source-dirs: src
   ghc-options:
   - -Wall
+
+executables:
+  plc-llvm:
+    main:           Main.hs
+    source-dirs:    app
+    ghc-options:
+    - -Wall
+    dependencies:
+    - plc-llvm
