@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Hachi.Compiler ( compile ) where
@@ -18,6 +17,8 @@ import qualified UntypedPlutusCore.Parser as UPLC
 import Hachi.Compiler.Config (Config(..))
 
 -------------------------------------------------------------------------------
+
+type DefaultTerm  a = Term TyName Name DefaultUni DefaultFun a
 
 type DefaultError a = Error DefaultUni DefaultFun a
 
