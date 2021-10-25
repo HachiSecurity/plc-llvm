@@ -16,9 +16,10 @@ import Flat
 import PlutusCore
 import qualified UntypedPlutusCore as UPLC
 import qualified UntypedPlutusCore.Parser as UPLC
+import qualified UntypedPlutusCore.Evaluation.Machine.Cek as UPLC
 
 import Hachi.Compiler.Config (Config(..))
-import Hachi.Compiler.CodeGen
+import Hachi.Compiler.CodeGen ( generateCode )
 
 -------------------------------------------------------------------------------
 
@@ -71,6 +72,8 @@ compile cfg fp = do
     p <- loadUntyped cfg xs 
     putStrLn "Generating code for:"
     print p
-    generateCode "out.ll" p
+    let (UPLC.Program _ _ t) = p
+    print $ UPLC.evaluateCekNoEmit defaultCekParameters t
+    generateCode cfg "out.ll" p
 
 -------------------------------------------------------------------------------

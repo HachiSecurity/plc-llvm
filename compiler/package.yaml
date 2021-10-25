@@ -7,12 +7,15 @@ maintainer:         "michael.gale@tweag.io"
 dependencies:
 - base
 - bytestring
+- containers
+- filepath
 - flat
 - llvm-hs
 - llvm-hs-pure
 - mtl
 - optparse-applicative
 - plutus-core
+- prettyprinter
 - transformers
 
 library:
