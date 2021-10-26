@@ -67,3 +67,35 @@ executable plc-llvm
     , transformers
     , typed-process
   default-language: Haskell2010
+
+test-suite plc-llvm-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Hachi.CompilerSpec
+      Paths_plc_llvm
+  hs-source-dirs:
+      test
+  ghc-options: -Wall
+  build-depends:
+      base
+    , bytestring
+    , containers
+    , directory
+    , filepath
+    , flat
+    , hedgehog
+    , llvm-hs
+    , llvm-hs-pure
+    , mtl
+    , optparse-applicative
+    , plc-llvm
+    , plutus-core
+    , prettyprinter
+    , tasty
+    , tasty-discover
+    , tasty-hedgehog
+    , tasty-hunit
+    , transformers
+    , typed-process
+  default-language: Haskell2010

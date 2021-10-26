@@ -40,8 +40,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          stack --no-terminal build --only-dependencies --fast --system-ghc
+          stack --no-terminal build --only-dependencies --test --fast --system-ghc
 
       - name: Build
         run: |
-          stack --no-terminal build --fast --system-ghc
+          stack --no-terminal build --test --fast --system-ghc --no-run-tests
+
+      - name: Run tests
+        run: |
+          stack --no-terminal build --test --fast --system-ghc

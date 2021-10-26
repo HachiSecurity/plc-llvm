@@ -33,3 +33,17 @@ executables:
     - -Wall
     dependencies:
     - plc-llvm
+
+tests:
+  plc-llvm-test:
+    main:           Spec.hs
+    source-dirs:    test
+    ghc-options:
+    - -Wall
+    dependencies:
+    - plc-llvm
+    - tasty
+    - tasty-discover
+    - tasty-hunit
+    - tasty-hedgehog
+    - hedgehog
