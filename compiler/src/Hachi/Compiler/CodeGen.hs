@@ -18,6 +18,7 @@ import qualified Data.Map as M
 import Data.String (fromString)
 
 import System.FilePath
+import System.Process.Typed
 
 import PlutusCore.Pretty ( Pretty, pretty )
 import UntypedPlutusCore as UPLC
@@ -394,8 +395,18 @@ generateCode cfg@MkConfig{..} p =
 
         writeBitcodeToFile (File outPath) m
     -- -- writeTargetAssemblyToFile tm (File "out.s") mod
-        writeObjectToFile tm (File $ replaceExtension outPath "o") m
+        let objectFile = replaceExtension outPath "o"
+        writeObjectToFile tm (File objectFile) m
         asm <- moduleLLVMAssembly m
         BS.putStrLn asm
+
+        -- compile with LLVM
+        let exeFile = dropExtension objectFile
+        let pcfg = proc "clang" ["./rts/rts.c", objectFile, "-o", exeFile]
+
+        ec <- runProcess pcfg
+
+        putStr "Ran clang and got: "
+        print ec
 
 -------------------------------------------------------------------------------
