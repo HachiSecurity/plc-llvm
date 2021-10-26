@@ -70,6 +70,19 @@ printfFun =
 printfRef :: Constant
 printfRef = GlobalReference printfTy $ mkName "printf"
 
+exitTy :: Type
+exitTy = PointerType fnTy (AddrSpace 0)
+    where fnTy = FunctionType VoidType [i32] False
+
+exitFun :: Global
+exitFun =
+    Function External Default Nothing C [] VoidType (mkName "exit") pTy []
+        Nothing Nothing 0 Nothing Nothing [] Nothing []
+    where pTy = ([Parameter i32 (mkName "") []], False)
+
+exitRef :: Constant
+exitRef = GlobalReference exitTy $ mkName "exit"
+
 -- | `closureTyDef` is a `Type` definition for closures. Note the layout is
 -- as follows:
 --
@@ -93,6 +106,8 @@ closureTy = NamedTypeReference "closure"
 closureTyPtr :: Type
 closureTyPtr = PointerType closureTy $ AddrSpace 0
 
+-------------------------------------------------------------------------------
+
 -- | Represents the state of the code generator.
 data CodeGenSt = MkCodeGenSt {
     codeGenCfg :: Config,
@@ -113,6 +128,8 @@ mkFresh prefix = do
     counter <- asks codeGenCounter
     val <- liftIO $ atomicModifyIORef counter $ \v -> (v+1,v)
     pure $ prefix <> show val
+
+-------------------------------------------------------------------------------
 
 -- | `compileNoopEntry` @name@ generates a closure entry function which does
 -- nothing except return the pointer to itself.
@@ -211,25 +228,29 @@ compileTerm
 compileTerm (Error _) = do
     name <- mkFresh "err"
 
-    _ <- IR.function "err0_code" [] VoidType $ \_ -> do
+    let code_name = mkName $ name <> "_code"
+
+    _ <- IR.function code_name [(closureTyPtr, "this")] closureTyPtr $ \[this] -> do
+        errMsg <- asks codeGenErrMsg
+        void $ call
+            (ConstantOperand $ GlobalReference printfTy $ mkName "printf")
+            [(ConstantOperand errMsg, [])]
+        void $ call (ConstantOperand exitRef) [(ConstantOperand $ Int 32 (-1), [])]
+        ret this
+
+    let code_fun = GlobalReference clsEntryTy code_name
+
+    let entry_name = mkName $ name <> "_entry"
+
+    _ <- IR.function entry_name [(closureTyPtr, "this")] closureTyPtr $ \[this] -> do
         errMsg <- asks codeGenErrMsg
         void $ call
             (ConstantOperand $ GlobalReference printfTy $ mkName "printf")
             [(ConstantOperand errMsg, [])]
         -- TODO: exit immediately
-        retVoid
+        ret this
 
-    let code_fun = GlobalReference clsEntryTy "err0_code"
-
-    _ <- IR.function "err0_entry" [] VoidType $ \_ -> do
-        errMsg <- asks codeGenErrMsg
-        void $ call
-            (ConstantOperand $ GlobalReference printfTy $ mkName "printf")
-            [(ConstantOperand errMsg, [])]
-        -- TODO: exit immediately
-        retVoid
-
-    let entry_fun = GlobalReference clsEntryTy "err0_entry"
+    let entry_fun = GlobalReference clsEntryTy entry_name
 
     print_fun <- compileMsgPrint name
         "Print function called for error, this shouldn't happen."
@@ -334,6 +355,8 @@ compileProgram
 compileProgram cfg (Program _ _ term) = do
     -- global definitions
     emitDefn $ GlobalDefinition printfFun
+    emitDefn $ GlobalDefinition exitFun
+
     _ <- typedef "closure" $ Just closureTyDef
     (errorMsg, _) <- runIRBuilderT emptyIRBuilder $
         globalStringPtr "Something has gone wrong.\n" "errorMsg"
