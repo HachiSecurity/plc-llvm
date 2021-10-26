@@ -1,17 +1,23 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Hachi.Compiler.CodeGen ( generateCode ) where
 
 -------------------------------------------------------------------------------
 
--------------------------------------------------------------------------------
 import Control.Monad ( void, when )
+import Control.Monad.IO.Class
 import Control.Monad.Reader (ReaderT, runReaderT, asks)
 import Control.Monad.Reader.Class ( MonadReader )
+import Control.Monad.Trans (lift)
 
 import qualified Data.ByteString.Char8 as BS
+import Data.IORef
 import qualified Data.Map as M
+import Data.String (fromString)
+
+import System.FilePath
 
 import PlutusCore.Pretty ( Pretty, pretty )
 import UntypedPlutusCore as UPLC
@@ -26,10 +32,9 @@ import LLVM.Target
 import LLVM.AST.AddrSpace
 import LLVM.AST.Constant
 import LLVM.IRBuilder as IR
-import Data.IORef
-import Control.Monad.IO.Class
-import Control.Monad.Trans (lift)
+
 import Hachi.Compiler.Config
+import Data.Maybe (fromMaybe)
 
 -------------------------------------------------------------------------------
 
@@ -46,7 +51,7 @@ clsEntryTy = PointerType (FunctionType closureTyPtr [closureTyPtr] False) (AddrS
 lamEntryTy :: Type
 lamEntryTy = PointerType (FunctionType closureTyPtr [closureTyPtr, closureTyPtr] False) (AddrSpace 0)
 
-funPtr :: Type 
+funPtr :: Type
 funPtr = PointerType (FunctionType VoidType [] False) (AddrSpace 0)
 
 -- | The type of printf.
@@ -56,8 +61,8 @@ printfTy = PointerType fnTy (AddrSpace 0)
 
 -- | The signature of printf.
 printfFun :: Global
-printfFun = 
-    Function External Default Nothing C [] i32 (mkName "printf") pTy [] 
+printfFun =
+    Function External Default Nothing C [] i32 (mkName "printf") pTy []
         Nothing Nothing 0 Nothing Nothing [] Nothing []
     where pTy = ([Parameter (PointerType i8 $ AddrSpace 0) (LLVM.Name "") []], True)
 
@@ -65,7 +70,7 @@ printfFun =
 printfRef :: Constant
 printfRef = GlobalReference printfTy $ mkName "printf"
 
--- | `closureTyDef` is a `Type` definition for closures. Note the layout is 
+-- | `closureTyDef` is a `Type` definition for closures. Note the layout is
 -- as follows:
 --
 -- - A pointer to the code for the closure.
@@ -73,14 +78,14 @@ printfRef = GlobalReference printfTy $ mkName "printf"
 -- - Zero or more free variables. (LLVM will accept more elements than the
 -- array's indicated size) https://llvm.org/docs/LangRef.html#array-type
 closureTyDef :: Type
-closureTyDef = StructureType False 
-    [ clsEntryTy 
-    , clsEntryTy  
-    , funPtr 
+closureTyDef = StructureType False
+    [ clsEntryTy
+    , clsEntryTy
+    , funPtr
     , ArrayType 0 funPtr
     ]
 
--- | `closureTy` is a `Type` for closures. 
+-- | `closureTy` is a `Type` for closures.
 closureTy :: Type
 closureTy = NamedTypeReference "closure"
 
@@ -115,15 +120,15 @@ compileNoopEntry :: (MonadIO m, MonadModuleBuilder m) => String -> CodeGen m Con
 compileNoopEntry name = do
     let entryName = mkName $ name <> "_entry"
 
-    _ <- IR.function entryName [(closureTyPtr, "this")] closureTyPtr $ 
+    _ <- IR.function entryName [(closureTyPtr, "this")] closureTyPtr $
         \[this] -> compileTrace (name <> "_entry") >> ret this
 
     pure $ GlobalReference clsEntryTy entryName
 
 -- | `compileConstPrint` @name value@ compiles a print function for a
 -- constant.
-compileConstPrint 
-    :: (MonadIO m, MonadModuleBuilder m, Pretty a) 
+compileConstPrint
+    :: (MonadIO m, MonadModuleBuilder m, Pretty a)
     => String -> a -> CodeGen m Constant
 compileConstPrint name val = compileMsgPrint name (show $ pretty val)
 
@@ -135,10 +140,10 @@ compileMsgPrint name msg = do
 
     _ <- IR.function printName [] VoidType $ \_ -> do
         compileTrace (name <> "_print")
-        (ptr, _) <- runIRBuilderT emptyIRBuilder $ 
+        (ptr, _) <- runIRBuilderT emptyIRBuilder $
             globalStringPtr (msg <> "\n") (mkName $ name <> "_print_msg")
-        void $ call 
-            (ConstantOperand printfRef) 
+        void $ call
+            (ConstantOperand printfRef)
             [(ConstantOperand ptr, [])]
         retVoid
 
@@ -147,24 +152,24 @@ compileMsgPrint name msg = do
 -- | `compileTrace` @message@ generates an instruction which prints @message@
 -- to the standard output, if tracing is enabled in the code generation
 -- configuration. Otherwise, this produces no code.
-compileTrace 
-    :: (MonadIO m, MonadModuleBuilder m) 
-    => String 
+compileTrace
+    :: (MonadIO m, MonadModuleBuilder m)
+    => String
     -> IRBuilderT (CodeGen m) ()
-compileTrace msg = lift (asks (cfgTrace . codeGenCfg)) >>= 
+compileTrace msg = lift (asks (cfgTrace . codeGenCfg)) >>=
     \isTracing -> when isTracing $ do
         name <- lift $ mkFresh "trace"
-        (ptr, _) <- runIRBuilderT emptyIRBuilder $ 
+        (ptr, _) <- runIRBuilderT emptyIRBuilder $
                 globalStringPtr (msg <> "\n") (mkName name )
-        void $ call 
-            (ConstantOperand printfRef) 
+        void $ call
+            (ConstantOperand printfRef)
             [(ConstantOperand ptr, [])]
 
 
 -- | `compileClosure` @name entryPtr printPtr@ generates a global variable
 -- representing a closure for @name@.
-compileClosure 
-    :: MonadModuleBuilder m 
+compileClosure
+    :: MonadModuleBuilder m
     => String -> Constant -> Constant -> Constant -> m Constant
 compileClosure name codePtr entryPtr printPtr = do
     let closureName = mkName $ name <> "_closure"
@@ -173,60 +178,60 @@ compileClosure name codePtr entryPtr printPtr = do
 
     pure $ GlobalReference (PointerType closureTy $ AddrSpace 0) closureName
 
-callClosure 
-    :: (MonadModuleBuilder m, MonadIRBuilder m) 
-    => Integer 
-    -> Operand 
-    -> [Operand] 
+callClosure
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Integer
+    -> Operand
+    -> [Operand]
     -> m Operand
 callClosure ix closure args = do
-    entryAddr <- gep closure 
+    entryAddr <- gep closure
         [ ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 ix ]
     entry <- load entryAddr 0
     call entry $ (closure, []) : [(arg, []) | arg <- args]
 
-pushClosure 
-    :: (MonadModuleBuilder m, MonadIRBuilder m) 
-    => Operand 
-    -> [Operand] 
+pushClosure
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand
+    -> [Operand]
     -> m Operand
 pushClosure = callClosure 0
 
-enterClosure 
-    :: (MonadModuleBuilder m, MonadIRBuilder m) 
-    => Operand 
-    -> [Operand] 
+enterClosure
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand
+    -> [Operand]
     -> m Operand
 enterClosure = callClosure 1
 
 -- | `compileTerm` @errMsg term@ compiles @term@ to LLVM.
-compileTerm 
-    :: Term UPLC.Name DefaultUni DefaultFun () 
+compileTerm
+    :: Term UPLC.Name DefaultUni DefaultFun ()
     -> CodeGen (ModuleBuilderT IO) Constant
 compileTerm (Error _) = do
     name <- mkFresh "err"
 
     _ <- IR.function "err0_code" [] VoidType $ \_ -> do
         errMsg <- asks codeGenErrMsg
-        void $ call 
-            (ConstantOperand $ GlobalReference printfTy $ mkName "printf") 
+        void $ call
+            (ConstantOperand $ GlobalReference printfTy $ mkName "printf")
             [(ConstantOperand errMsg, [])]
         -- TODO: exit immediately
-        retVoid 
+        retVoid
 
     let code_fun = GlobalReference clsEntryTy "err0_code"
 
     _ <- IR.function "err0_entry" [] VoidType $ \_ -> do
         errMsg <- asks codeGenErrMsg
-        void $ call 
-            (ConstantOperand $ GlobalReference printfTy $ mkName "printf") 
+        void $ call
+            (ConstantOperand $ GlobalReference printfTy $ mkName "printf")
             [(ConstantOperand errMsg, [])]
         -- TODO: exit immediately
-        retVoid 
+        retVoid
 
     let entry_fun = GlobalReference clsEntryTy "err0_entry"
 
-    print_fun <- compileMsgPrint name 
+    print_fun <- compileMsgPrint name
         "Print function called for error, this shouldn't happen."
 
     compileClosure name code_fun entry_fun print_fun
@@ -241,17 +246,17 @@ compileTerm (Constant _ val) = do
 
     -- 3. generate the closure
     compileClosure name entry_fun entry_fun print_fun
-compileTerm (Var _ x) = do 
+compileTerm (Var _ x) = do
     name <- mkFresh "var"
 
     code_fun <- compileNoopEntry (name <> "_code")
 
     let entryName = mkName $ name <> "_entry"
 
-    _ <- IR.function entryName [(closureTyPtr, "this"), (closureTyPtr, "arg")] closureTyPtr $ 
+    _ <- IR.function entryName [(closureTyPtr, "this"), (closureTyPtr, "arg")] closureTyPtr $
         \[this, arg] -> do
-            compileTrace (name <> "_entry") 
-            op <- pushClosure arg [] 
+            compileTrace (name <> "_entry")
+            op <- pushClosure arg []
             ret op
 
     let entry_fun = GlobalReference lamEntryTy entryName
@@ -268,10 +273,10 @@ compileTerm (LamAbs _ var term) = do
 
     let entryName = mkName $ name <> "_entry"
 
-    _ <- IR.function entryName [(closureTyPtr, "this"), (closureTyPtr, "arg")] closureTyPtr $ 
+    _ <- IR.function entryName [(closureTyPtr, "this"), (closureTyPtr, "arg")] closureTyPtr $
         \[this, arg] -> do
             compileTrace (name <> "_entry")
-            op <- enterClosure (ConstantOperand termClosure) [arg] 
+            op <- enterClosure (ConstantOperand termClosure) [arg]
             ret op
 
     let entry_fun = GlobalReference lamEntryTy entryName
@@ -299,7 +304,7 @@ compileTerm (Apply _ lhs rhs) = do
 
     let code_fun = GlobalReference clsEntryTy codeName
 
-    print_fun <- compileMsgPrint name 
+    print_fun <- compileMsgPrint name
         "Print function called for application, this shouldn't happen."
 
     compileClosure name code_fun code_fun print_fun
@@ -308,9 +313,9 @@ compileTerm term = error $ "compileTerm for " <> show term <> " not implemented!
 
 generateEntry :: Constant -> ModuleBuilderT IO ()
 generateEntry closure = void $ IR.function "entry" [] VoidType $ \_ -> do
-    -- enter the first closure and get back a pointer to the result 
+    -- enter the first closure and get back a pointer to the result
     -- of the program (which is also a closure)
-    entryAddr <- gep (ConstantOperand closure) 
+    entryAddr <- gep (ConstantOperand closure)
         [ ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 0 ]
     entry <- load entryAddr 0
     resultClosure <- call entry [(ConstantOperand closure, [])]
@@ -322,25 +327,25 @@ generateEntry closure = void $ IR.function "entry" [] VoidType $ \_ -> do
 
     retVoid
 
-compileProgram 
-    :: Config 
-    -> Program UPLC.Name DefaultUni DefaultFun () 
+compileProgram
+    :: Config
+    -> Program UPLC.Name DefaultUni DefaultFun ()
     -> ModuleBuilderT IO ()
 compileProgram cfg (Program _ _ term) = do
     -- global definitions
     emitDefn $ GlobalDefinition printfFun
     _ <- typedef "closure" $ Just closureTyDef
-    (errorMsg, _) <- runIRBuilderT emptyIRBuilder $ 
+    (errorMsg, _) <- runIRBuilderT emptyIRBuilder $
         globalStringPtr "Something has gone wrong.\n" "errorMsg"
 
     -- initialise the compilation context and compile the root term
     counter <- liftIO $ newIORef 0
-    closure <- runReaderT (runCodeGen (compileTerm term)) 
-        MkCodeGenSt{ 
+    closure <- runReaderT (runCodeGen (compileTerm term))
+        MkCodeGenSt{
             codeGenCfg = cfg,
             codeGenErrMsg = errorMsg,
             codeGenCounter = counter,
-            codeGenEnv = M.empty 
+            codeGenEnv = M.empty
         }
 
     -- generate the entry wrapper
@@ -350,23 +355,24 @@ compileProgram cfg (Program _ _ term) = do
 
 -- | `generateCode` @config path program@ generates code for @program@
 -- using the configuration given by @config@.
-generateCode 
-    :: Config 
-    -> FilePath 
-    -> Program UPLC.Name DefaultUni DefaultFun () 
+generateCode
+    :: Config
+    -> Program UPLC.Name DefaultUni DefaultFun ()
     -> IO ()
-generateCode cfg fp p = 
+generateCode cfg@MkConfig{..} p =
     withContext $ \ctx ->
     -- withModuleFromLLVMAssembly ctx (File "wrapper.ll") $ \m -> moduleAST m >>= print
 
     withHostTargetMachineDefault $ \tm ->
-    buildModuleT "test" (compileProgram cfg p) >>= \compiled ->
-    withModuleFromAST ctx compiled{ moduleSourceFileName  = "test.plc" } $ \m -> do
-    
-        writeBitcodeToFile (File fp) m
+    buildModuleT (fromString $ takeBaseName cfgInput) (compileProgram cfg p) >>= \compiled ->
+    withModuleFromAST ctx compiled{ moduleSourceFileName = fromString cfgInput } $ \m -> do
+        let outPath = fromMaybe (replaceExtension cfgInput ".ll") cfgOutput
+
+
+        writeBitcodeToFile (File outPath) m
     -- -- writeTargetAssemblyToFile tm (File "out.s") mod
-        writeObjectToFile tm (File "out.o") m
-        asm <- moduleLLVMAssembly m 
+        writeObjectToFile tm (File $ replaceExtension outPath "o") m
+        asm <- moduleLLVMAssembly m
         BS.putStrLn asm
 
 -------------------------------------------------------------------------------

@@ -30,6 +30,7 @@ library
       base
     , bytestring
     , containers
+    , directory
     , filepath
     , flat
     , llvm-hs
@@ -52,6 +53,7 @@ executable plc-llvm
       base
     , bytestring
     , containers
+    , directory
     , filepath
     , flat
     , llvm-hs

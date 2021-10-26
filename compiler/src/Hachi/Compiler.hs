@@ -29,13 +29,13 @@ type DefaultError a = Error DefaultUni DefaultFun a
 
 type UntypedProgram = UPLC.Program Name DefaultUni DefaultFun
 
-deserialiseUntyped 
-  :: BSL.ByteString 
+deserialiseUntyped
+  :: BSL.ByteString
   -> Either DecodeException (UntypedProgram ())
 deserialiseUntyped = unflat
 
-parseUntyped 
-  :: BSL.ByteString 
+parseUntyped
+  :: BSL.ByteString
   -> Either (DefaultError AlexPosn) (UntypedProgram AlexPosn)
 parseUntyped = runQuote . runExceptT . UPLC.parseProgram
 
@@ -52,8 +52,8 @@ loadUntyped MkConfig{..} xs
 
 type TypedProgram = Program TyName Name DefaultUni DefaultFun
 
-parseTyped 
-  :: BSL.ByteString 
+parseTyped
+  :: BSL.ByteString
   -> Either (DefaultError AlexPosn) (TypedProgram AlexPosn)
 parseTyped = runQuote . runExceptT . parseProgram
 
@@ -62,18 +62,18 @@ compileTyped _ xs = print $ parseTyped xs
 
 -------------------------------------------------------------------------------
 
-compile :: Config -> FilePath -> IO ()
-compile cfg fp = do
-  xs <- BSL.readFile fp
+compile :: Config -> IO ()
+compile cfg = do
+  xs <- BSL.readFile $ cfgInput cfg
 
   if cfgTyped cfg
   then compileTyped cfg xs
   else do
-    p <- loadUntyped cfg xs 
+    p <- loadUntyped cfg xs
     putStrLn "Generating code for:"
     print p
     let (UPLC.Program _ _ t) = p
     print $ UPLC.evaluateCekNoEmit defaultCekParameters t
-    generateCode cfg "out.ll" p
+    generateCode cfg p
 
 -------------------------------------------------------------------------------

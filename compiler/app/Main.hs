@@ -1,10 +1,10 @@
 
-module Main ( main ) where 
+module Main ( main ) where
 
 -------------------------------------------------------------------------------
 
-import Hachi.Compiler (compile)
-import Hachi.Compiler.Config (parseCmdLineArgs, cfgInput)
+import Hachi.Compiler ( compile )
+import Hachi.Compiler.Config ( parseCmdLineArgs )
 
 -------------------------------------------------------------------------------
 
@@ -12,6 +12,6 @@ import Hachi.Compiler.Config (parseCmdLineArgs, cfgInput)
 main :: IO ()
 main = do
     args <- parseCmdLineArgs
-    compile args (cfgInput args)
+    compile args
 
 -------------------------------------------------------------------------------
