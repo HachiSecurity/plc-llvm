@@ -1,0 +1,13 @@
+cradle:
+  stack:
+    components:
+    - path: 'compiler/app'
+      component: 'plc-llvm:exe:plc-llvm'
+    - path: 'compiler/src'
+      component: 'plc-llvm:lib'
+    - path: 'compiler/test'
+      component: 'plc-llvm:test:plc-llvm-test'
+
+dependencies:
+- stack.yaml
+- compiler/package.yaml
