@@ -13,6 +13,7 @@ import Options.Applicative
 data Config = MkConfig {
     cfgInput :: FilePath,
     cfgOutput :: Maybe FilePath,
+    cfgRTS :: Maybe FilePath,
     cfgDeserialise :: Bool,
     cfgTyped :: Bool,
     cfgTrace :: Bool
@@ -24,11 +25,16 @@ cfgInputP = strArgument $
     help "The path to the PLC source file"
 
 cfgOutputP :: Parser (Maybe FilePath)
-cfgOutputP = optional $ option auto $
+cfgOutputP = optional $ strOption $
     short 'o' <>
     long "output" <>
     metavar "OUTPUT" <>
     help "The path of the output file to generate"
+
+cfgRTSP :: Parser (Maybe FilePath)
+cfgRTSP = optional $ strOption $
+    long "rts" <>
+    help "The path to rts.c"
 
 cfgDeserialiseP :: Parser Bool
 cfgDeserialiseP = switch $
@@ -49,6 +55,7 @@ cmdArgsP :: Parser Config
 cmdArgsP = MkConfig
     <$> cfgInputP
     <*> cfgOutputP
+    <*> cfgRTSP
     <*> cfgDeserialiseP
     <*> cfgTypedP
     <*> cfgTraceP

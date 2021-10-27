@@ -401,8 +401,9 @@ generateCode cfg@MkConfig{..} p =
         BS.putStrLn asm
 
         -- compile with LLVM
+        let rtsFile = fromMaybe "./rts/rts.c" cfgRTS
         let exeFile = dropExtension objectFile
-        let pcfg = proc "clang" ["./rts/rts.c", objectFile, "-o", exeFile]
+        let pcfg = proc "clang" [rtsFile, objectFile, "-o", exeFile]
 
         ec <- runProcess pcfg
 
