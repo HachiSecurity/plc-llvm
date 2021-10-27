@@ -16,6 +16,7 @@ import Test.Tasty.HUnit
 
 import Hachi.Compiler
 import Hachi.Compiler.Config
+import Data.List (sort)
 
 -------------------------------------------------------------------------------
 
@@ -29,7 +30,7 @@ test_samples = do
     let root = "./test-data/untyped"
     ds <- listDirectories root
 
-    forM ds $ \dir ->
+    forM (sort ds) $ \dir ->
         pure $ testCase dir $ do
             -- compile the code
             let fp = root </> dir </> dir <.> "plc"

@@ -26,7 +26,7 @@ data CodeGenSt = MkCodeGenSt {
     -- | The configuration for the compiler.
     codeGenCfg :: Config,
     codeGenErrMsg :: Constant,
-    codeGenCounter :: IORef Integer,
+    codeGenCounters :: IORef (M.Map String (IORef Integer)),
     codeGenEnv :: M.Map T.Text Operand
 }
 
@@ -38,11 +38,17 @@ newtype CodeGen m a = MkCodeGen { runCodeGen :: ReaderT CodeGenSt m a }
              )
 
 -- | `mkFresh` @prefix@ generates a fresh name starting with @prefix@.
-mkFresh :: MonadIO m => String -> CodeGen m String
-mkFresh prefix = do
-    counter <- asks codeGenCounter
-    val <- liftIO $ atomicModifyIORef counter $ \v -> (v+1,v)
-    pure $ prefix <> show val
+mkFresh :: (MonadReader CodeGenSt m, MonadIO m) => String -> m String
+mkFresh prefix = asks codeGenCounters >>= \countersRef-> liftIO $ do
+    counters <- readIORef countersRef
+    case M.lookup prefix counters of
+        Nothing -> do
+            ref <- newIORef 1
+            writeIORef countersRef $ M.insert prefix ref counters
+            pure $ prefix <> "0"
+        Just counter -> do
+            val <- liftIO $ atomicModifyIORef counter $ \v -> (v+1,v)
+            pure $ prefix <> show val
 
 -- | `extendScope` @name operand action@ adds @name@ to the scope for
 -- @action@ along with @operand@ which represents the LLVM identifier.

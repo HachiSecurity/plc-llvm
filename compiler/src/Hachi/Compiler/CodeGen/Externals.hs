@@ -7,11 +7,12 @@ module Hachi.Compiler.CodeGen.Externals where
 import LLVM.AST
 import LLVM.AST.AddrSpace
 import LLVM.AST.Constant
-
-import Hachi.Compiler.CodeGen.Types
 import LLVM.AST.Linkage
 import LLVM.AST.Visibility
 import LLVM.AST.CallingConvention
+import LLVM.IRBuilder
+
+import Hachi.Compiler.CodeGen.Types
 
 -------------------------------------------------------------------------------
 
@@ -30,6 +31,9 @@ printfFun =
 printfRef :: Constant
 printfRef = GlobalReference printfTy $ mkName "printf"
 
+printf :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
+printf msg = call (ConstantOperand printfRef) [(msg, [])]
+
 exitTy :: Type
 exitTy = ptrOf $ FunctionType VoidType [i32] False
 
@@ -42,6 +46,9 @@ exitFun =
 exitRef :: Constant
 exitRef = GlobalReference exitTy $ mkName "exit"
 
+exit :: (MonadModuleBuilder m, MonadIRBuilder m) => Integer -> m Operand
+exit code = call (ConstantOperand exitRef) [(ConstantOperand $ Int 32 code, [])]
+
 mallocTy :: Type
 mallocTy = ptrOf $ FunctionType (PointerType i8 (AddrSpace 0)) [i64] False
 
@@ -53,5 +60,8 @@ mallocFun =
 
 mallocRef :: Constant
 mallocRef = GlobalReference mallocTy $ mkName "malloc"
+
+malloc :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
+malloc size = call (ConstantOperand mallocRef) [(size, [])]
 
 -------------------------------------------------------------------------------
