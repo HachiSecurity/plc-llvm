@@ -17,6 +17,7 @@ dependencies:
 - optparse-applicative
 - plutus-core
 - prettyprinter
+- text
 - transformers
 - typed-process
 

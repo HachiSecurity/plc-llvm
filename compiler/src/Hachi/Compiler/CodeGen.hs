@@ -16,6 +16,7 @@ import qualified Data.ByteString.Char8 as BS
 import Data.IORef
 import qualified Data.Map as M
 import Data.String (fromString)
+import qualified Data.Text as T
 
 import System.FilePath
 import System.Process.Typed
@@ -283,7 +284,7 @@ compileTerm (Var _ x) = do
 
     let entry_fun = GlobalReference lamEntryTy entryName
 
-    print_fun <- compileMsgPrint name (show x)
+    print_fun <- compileMsgPrint name (T.unpack $ nameString x)
 
     compileClosure name code_fun entry_fun print_fun
 compileTerm (LamAbs _ var term) = do
