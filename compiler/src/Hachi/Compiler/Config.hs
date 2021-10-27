@@ -1,6 +1,7 @@
 
 module Hachi.Compiler.Config (
   Config(..),
+  mkDefaultConfig,
   parseCmdLineArgs
 ) where
 
@@ -18,6 +19,18 @@ data Config = MkConfig {
     cfgTyped :: Bool,
     cfgTrace :: Bool
 } deriving (Eq, Show)
+
+-- | `mkDefaultConfig` @input@ constructs a `Config` with reasonable defaults
+-- and using @input@ as the input source file.
+mkDefaultConfig :: FilePath -> Config
+mkDefaultConfig fp = MkConfig{
+    cfgInput = fp,
+    cfgOutput = Nothing,
+    cfgRTS = Nothing,
+    cfgDeserialise = False,
+    cfgTyped = False,
+    cfgTrace = False
+}
 
 cfgInputP :: Parser FilePath
 cfgInputP = strArgument $

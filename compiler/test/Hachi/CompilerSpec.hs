@@ -27,19 +27,13 @@ listDirectories root =
 test_samples :: IO [TestTree]
 test_samples = do
     let root = "./test-data/untyped"
-    let cfg fp = MkConfig{
-            cfgInput = fp,
-            cfgOutput = Nothing,
-            cfgDeserialise = False,
-            cfgTyped = False,
-            cfgTrace = False
-        }
     ds <- listDirectories root
+
     forM ds $ \dir ->
         pure $ testCase dir $ do
             -- compile the code
             let fp = root </> dir </> dir <.> "plc"
-            compile (cfg fp)
+            compile (mkDefaultConfig fp)
 
             -- run the resulting program
             let pcfg = proc (dropExtension fp) []
