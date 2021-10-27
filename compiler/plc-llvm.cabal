@@ -20,11 +20,18 @@ library
   exposed-modules:
       Hachi.Compiler
       Hachi.Compiler.CodeGen
+      Hachi.Compiler.CodeGen.Externals
+      Hachi.Compiler.CodeGen.Monad
+      Hachi.Compiler.CodeGen.Types
       Hachi.Compiler.Config
+      Hachi.Compiler.FreeVars
   other-modules:
       Paths_plc_llvm
   hs-source-dirs:
       src
+  default-extensions:
+      FlexibleContexts
+      OverloadedStrings
   ghc-options: -Wall
   build-depends:
       base
@@ -50,6 +57,9 @@ executable plc-llvm
       Paths_plc_llvm
   hs-source-dirs:
       app
+  default-extensions:
+      FlexibleContexts
+      OverloadedStrings
   ghc-options: -Wall
   build-depends:
       base
@@ -78,6 +88,9 @@ test-suite plc-llvm-test
       Paths_plc_llvm
   hs-source-dirs:
       test
+  default-extensions:
+      FlexibleContexts
+      OverloadedStrings
   ghc-options: -Wall
   build-depends:
       base

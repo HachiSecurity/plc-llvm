@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Hachi.Compiler.CodeGen ( generateCode ) where
@@ -8,13 +6,13 @@ module Hachi.Compiler.CodeGen ( generateCode ) where
 
 import Control.Monad ( void, when )
 import Control.Monad.IO.Class
-import Control.Monad.Reader (ReaderT, runReaderT, asks)
-import Control.Monad.Reader.Class ( MonadReader )
+import Control.Monad.Reader
 import Control.Monad.Trans (lift)
 
 import qualified Data.ByteString.Char8 as BS
 import Data.IORef
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Data.String (fromString)
 import qualified Data.Text as T
 
@@ -26,9 +24,6 @@ import UntypedPlutusCore as UPLC
 
 import LLVM
 import LLVM.AST as LLVM
-import LLVM.AST.CallingConvention
-import LLVM.AST.Linkage
-import LLVM.AST.Visibility
 import LLVM.Context
 import LLVM.Target
 import LLVM.AST.AddrSpace
@@ -36,102 +31,21 @@ import LLVM.AST.Constant
 import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.Config
+import Hachi.Compiler.FreeVars
+import Hachi.Compiler.CodeGen.Externals
+import Hachi.Compiler.CodeGen.Monad
+import Hachi.Compiler.CodeGen.Types
+
 import Data.Maybe (fromMaybe)
 
 -------------------------------------------------------------------------------
 
-i8 :: Type
-i8 = IntegerType 8
+mkParamName :: UPLC.Name -> ParameterName
+mkParamName = fromString . T.unpack . nameString
 
-i32 :: Type
-i32 = IntegerType 32
-
--- | `clsEntryTy` is the `Type` of closure entry functions.
-clsEntryTy :: Type
-clsEntryTy = PointerType (FunctionType closureTyPtr [closureTyPtr] False) (AddrSpace 0)
-
-lamEntryTy :: Type
-lamEntryTy = PointerType (FunctionType closureTyPtr [closureTyPtr, closureTyPtr] False) (AddrSpace 0)
-
-funPtr :: Type
-funPtr = PointerType (FunctionType VoidType [] False) (AddrSpace 0)
-
--- | The type of printf.
-printfTy :: Type
-printfTy = PointerType fnTy (AddrSpace 0)
-    where fnTy = FunctionType i32 [PointerType i8 $ AddrSpace 0] True
-
--- | The signature of printf.
-printfFun :: Global
-printfFun =
-    Function External Default Nothing C [] i32 (mkName "printf") pTy []
-        Nothing Nothing 0 Nothing Nothing [] Nothing []
-    where pTy = ([Parameter (PointerType i8 $ AddrSpace 0) (LLVM.Name "") []], True)
-
--- | A `Constant` which provides a reference to the global printf declaration.
-printfRef :: Constant
-printfRef = GlobalReference printfTy $ mkName "printf"
-
-exitTy :: Type
-exitTy = PointerType fnTy (AddrSpace 0)
-    where fnTy = FunctionType VoidType [i32] False
-
-exitFun :: Global
-exitFun =
-    Function External Default Nothing C [] VoidType (mkName "exit") pTy []
-        Nothing Nothing 0 Nothing Nothing [] Nothing []
-    where pTy = ([Parameter i32 (mkName "") []], False)
-
-exitRef :: Constant
-exitRef = GlobalReference exitTy $ mkName "exit"
-
--- | `closureTyDef` is a `Type` definition for closures. Note the layout is
--- as follows:
---
--- - A pointer to the code for the closure.
--- - A pointer to the print code for the closure.
--- - Zero or more free variables. (LLVM will accept more elements than the
--- array's indicated size) https://llvm.org/docs/LangRef.html#array-type
-closureTyDef :: Type
-closureTyDef = StructureType False
-    [ clsEntryTy
-    , clsEntryTy
-    , funPtr
-    , ArrayType 0 funPtr
-    ]
-
--- | `closureTy` is a `Type` for closures.
-closureTy :: Type
-closureTy = NamedTypeReference "closure"
-
--- | `closureTyPtr` is a `Type` representing a pointer to a closure.
-closureTyPtr :: Type
-closureTyPtr = PointerType closureTy $ AddrSpace 0
-
--------------------------------------------------------------------------------
-
--- | Represents the state of the code generator.
-data CodeGenSt = MkCodeGenSt {
-    codeGenCfg :: Config,
-    codeGenErrMsg :: Constant,
-    codeGenCounter :: IORef Integer,
-    codeGenEnv :: M.Map String Operand
-}
-
--- | The code generator monad.
-newtype CodeGen m a = MkCodeGen { runCodeGen :: ReaderT CodeGenSt m a }
-    deriving ( Functor, Applicative, Monad, MonadIO
-             , MonadReader CodeGenSt
-             , MonadModuleBuilder, MonadIRBuilder
-             )
-
-mkFresh :: MonadIO m => String -> CodeGen m String
-mkFresh prefix = do
-    counter <- asks codeGenCounter
-    val <- liftIO $ atomicModifyIORef counter $ \v -> (v+1,v)
-    pure $ prefix <> show val
-
--------------------------------------------------------------------------------
+generateParams :: S.Set UPLC.Name -> [(Type, ParameterName)]
+generateParams = S.foldr (\name r -> addParam name : r ) []
+    where addParam name = (closureTyPtr, mkParamName name)
 
 -- | `compileNoopEntry` @name@ generates a closure entry function which does
 -- nothing except return the pointer to itself.
@@ -282,7 +196,7 @@ compileTerm (Var _ x) = do
             op <- pushClosure arg []
             ret op
 
-    let entry_fun = GlobalReference lamEntryTy entryName
+    let entry_fun = GlobalReference varEntryTy entryName
 
     print_fun <- compileMsgPrint name (T.unpack $ nameString x)
 
@@ -295,6 +209,8 @@ compileTerm (LamAbs _ var term) = do
     termClosure <- compileTerm term
 
     let entryName = mkName $ name <> "_entry"
+    let entryParams = generateParams $ S.delete var $ freeVars term
+    let entryTy = mkEntryTy $ length entryParams + 1
 
     _ <- IR.function entryName [(closureTyPtr, "this"), (closureTyPtr, "arg")] closureTyPtr $
         \[this, arg] -> do
@@ -302,7 +218,7 @@ compileTerm (LamAbs _ var term) = do
             op <- enterClosure (ConstantOperand termClosure) [arg]
             ret op
 
-    let entry_fun = GlobalReference lamEntryTy entryName
+    let entry_fun = GlobalReference entryTy entryName
 
     print_fun <- compileMsgPrint name "Evaluation resulted in a function."
 

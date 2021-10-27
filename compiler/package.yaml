@@ -21,6 +21,10 @@ dependencies:
 - transformers
 - typed-process
 
+default-extensions:
+- FlexibleContexts
+- OverloadedStrings
+
 library:
   source-dirs: src
   ghc-options:
