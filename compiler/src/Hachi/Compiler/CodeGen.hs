@@ -390,15 +390,14 @@ generateCode cfg@MkConfig{..} p =
     withHostTargetMachineDefault $ \tm ->
     buildModuleT (fromString $ takeBaseName cfgInput) (compileProgram cfg p) >>= \compiled ->
     withModuleFromAST ctx compiled{ moduleSourceFileName = fromString cfgInput } $ \m -> do
-        let outPath = fromMaybe (replaceExtension cfgInput ".ll") cfgOutput
-
-
-        writeBitcodeToFile (File outPath) m
-    -- -- writeTargetAssemblyToFile tm (File "out.s") mod
-        let objectFile = replaceExtension outPath "o"
+        let objectFile = fromMaybe (replaceExtension cfgInput "o") cfgOutput
+        -- writeBitcodeToFile (File outPath) m
+        -- writeTargetAssemblyToFile tm (File "out.s") mod
         writeObjectToFile tm (File objectFile) m
-        asm <- moduleLLVMAssembly m
-        BS.putStrLn asm
+
+        when cfgVerbose $ do
+            asm <- moduleLLVMAssembly m
+            BS.putStrLn asm
 
         -- compile with LLVM
         let rtsFile = fromMaybe "./rts/rts.c" cfgRTS
@@ -407,7 +406,8 @@ generateCode cfg@MkConfig{..} p =
 
         ec <- runProcess pcfg
 
-        putStr "Ran clang and got: "
-        print ec
+        when cfgVerbose $ do
+            putStr "Ran clang and got: "
+            print ec
 
 -------------------------------------------------------------------------------

@@ -17,7 +17,8 @@ data Config = MkConfig {
     cfgRTS :: Maybe FilePath,
     cfgDeserialise :: Bool,
     cfgTyped :: Bool,
-    cfgTrace :: Bool
+    cfgTrace :: Bool,
+    cfgVerbose :: Bool
 } deriving (Eq, Show)
 
 -- | `mkDefaultConfig` @input@ constructs a `Config` with reasonable defaults
@@ -29,7 +30,8 @@ mkDefaultConfig fp = MkConfig{
     cfgRTS = Nothing,
     cfgDeserialise = False,
     cfgTyped = False,
-    cfgTrace = False
+    cfgTrace = False,
+    cfgVerbose = False
 }
 
 cfgInputP :: Parser FilePath
@@ -64,6 +66,12 @@ cfgTraceP = switch $
     long "trace" <>
     help "Inject tracing code into the LLVM IR"
 
+cfgVerboseP :: Parser Bool
+cfgVerboseP = switch $
+    short 'v' <>
+    long "verbose" <>
+    help "Print diagnostic messages during compilation"
+
 cmdArgsP :: Parser Config
 cmdArgsP = MkConfig
     <$> cfgInputP
@@ -72,6 +80,7 @@ cmdArgsP = MkConfig
     <*> cfgDeserialiseP
     <*> cfgTypedP
     <*> cfgTraceP
+    <*> cfgVerboseP
 
 -- | `parseCmdLineArgs` parses command-line arguments into a `Config` value.
 -- If parsing fails, the program is terminated and a help message is shown.

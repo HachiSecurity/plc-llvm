@@ -4,7 +4,7 @@ module Hachi.Compiler ( compile ) where
 
 -------------------------------------------------------------------------------
 
-import Control.Monad (void)
+import Control.Monad
 import Control.Monad.Trans.Except ( runExceptT )
 
 import qualified Data.ByteString.Lazy as BSL
@@ -70,10 +70,13 @@ compile cfg = do
   then compileTyped cfg xs
   else do
     p <- loadUntyped cfg xs
-    putStrLn "Generating code for:"
-    print p
-    let (UPLC.Program _ _ t) = p
-    print $ UPLC.evaluateCekNoEmit defaultCekParameters t
+
+    when (cfgVerbose cfg) $ do
+      putStrLn "Generating code for:"
+      print p
+
+    -- let (UPLC.Program _ _ t) = p
+    -- print $ UPLC.evaluateCekNoEmit defaultCekParameters t
     generateCode cfg p
 
 -------------------------------------------------------------------------------
