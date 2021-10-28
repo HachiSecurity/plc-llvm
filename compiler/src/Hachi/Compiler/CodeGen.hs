@@ -25,22 +25,19 @@ import LLVM
 import LLVM.AST as LLVM
 import LLVM.Context
 import LLVM.Target
-import LLVM.AST.AddrSpace
 import LLVM.AST.Constant
 import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.Config
 import Hachi.Compiler.FreeVars
+import Hachi.Compiler.CodeGen.Closure
+import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Monad
-import Hachi.Compiler.CodeGen.Types
 
 import Data.Maybe (fromMaybe)
 
 -------------------------------------------------------------------------------
-
-mkParamName :: UPLC.Name -> ParameterName
-mkParamName = fromString . T.unpack . nameString
 
 -- | `compileNoopEntry` @name@ generates a closure entry function which does
 -- nothing except return the pointer to itself.
@@ -54,82 +51,6 @@ compileNoopEntry name = do
         \[this] -> compileTrace (name <> "_entry") >> ret this
 
     pure $ GlobalReference clsEntryTy entryName
-
--- | `compileConstPrint` @name value@ compiles a print function for a
--- constant.
-compileConstPrint
-    :: (MonadReader CodeGenSt m, MonadIO m, MonadModuleBuilder m, Pretty a)
-    => String -> a -> m Constant
-compileConstPrint name val = compileMsgPrint name (show $ pretty val)
-
-compileMsgPrint
-    :: (MonadReader CodeGenSt m, MonadIO m, MonadModuleBuilder m)
-    => String -> String -> m Constant
-compileMsgPrint name msg = do
-    let printName = mkName $ name <> "_print"
-
-    _ <- IR.function printName [] VoidType $ \_ -> do
-        compileTrace (name <> "_print")
-        (ptr, _) <- runIRBuilderT emptyIRBuilder $
-            globalStringPtr (msg <> "\n") (mkName $ name <> "_print_msg")
-        void $ call
-            (ConstantOperand printfRef)
-            [(ConstantOperand ptr, [])]
-        retVoid
-
-    pure $ GlobalReference funPtr printName
-
--- | `compileTrace` @message@ generates an instruction which prints @message@
--- to the standard output, if tracing is enabled in the code generation
--- configuration. Otherwise, this produces no code.
-compileTrace
-    :: ( MonadReader CodeGenSt m
-       , MonadIO m
-       , MonadModuleBuilder m
-       , MonadIRBuilder m
-       )
-    => String
-    -> m ()
-compileTrace msg = do
-    isTracing <- asks (cfgTrace . codeGenCfg)
-    when isTracing $ do
-        name <- mkFresh "trace"
-        (ptr, _) <- runIRBuilderT emptyIRBuilder $
-                globalStringPtr (msg <> "\n") (mkName name )
-        void $ call
-            (ConstantOperand printfRef)
-            [(ConstantOperand ptr, [])]
-
-
--- | `compileClosure` @name entryPtr printPtr@ generates a global variable
--- representing a closure for @name@.
-compileClosure
-    :: MonadModuleBuilder m
-    => String -> Constant -> Constant -> [Constant] -> m Constant
-compileClosure name codePtr printPtr fvs = do
-    let closureName = mkName $ name <> "_closure"
-
-    void $ global closureName closureTy $ Struct Nothing False $
-        codePtr : printPtr : fvs
-
-    pure $ GlobalReference (PointerType closureTy $ AddrSpace 0) closureName
-
-callClosure
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => ClosureComponent
-    -> ClosurePtr
-    -> [Operand]
-    -> m Operand
-callClosure prop closure args = do
-    entry <- loadFromClosure prop closure
-    call entry $ (closurePtr closure, []) : [(arg, []) | arg <- args]
-
-enterClosure
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => ClosurePtr
-    -> [Operand]
-    -> m Operand
-enterClosure = callClosure ClosureCode
 
 -- | `compileBody` @term@
 compileBody
@@ -202,69 +123,9 @@ compileBody (Var _ x) = do
 compileBody (LamAbs _ var term) = do
     name <- mkFresh "fun"
 
-    -- we dynamically allocate a closure so that we can store the free
-    -- variables along with it - for now, we assume that we are running
-    -- on a 64 bit platform and calculate the pointer size accordingly
-    let bits = 64
-    let ptrSize = ConstantOperand $ LLVM.AST.Constant.sizeof bits closureTyPtr
-
-    let entryName = mkName $ name <> "_entry"
     let fvs = S.delete var $ freeVars term
-    let entryTy = mkEntryTy 1
 
-    _ <- IR.function entryName [(closureTyPtr, "this"), (closureTyPtr, mkParamName var)] closureTyPtr $
-        \[this, arg] -> extendScope var arg $ do
-            compileTrace (name <> "_entry")
-
-            -- we need to load the free variables from the closure pointed to
-            -- by `this`, which are stored at offset 3 onwards; note that the
-            -- free variables are stored in alphabetical order and the code
-            -- which loads them here must correspond to the code that stores
-            -- them further down
-            let loadFrom i = do
-                    offset <- mul ptrSize (ConstantOperand $ Int bits i)
-                    addr <- add this offset
-                    load addr 0
-
-            -- load the free variables from the closure pointed to by `this`
-            cvars <- forM (zip [closureSize..] $ S.toList fvs) $ \(idx,_) -> loadFrom idx
-
-            -- update the local environment with mappings to the free variables
-            -- we have obtained from the closure represented by `this` and
-            -- compile the body of the function
-            termClosure <- updateEnv fvs cvars $ compileBody term
-            ret termClosure
-
-    let code_fun = GlobalReference entryTy entryName
-
-    print_fun <- compileMsgPrint name "Evaluation resulted in a function."
-
-    -- allocate enough space for the closure on the heap:
-    -- 3 code pointers + one pointer for each free variable
-    size <- mul ptrSize (ConstantOperand $ Int bits $ 3 + toInteger (length fvs))
-    c <- malloc size
-    cc <- bitcast c closureTyPtr
-
-    -- store data in the closure: we have the function pointers followed by
-    -- any pointers to free variables
-    let storeAt i val = do
-            offset <- mul ptrSize (ConstantOperand $ Int bits i)
-            addr <- add cc offset
-            store addr 0 val
-
-    storeAt 0 $ ConstantOperand code_fun
-    storeAt 1 $ ConstantOperand print_fun
-
-    env <- asks codeGenEnv
-
-    forM_ (zip [closureSize..] $ S.toList fvs) $ \(idx, v) -> case M.lookup (nameString v) env of
-        -- TODO: handle this a bit more nicely
-        Nothing -> error "Can't find variable"
-        Just val -> storeAt idx val
-
-    -- return an Operand representing a pointer to the dynamic closure that we
-    -- have just created
-    pure cc
+    compileDynamicClosure name fvs var $ compileBody term
 compileBody (Apply _ lhs rhs) = do
     name <- mkFresh "app"
 
