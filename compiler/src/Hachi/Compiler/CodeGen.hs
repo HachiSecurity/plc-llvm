@@ -105,40 +105,31 @@ compileTrace msg = do
 -- representing a closure for @name@.
 compileClosure
     :: MonadModuleBuilder m
-    => String -> Constant -> Constant -> Constant -> [Constant] -> m Constant
-compileClosure name codePtr entryPtr printPtr fvs = do
+    => String -> Constant -> Constant -> [Constant] -> m Constant
+compileClosure name codePtr printPtr fvs = do
     let closureName = mkName $ name <> "_closure"
 
     void $ global closureName closureTy $ Struct Nothing False $
-        codePtr : entryPtr : printPtr : fvs
+        codePtr : printPtr : fvs
 
     pure $ GlobalReference (PointerType closureTy $ AddrSpace 0) closureName
 
 callClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Integer
-    -> Operand
+    => ClosureComponent
+    -> ClosurePtr
     -> [Operand]
     -> m Operand
-callClosure ix closure args = do
-    entryAddr <- gep closure
-        [ ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 ix ]
-    entry <- load entryAddr 0
-    call entry $ (closure, []) : [(arg, []) | arg <- args]
-
-pushClosure
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand
-    -> [Operand]
-    -> m Operand
-pushClosure = callClosure 0
+callClosure prop closure args = do
+    entry <- loadFromClosure prop closure
+    call entry $ (closurePtr closure, []) : [(arg, []) | arg <- args]
 
 enterClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand
+    => ClosurePtr
     -> [Operand]
     -> m Operand
-enterClosure = callClosure 1
+enterClosure = callClosure ClosureCode
 
 -- | `compileBody` @term@
 compileBody
@@ -217,9 +208,6 @@ compileBody (LamAbs _ var term) = do
     let bits = 64
     let ptrSize = ConstantOperand $ LLVM.AST.Constant.sizeof bits closureTyPtr
 
-    -- generate a noop entry function
-    code_fun <- compileNoopEntry (name <> "_code")
-
     let entryName = mkName $ name <> "_entry"
     let fvs = S.delete var $ freeVars term
     let entryTy = mkEntryTy 1
@@ -239,7 +227,7 @@ compileBody (LamAbs _ var term) = do
                     load addr 0
 
             -- load the free variables from the closure pointed to by `this`
-            cvars <- forM (zip [3..] $ S.toList fvs) $ \(idx,_) -> loadFrom idx
+            cvars <- forM (zip [closureSize..] $ S.toList fvs) $ \(idx,_) -> loadFrom idx
 
             -- update the local environment with mappings to the free variables
             -- we have obtained from the closure represented by `this` and
@@ -247,7 +235,7 @@ compileBody (LamAbs _ var term) = do
             termClosure <- updateEnv fvs cvars $ compileBody term
             ret termClosure
 
-    let entry_fun = GlobalReference entryTy entryName
+    let code_fun = GlobalReference entryTy entryName
 
     print_fun <- compileMsgPrint name "Evaluation resulted in a function."
 
@@ -265,12 +253,11 @@ compileBody (LamAbs _ var term) = do
             store addr 0 val
 
     storeAt 0 $ ConstantOperand code_fun
-    storeAt 1 $ ConstantOperand entry_fun
-    storeAt 2 $ ConstantOperand print_fun
+    storeAt 1 $ ConstantOperand print_fun
 
     env <- asks codeGenEnv
 
-    forM_ (zip [3..] $ S.toList fvs) $ \(idx, v) -> case M.lookup (nameString v) env of
+    forM_ (zip [closureSize..] $ S.toList fvs) $ \(idx, v) -> case M.lookup (nameString v) env of
         -- TODO: handle this a bit more nicely
         Nothing -> error "Can't find variable"
         Just val -> storeAt idx val
@@ -292,7 +279,7 @@ compileBody (Apply _ lhs rhs) = do
 
     -- enter the closure pointed to by l, giving it a pointer to another
     -- closure r as argument
-    enterClosure l [r]
+    enterClosure (MkClosurePtr l) [r]
 compileBody (Constant _ val) = do
     name <- mkFresh "con"
 
@@ -304,7 +291,7 @@ compileBody (Constant _ val) = do
 
     -- 3. generate a static closure: this should be sufficient since constants
     -- hopefully do not contain any free variables
-    ConstantOperand <$> compileClosure name entry_fun entry_fun print_fun []
+    ConstantOperand <$> compileClosure name entry_fun print_fun []
 compileBody term = error $
     "compileBody for " <> show term <> " not implemented!"
 
@@ -320,8 +307,7 @@ generateEntry body = void $ IR.function "entry" [] VoidType $ \_ -> do
     ptr <- compileBody body
 
     -- call the print code of the resulting closure
-    printAddr <- gep ptr [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 2]
-    printFun <- load printAddr 0
+    printFun <- loadFromClosure ClosurePrint $ MkClosurePtr ptr
     void $ call printFun []
 
     retVoid
