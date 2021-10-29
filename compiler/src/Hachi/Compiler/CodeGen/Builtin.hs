@@ -1,5 +1,4 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -16,6 +15,7 @@ import PlutusCore.Default
 
 import LLVM.AST
 import LLVM.AST.Constant
+import LLVM.AST.IntegerPredicate as LLVM
 import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.CodeGen.Closure
@@ -79,11 +79,27 @@ compileBinaryInteger
 compileBinaryInteger name builder = compileBinary name i64 i64 $ \x y -> do
     builder x y >>= compileConstDynamic @a
 
-compileAddInteger :: MonadCodeGen m => m Constant
-compileAddInteger = compileBinaryInteger @Integer "addInteger" add
+addInteger :: MonadCodeGen m => m Constant
+addInteger = compileBinaryInteger @Integer "addInteger" add
 
-compileSubtractInteger :: MonadCodeGen m => m Constant
-compileSubtractInteger = compileBinaryInteger @Integer "subtractInteger" sub
+subtractInteger :: MonadCodeGen m => m Constant
+subtractInteger = compileBinaryInteger @Integer "subtractInteger" sub
+
+multiplyInteger :: MonadCodeGen m => m Constant
+multiplyInteger = compileBinaryInteger @Integer "multiplyInteger" mul
+
+
+equalsInteger :: MonadCodeGen m => m Constant
+equalsInteger =
+    compileBinaryInteger @Bool "equalsInteger" $ icmp LLVM.EQ
+
+lessThanInteger :: MonadCodeGen m => m Constant
+lessThanInteger =
+    compileBinaryInteger @Bool "lessThanInteger" $ icmp LLVM.SLT
+
+lessThanEqualsInteger :: MonadCodeGen m => m Constant
+lessThanEqualsInteger =
+    compileBinaryInteger @Bool "lessThanEqualsInteger" $ icmp LLVM.SLE
 
 -------------------------------------------------------------------------------
 
@@ -92,8 +108,12 @@ compileSubtractInteger = compileBinaryInteger @Integer "subtractInteger" sub
 -- supported built-in function.
 builtins :: MonadCodeGen m => [(DefaultFun, m Constant)]
 builtins =
-    [ (AddInteger, compileAddInteger)
-    , (SubtractInteger, compileSubtractInteger)
+    [ (AddInteger, addInteger)
+    , (SubtractInteger, subtractInteger)
+    , (MultiplyInteger, multiplyInteger)
+    , (EqualsInteger, equalsInteger)
+    , (LessThanInteger, lessThanInteger)
+    , (LessThanEqualsInteger, lessThanEqualsInteger)
     ]
 
 -- | `compileBuiltins` is a computation which generates code for all the

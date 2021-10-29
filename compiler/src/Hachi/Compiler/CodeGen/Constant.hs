@@ -1,5 +1,4 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -98,8 +97,7 @@ instance CompileConstant Integer where
     compileConstant _ val = pure $ Int 64 val
 
     -- retrieve the integer value from the closure directly
-    compileLoadConstant this =
-        loadFromClosure (ClosureFreeVar 0) (Just $ ptrOf i64) this
+    compileLoadConstant = loadFromClosure (ClosureFreeVar 0) (Just $ ptrOf i64)
 
     compilePrintBody _ this = do
         -- retrieve the constant from the closure
@@ -120,8 +118,7 @@ instance CompileConstant Bool where
         pure $ Int 1 $ toInteger $ fromEnum val
 
     -- retrieve the boolean value from the closure directly
-    compileLoadConstant this =
-        loadFromClosure (ClosureFreeVar 0) (Just $ ptrOf i1) this
+    compileLoadConstant = loadFromClosure (ClosureFreeVar 0) (Just $ ptrOf i1)
 
     compilePrintBody _ this = do
         -- load the bit value from the closure
