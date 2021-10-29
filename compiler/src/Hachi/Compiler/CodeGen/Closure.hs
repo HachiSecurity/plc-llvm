@@ -10,14 +10,18 @@ module Hachi.Compiler.CodeGen.Closure (
     mkEntryTy,
     clsEntryTy,
     varEntryTy,
+    printFnTy,
     compileClosure,
+    allocateClosure,
     compileDynamicClosure,
+    compileMsgPrint,
 
     -- * Loading data from closures
     ClosureComponent(..),
     loadFromClosure,
     callClosure,
-    enterClosure
+    enterClosure,
+    lookupVar
 ) where
 
 -------------------------------------------------------------------------------
@@ -25,15 +29,16 @@ module Hachi.Compiler.CodeGen.Closure (
 import Control.Monad
 import Control.Monad.Reader
 
+import Data.List
 import qualified Data.Map as M
 import qualified Data.Set as S
+import qualified Data.Text as T
+import Data.Word
 
 import LLVM.AST
 import LLVM.AST.AddrSpace
 import LLVM.AST.Constant
 import LLVM.IRBuilder as IR
-
-import UntypedPlutusCore as UPLC
 
 import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Externals
@@ -56,7 +61,7 @@ newtype ClosurePtr = MkClosurePtr { closurePtr :: Operand }
 closureTyDef :: Type
 closureTyDef = StructureType False
     [ clsEntryTy
-    , funPtr
+    , printFnTy
     , ArrayType 0 closureTyPtr
     ]
 
@@ -103,6 +108,12 @@ clsEntryTy = mkEntryTy 0
 varEntryTy :: Type
 varEntryTy = mkEntryTy 1
 
+-- | `printFnTy` is the `Type` of closure print functions. They are similar to
+-- closure entry functions in that they take a pointer to the current closure
+-- as argument, but return nothing.
+printFnTy :: Type
+printFnTy = ptrOf $ FunctionType VoidType [closureTyPtr] False
+
 -- | `compileClosure` @name entryPtr printPtr@ generates a global variable
 -- representing a closure for @name@.
 compileClosure
@@ -116,21 +127,59 @@ compileClosure name codePtr printPtr fvs = do
 
     pure $ GlobalReference (PointerType closureTy $ AddrSpace 0) closureName
 
--- | `compileDynamicClosure`
+-- | When we dynamically allocate closures, we need to know how much space to
+-- allocate for the pointers; for this purpose we are currently assuming that
+-- we are running on a 64-bit system.
+bits :: Word32
+bits = 64
+
+-- | The size of a pointer as an `Operand`. This should correspond to the
+-- value given by `bits`.
+ptrSize :: Operand
+ptrSize = ConstantOperand $ LLVM.AST.Constant.sizeof bits closureTyPtr
+
+-- | `allocateClosure` @codePtr printPtr freeVars@ allocates a closure with
+-- enough space to store all of @freeVars@ in addition to the code pointers.
+-- The code pointers are free variables are stored in the closure and the
+-- pointer to the closure is returned.
+allocateClosure
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Constant -> Constant -> [Operand] -> m Operand
+allocateClosure codePtr printPtr fvs = do
+    -- allocate enough space for the closure on the heap:
+    -- 2 code pointers + one pointer for each free variable
+    size <- mul ptrSize (ConstantOperand $ Int bits $ closureSize + genericLength fvs)
+    c <- malloc size
+    cc <- bitcast c closureTyPtr
+
+    -- store data in the closure: we have the function pointers followed by
+    -- any pointers to free variables
+    let storeAt i val = do
+            addr <- gep cc [ ConstantOperand $ Int 32 0
+                           , ConstantOperand $ Int 32 i
+                           ]
+            store addr 0 val
+
+    storeAt 0 $ ConstantOperand codePtr
+    storeAt 1 $ ConstantOperand printPtr
+
+    forM_ (zip [closureSize..] fvs) $ uncurry storeAt
+
+    -- return an Operand representing a pointer to the dynamic closure that we
+    -- have just created
+    pure cc
+
+-- | `compileDynamicClosure` @name freeVars var codeFun@
 compileDynamicClosure
     :: ( MonadIO m
        , MonadReader CodeGenSt m
        , MonadModuleBuilder m
        , MonadIRBuilder m
        )
-    => String -> S.Set UPLC.Name -> UPLC.Name -> IRBuilderT m Operand -> m Operand
+    => String -> S.Set T.Text -> T.Text
+    -> (Operand -> Operand -> IRBuilderT m Operand)
+    -> m Operand
 compileDynamicClosure name fvs var codeFun = do
-    -- we dynamically allocate a closure so that we can store the free
-    -- variables along with it - for now, we assume that we are running
-    -- on a 64 bit platform and calculate the pointer size accordingly
-    let bits = 64
-    let ptrSize = ConstantOperand $ LLVM.AST.Constant.sizeof bits closureTyPtr
-
     let entryName = mkName $ name <> "_entry"
     let entryTy = mkEntryTy 1
 
@@ -144,9 +193,11 @@ compileDynamicClosure name fvs var codeFun = do
             -- which loads them here must correspond to the code that stores
             -- them further down
             let loadFrom i = do
-                    offset <- mul ptrSize (ConstantOperand $ Int bits i)
-                    addr <- add this offset
-                    load addr 0
+                    addr <- gep this [ ConstantOperand $ Int 32 0
+                                     , ConstantOperand $ Int 32 i
+                                     ]
+                    ptr <- bitcast addr closureTyPtr
+                    load ptr 0
 
             -- load the free variables from the closure pointed to by `this`
             cvars <- forM (zip [closureSize..] $ S.toList fvs) $ \(idx,_) -> loadFrom idx
@@ -154,51 +205,56 @@ compileDynamicClosure name fvs var codeFun = do
             -- update the local environment with mappings to the free variables
             -- we have obtained from the closure represented by `this` and
             -- compile the body of the function
-            termClosure <- updateEnv fvs cvars codeFun
+            termClosure <- updateEnv fvs cvars $ codeFun this arg
             ret termClosure
 
     let code_fun = GlobalReference entryTy entryName
 
     print_fun <- compileMsgPrint name "Evaluation resulted in a function."
 
-    -- allocate enough space for the closure on the heap:
-    -- 3 code pointers + one pointer for each free variable
-    size <- mul ptrSize (ConstantOperand $ Int bits $ 3 + toInteger (length fvs))
-    c <- malloc size
-    cc <- bitcast c closureTyPtr
-
-    -- store data in the closure: we have the function pointers followed by
-    -- any pointers to free variables
-    let storeAt i val = do
-            offset <- mul ptrSize (ConstantOperand $ Int bits i)
-            addr <- add cc offset
-            store addr 0 val
-
-    storeAt 0 $ ConstantOperand code_fun
-    storeAt 1 $ ConstantOperand print_fun
-
     env <- asks codeGenEnv
 
-    forM_ (zip [closureSize..] $ S.toList fvs) $ \(idx, v) -> case M.lookup (nameString v) env of
+    vals <- forM (S.toList fvs) $ \fv -> case M.lookup fv env of
         -- TODO: handle this a bit more nicely
         Nothing -> error "Can't find variable"
-        Just val -> storeAt idx val
+        Just val -> pure val
 
-    -- return an Operand representing a pointer to the dynamic closure that we
-    -- have just created
-    pure cc
+    allocateClosure code_fun print_fun vals
+
+compileMsgPrint
+    :: (MonadReader CodeGenSt m, MonadIO m, MonadModuleBuilder m)
+    => String -> String -> m Constant
+compileMsgPrint name msg = do
+    let printName = mkName $ name <> "_print"
+
+    _ <- IR.function printName [(closureTyPtr, "this")] VoidType $ \[_] -> do
+        compileTrace (name <> "_print")
+        (ptr, _) <- runIRBuilderT emptyIRBuilder $
+            globalStringPtr (msg <> "\n") (mkName $ name <> "_print_msg")
+        void $ call
+            (ConstantOperand printfRef)
+            [(ConstantOperand ptr, [])]
+        retVoid
+
+    pure $ GlobalReference printFnTy printName
 
 -------------------------------------------------------------------------------
 
--- | `loadFromClosure` @component ptr@ loads the component described by
--- @component@ from the closure represented by @ptr@.
+-- | `loadFromClosure` @component mType ptr@ loads the component described by
+-- @component@ from the closure represented by @ptr@ and casts its type to
+-- @mType@ if that is not `Nothing`.
 loadFromClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => ClosureComponent -> ClosurePtr -> m Operand
-loadFromClosure prop (MkClosurePtr ptr) = do
+    => ClosureComponent -> Maybe Type -> ClosurePtr -> m Operand
+loadFromClosure prop mty (MkClosurePtr ptr) = do
     let ix = indexForComponent prop
     addr <- gep ptr [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 ix]
-    load addr 0
+
+    case mty of
+        Nothing -> load addr 0
+        Just ty -> do
+            r <- bitcast addr ty
+            load r 0
 
 -- | `callClosure` @component ptr args@ loads the component described by
 -- @component@ from the closure represented by @ptr@, assumes it is a function,
@@ -210,7 +266,7 @@ callClosure
     -> [Operand]
     -> m Operand
 callClosure prop closure argv = do
-    entry <- loadFromClosure prop closure
+    entry <- loadFromClosure prop Nothing closure
     call entry $ (closurePtr closure, []) : [(arg, []) | arg <- argv]
 
 -- `enterClosure` @ptr args@ enters the closure represented by @ptr@ and
@@ -219,5 +275,30 @@ enterClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
     => ClosurePtr -> [Operand] -> m Operand
 enterClosure = callClosure ClosureCode
+
+-- | `lookupVar` @name type@ generates code which retrieves the variable named
+-- @name@ from the local environment. If the variable is not in scope, we
+-- generate code which prints an error at runtime. For convenience, we cast
+-- the type of the resulting `Operand` to @type@, which will normally be
+-- `closureTyPtr`.
+lookupVar :: (MonadCodeGen m, MonadIRBuilder m) => T.Text -> Type -> m Operand
+lookupVar var ty = do
+    name <- mkFresh "var"
+    env <- asks codeGenEnv
+
+    case M.lookup var env of
+        Nothing -> do
+            -- generate code that prints a suitable error message
+            ptr <- globalStringPtr
+                (T.unpack var <> " is not in scope.\n") (mkName name)
+            void $ printf (ConstantOperand ptr) []
+            void $ exit (-1)
+
+            -- this part of the program should not be reachable
+            unreachable
+            pure $ ConstantOperand $ Null closureTyPtr
+        Just ptr -> do
+            compileTrace $ "Found " <> T.unpack var <> " in " <> name
+            bitcast ptr ty
 
 -------------------------------------------------------------------------------

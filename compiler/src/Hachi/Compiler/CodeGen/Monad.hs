@@ -1,4 +1,5 @@
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
+{-# LANGUAGE ConstraintKinds #-}
 
 module Hachi.Compiler.CodeGen.Monad where
 
@@ -7,6 +8,7 @@ module Hachi.Compiler.CodeGen.Monad where
 import Control.Monad.Reader
 
 import Data.IORef
+import Data.Kind
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -27,7 +29,8 @@ data CodeGenSt = MkCodeGenSt {
     codeGenCfg :: Config,
     codeGenErrMsg :: Constant,
     codeGenCounters :: IORef (M.Map String (IORef Integer)),
-    codeGenEnv :: M.Map T.Text Operand
+    codeGenEnv :: M.Map T.Text Operand,
+    codeGenBuiltins :: M.Map UPLC.DefaultFun Constant
 }
 
 -- | The code generator monad.
@@ -36,6 +39,12 @@ newtype CodeGen m a = MkCodeGen { runCodeGen :: ReaderT CodeGenSt m a }
              , MonadReader CodeGenSt
              , MonadModuleBuilder, MonadIRBuilder
              )
+
+-- | A constraint synonym for the type class constraints we usually expect our
+-- code generation monad to satisfy.
+type MonadCodeGen :: (* -> *) -> Constraint
+type MonadCodeGen m =
+    (MonadIO m, MonadModuleBuilder m, MonadReader CodeGenSt m)
 
 -- | `mkFresh` @prefix@ generates a fresh name starting with @prefix@.
 mkFresh :: (MonadReader CodeGenSt m, MonadIO m) => String -> m String
@@ -52,9 +61,9 @@ mkFresh prefix = asks codeGenCounters >>= \countersRef-> liftIO $ do
 
 -- | `extendScope` @name operand action@ adds @name@ to the scope for
 -- @action@ along with @operand@ which represents the LLVM identifier.
-extendScope :: MonadReader CodeGenSt m => UPLC.Name -> Operand -> m a -> m a
+extendScope :: MonadReader CodeGenSt m => T.Text -> Operand -> m a -> m a
 extendScope name val = local $ \st ->
-    st{ codeGenEnv = M.insert (UPLC.nameString name) val (codeGenEnv st) }
+    st{ codeGenEnv = M.insert name val (codeGenEnv st) }
 
 -- | `updateEnv` @names operands action@ updates the scope for @action@
 -- with @operands@ which correspond to @names@. Important: the names in
@@ -62,10 +71,10 @@ extendScope name val = local $ \st ->
 -- @operands@.
 updateEnv
     :: MonadReader CodeGenSt m
-    => S.Set UPLC.Name -> [Operand] -> m a -> m a
+    => S.Set T.Text -> [Operand] -> m a -> m a
 updateEnv names operands = local $ \st ->
     st{ codeGenEnv = M.union namedOperands (codeGenEnv st) }
     where namedOperands = M.fromList
-                        $ zip (map UPLC.nameString $ S.toList names) operands
+                        $ zip (S.toList names) operands
 
 -------------------------------------------------------------------------------

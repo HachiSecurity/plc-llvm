@@ -18,7 +18,6 @@ import qualified Data.Text as T
 import System.FilePath
 import System.Process.Typed
 
-import PlutusCore.Pretty ( Pretty, pretty )
 import UntypedPlutusCore as UPLC
 
 import LLVM
@@ -30,29 +29,16 @@ import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.Config
 import Hachi.Compiler.FreeVars
+import Hachi.Compiler.CodeGen.Builtin
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Common
+import Hachi.Compiler.CodeGen.Constant
 import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Monad
 
-import Data.Maybe (fromMaybe)
-
 -------------------------------------------------------------------------------
 
--- | `compileNoopEntry` @name@ generates a closure entry function which does
--- nothing except return the pointer to itself.
-compileNoopEntry
-    :: (MonadReader CodeGenSt m, MonadIO m, MonadModuleBuilder m)
-    => String -> m Constant
-compileNoopEntry name = do
-    let entryName = mkName $ name <> "_entry"
-
-    _ <- IR.function entryName [(closureTyPtr, "this")] closureTyPtr $
-        \[this] -> compileTrace (name <> "_entry") >> ret this
-
-    pure $ GlobalReference clsEntryTy entryName
-
--- | `compileBody` @term@
+-- | `compileBody` @term@ compiles @term@ to LLVM.
 compileBody
     :: ( MonadReader CodeGenSt m
        , MonadIRBuilder m
@@ -67,7 +53,7 @@ compileBody (Error _) = do
     errMsg <- asks codeGenErrMsg
 
     -- print the error message and terminate the program
-    void $ printf $ ConstantOperand errMsg
+    void $ printf (ConstantOperand errMsg) []
     void $ exit (-1)
 
     -- this part of the program should not be reachable
@@ -96,7 +82,7 @@ compileBody (Var _ x) = do
             -- generate code that prints a suitable error message
             ptr <- globalStringPtr
                 (T.unpack (nameString x) <> " is not in scope.\n") (mkName name)
-            void $ printf $ ConstantOperand ptr
+            void $ printf (ConstantOperand ptr) []
             void $ exit (-1)
 
             -- this part of the program should not be reachable
@@ -123,9 +109,12 @@ compileBody (Var _ x) = do
 compileBody (LamAbs _ var term) = do
     name <- mkFresh "fun"
 
-    let fvs = S.delete var $ freeVars term
+    -- TODO: the S.map here might be overly pessimistic, we might be able
+    -- to replace it with S.mapMonotonic for better performance
+    let fvs = S.map nameString $ S.delete var $ freeVars term
 
-    compileDynamicClosure name fvs var $ compileBody term
+    compileDynamicClosure name fvs (UPLC.nameString var) $
+        \_ _ -> compileBody term
 compileBody (Apply _ lhs rhs) = do
     name <- mkFresh "app"
 
@@ -141,18 +130,12 @@ compileBody (Apply _ lhs rhs) = do
     -- enter the closure pointed to by l, giving it a pointer to another
     -- closure r as argument
     enterClosure (MkClosurePtr l) [r]
-compileBody (Constant _ val) = do
-    name <- mkFresh "con"
-
-    -- 1. generate entry code
-    entry_fun <- compileNoopEntry name
-
-    -- 2. generate print code
-    print_fun <- compileConstPrint name val
-
-    -- 3. generate a static closure: this should be sufficient since constants
-    -- hopefully do not contain any free variables
-    ConstantOperand <$> compileClosure name entry_fun print_fun []
+compileBody (Constant _ val) = compileConst val
+compileBody (Builtin _ f) = do
+    builtins <- asks codeGenBuiltins
+    case M.lookup f builtins of
+        Nothing -> error $ "No such builtin: " <> show f
+        Just ref -> pure $ ConstantOperand ref
 compileBody term = error $
     "compileBody for " <> show term <> " not implemented!"
 
@@ -160,16 +143,24 @@ compileBody term = error $
 -- wrapper which calls the print function of the closure that results from
 -- executing the program generated from @term@.
 generateEntry
-    :: (MonadReader CodeGenSt m, MonadModuleBuilder m, MonadIO m)
+    :: MonadCodeGen m
     => Term UPLC.Name DefaultUni DefaultFun () -> m ()
 generateEntry body = void $ IR.function "entry" [] VoidType $ \_ -> do
+    generateConstantGlobals
+
+    -- generate code for all the built-in functions: it is easier for us to
+    -- do this programmatically rather than in e.g. C since the functions
+    -- all need to be curried; however, it may be nice to only compile the
+    -- builtins we actually need for the current program in the future
+    builtins <- compileBuiltins
+
     -- compile the program; the resulting Operand represent a pointer to some
     -- kind of closure (function or constant)
-    ptr <- compileBody body
+    ptr <- local (\st -> st{codeGenBuiltins = builtins}) $ compileBody body
 
     -- call the print code of the resulting closure
-    printFun <- loadFromClosure ClosurePrint $ MkClosurePtr ptr
-    void $ call printFun []
+    printFun <- loadFromClosure ClosurePrint Nothing $ MkClosurePtr ptr
+    void $ call printFun [(ptr, [])]
 
     retVoid
 
@@ -194,7 +185,8 @@ compileProgram cfg (Program _ _ term) = do
             codeGenCfg = cfg,
             codeGenErrMsg = errorMsg,
             codeGenCounters = counter,
-            codeGenEnv = M.empty
+            codeGenEnv = M.empty,
+            codeGenBuiltins = M.empty
         }
 
     -- compile the program

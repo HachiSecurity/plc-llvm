@@ -24,6 +24,7 @@ dependencies:
 default-extensions:
 - FlexibleContexts
 - OverloadedStrings
+- StandaloneKindSignatures
 
 library:
   source-dirs: src

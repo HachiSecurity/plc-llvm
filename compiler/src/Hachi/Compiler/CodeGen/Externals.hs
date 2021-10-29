@@ -31,8 +31,8 @@ printfFun =
 printfRef :: Constant
 printfRef = GlobalReference printfTy $ mkName "printf"
 
-printf :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
-printf msg = call (ConstantOperand printfRef) [(msg, [])]
+printf :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> [Operand] -> m Operand
+printf msg xs = call (ConstantOperand printfRef) $ (msg, []) : [(x, []) | x <- xs]
 
 exitTy :: Type
 exitTy = ptrOf $ FunctionType VoidType [i32] False
