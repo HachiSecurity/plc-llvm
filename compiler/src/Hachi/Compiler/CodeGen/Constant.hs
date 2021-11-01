@@ -1,5 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 
 -- | This module contains code generation functions for constants.
@@ -29,11 +30,13 @@ import LLVM.IRBuilder as IR
 import PlutusCore as PLC
 import PlutusCore.Data as PLC
 
+import Hachi.Compiler.TH
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 import Hachi.Compiler.CodeGen.Externals
+import Hachi.Compiler.CodeGen.Constant.String
 
 -------------------------------------------------------------------------------
 
@@ -43,37 +46,14 @@ generateConstantGlobals :: MonadCodeGen m => m ()
 generateConstantGlobals = void $ do
     void $ global "returnRegister" (ptrOf VoidType) $ Null (ptrOf VoidType)
 
-    runIRBuilderT emptyIRBuilder $ do
-        void $ globalStringPtr "%d\n" "i64FormatStr"
-        void $ globalStringPtr "%s\n" "strFormatStr"
-        void $ globalStringPtr "True" "trueStr"
-        void $ globalStringPtr "False" "falseStr"
+    runIRBuilderT emptyIRBuilder $ forM_ globalStrs $ \(name, val) ->
+        globalStringPtr val $ mkName name
 
-        void $ globalStringPtr "Attempted to instantiate a non-polymorphic term.\n" "forceErr"
+$(mkGlobalStrRefs globalStrs)
 
 returnRef :: Operand
 returnRef = ConstantOperand
           $ GlobalReference (ptrOf $ ptrOf VoidType) "returnRegister"
-
-i64FormatRef :: Operand
-i64FormatRef = ConstantOperand $ asStringPtr $
-    GlobalReference (stringPtr "%d\n") "i64FormatStr"
-
-strFormatRef :: Operand
-strFormatRef = ConstantOperand $ asStringPtr $
-    GlobalReference (stringPtr "%s\n") "strFormatStr"
-
-trueRef :: Operand
-trueRef = ConstantOperand $ asStringPtr $
-    GlobalReference (stringPtr "True") "trueStr"
-
-falseRef :: Operand
-falseRef = ConstantOperand $ asStringPtr $
-    GlobalReference (stringPtr "False") "falseStr"
-
-forceErrRef :: Operand
-forceErrRef = ConstantOperand $ asStringPtr $
-    GlobalReference (stringPtr "Attempted to instantiate a non-polymorphic term.\n") "forceErr"
 
 -------------------------------------------------------------------------------
 

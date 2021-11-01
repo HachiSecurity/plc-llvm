@@ -24,11 +24,13 @@ library
       Hachi.Compiler.CodeGen.Closure
       Hachi.Compiler.CodeGen.Common
       Hachi.Compiler.CodeGen.Constant
+      Hachi.Compiler.CodeGen.Constant.String
       Hachi.Compiler.CodeGen.Externals
       Hachi.Compiler.CodeGen.Monad
       Hachi.Compiler.CodeGen.Types
       Hachi.Compiler.Config
       Hachi.Compiler.FreeVars
+      Hachi.Compiler.TH
   other-modules:
       Paths_plc_llvm
   hs-source-dirs:
@@ -51,6 +53,7 @@ library
     , optparse-applicative
     , plutus-core
     , prettyprinter
+    , template-haskell
     , text
     , transformers
     , typed-process
@@ -81,6 +84,7 @@ executable plc-llvm
     , plc-llvm
     , plutus-core
     , prettyprinter
+    , template-haskell
     , text
     , transformers
     , typed-process
@@ -118,6 +122,7 @@ test-suite plc-llvm-test
     , tasty-discover
     , tasty-hedgehog
     , tasty-hunit
+    , template-haskell
     , text
     , transformers
     , typed-process
