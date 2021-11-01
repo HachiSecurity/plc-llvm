@@ -22,9 +22,10 @@ import UntypedPlutusCore as UPLC
 
 import LLVM
 import LLVM.AST as LLVM
+import LLVM.AST.Constant
+import LLVM.AST.IntegerPredicate as LLVM
 import LLVM.Context
 import LLVM.Target
-import LLVM.AST.Constant
 import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.Config
@@ -35,6 +36,7 @@ import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Constant
 import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Monad
+import Hachi.Compiler.CodeGen.Types
 
 -------------------------------------------------------------------------------
 
@@ -90,7 +92,6 @@ compileBody (Var _ x) = do
             pure $ ConstantOperand $ Null closureTyPtr
         Just ptr -> do
             compileTrace $ "Found " <> T.unpack (nameString x) <> " in " <> name
-            ret ptr
             pure ptr
 -- (lam x e): since PLC has higher-order functions, functions may escape the
 -- scope in which they are defined in. Therefore, we require closures which
@@ -113,7 +114,7 @@ compileBody (LamAbs _ var term) = do
     -- to replace it with S.mapMonotonic for better performance
     let fvs = S.map nameString $ S.delete var $ freeVars term
 
-    compileDynamicClosure name fvs (UPLC.nameString var) $
+    compileDynamicClosure False name fvs (UPLC.nameString var) $
         \_ _ -> compileBody term
 compileBody (Apply _ lhs rhs) = do
     name <- mkFresh "app"
@@ -130,6 +131,44 @@ compileBody (Apply _ lhs rhs) = do
     -- enter the closure pointed to by l, giving it a pointer to another
     -- closure r as argument
     enterClosure (MkClosurePtr l) [r]
+compileBody (Force _ term) = do
+    name <- mkFresh "force"
+    compileTrace name
+
+    -- Generate code for the term, this can be an arbitrary term and may
+    -- not immediately be a delay term - indeed, there may not be a delay
+    -- term at all!
+    r <- MkClosurePtr <$> compileBody term
+
+    -- We need to determine whether evaluation of the body results in a
+    -- delay term or not - the PLC interpreter treats the latter as an
+    -- error so we should, too. For this purpose, we store some flags
+    -- in the closure that indicate whether the closure belongs to a
+    -- delay term or not. Here, we inspect those flags to determine
+    -- whether to enter the closure or print an error.
+    let trueBr = mkName $ name <> "_delay"
+    let falseBr = mkName $ name <> "_fail"
+    let contBr = mkName $ name <> "_cont"
+
+    flags <- loadFromClosure ClosureFlags (Just $ ptrOf i64) r
+    cond <- icmp LLVM.EQ flags (ConstantOperand $ Int 64 1)
+    condBr cond trueBr falseBr
+
+    -- Enter the closure that is returned from the body: it corresponds to a
+    -- delay term
+    emitBlockStart trueBr
+    ptr <- enterClosure r [closurePtr r]
+    br contBr
+
+    -- The closure does not belong to a delay term: this is a runtime error
+    emitBlockStart falseBr
+    void $ printf forceErrRef []
+    void $ exit (-1)
+    unreachable
+
+    emitBlockStart contBr
+
+    pure ptr
 -- (delay t): we compile this just like a lambda abstraction to prevent it
 -- from being executed straight away - a force expression is then just like
 -- function application, minus the argument
@@ -144,7 +183,7 @@ compileBody (Delay _ term) = do
     -- therefore, if evaluation results in a delay term, we get a result
     -- equivalent to the one we get when evaluation results in a function;
     -- in the future, we might want to print a different message
-    compileDynamicClosure name fvs "_delayArg" $
+    compileDynamicClosure True name fvs "_delayArg" $
         \_ _ -> compileBody term
 compileBody (Constant _ val) = compileConst val
 compileBody (Builtin _ f) = do
@@ -152,8 +191,6 @@ compileBody (Builtin _ f) = do
     case M.lookup f builtins of
         Nothing -> error $ "No such builtin: " <> show f
         Just ref -> pure $ ConstantOperand ref
-compileBody term = error $
-    "compileBody for " <> show term <> " not implemented!"
 
 -- | `generateEntry` @term@ generates code for @term@ surrounded by a small
 -- wrapper which calls the print function of the closure that results from

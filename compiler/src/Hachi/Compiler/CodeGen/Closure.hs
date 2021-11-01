@@ -62,12 +62,13 @@ closureTyDef :: Type
 closureTyDef = StructureType False
     [ clsEntryTy
     , printFnTy
+    , ptrOf VoidType
     , ArrayType 0 closureTyPtr
     ]
 
 -- | The minimum size of a closure in words.
 closureSize :: Num a => a
-closureSize = 2
+closureSize = 3
 
 -- | `closureTy` is a `Type` for closures.
 closureTy :: Type
@@ -81,6 +82,7 @@ closureTyPtr = ptrOf closureTy
 data ClosureComponent
     = ClosureCode
     | ClosurePrint
+    | ClosureFlags
     | ClosureFreeVar Integer
     deriving (Eq, Show)
 
@@ -89,6 +91,7 @@ data ClosureComponent
 indexForComponent :: ClosureComponent -> Integer
 indexForComponent ClosureCode = 0
 indexForComponent ClosurePrint = 1
+indexForComponent ClosureFlags = 2
 indexForComponent (ClosureFreeVar n) = closureSize + n
 
 -------------------------------------------------------------------------------
@@ -123,7 +126,7 @@ compileClosure name codePtr printPtr fvs = do
     let closureName = mkName $ name <> "_closure"
 
     void $ global closureName closureTy $ Struct Nothing False $
-        codePtr : printPtr : fvs
+        codePtr : printPtr : Int bits 0 : fvs
 
     pure $ GlobalReference (PointerType closureTy $ AddrSpace 0) closureName
 
@@ -138,14 +141,14 @@ bits = 64
 ptrSize :: Operand
 ptrSize = ConstantOperand $ LLVM.AST.Constant.sizeof bits closureTyPtr
 
--- | `allocateClosure` @codePtr printPtr freeVars@ allocates a closure with
--- enough space to store all of @freeVars@ in addition to the code pointers.
--- The code pointers are free variables are stored in the closure and the
--- pointer to the closure is returned.
+-- | `allocateClosure` @isDelay codePtr printPtr freeVars@ allocates a closure
+-- with enough space to store all of @freeVars@ in addition to the code
+-- pointers. The code pointers are free variables are stored in the closure and
+-- the pointer to the closure is returned.
 allocateClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Constant -> Constant -> [Operand] -> m Operand
-allocateClosure codePtr printPtr fvs = do
+    => Bool -> Constant -> Constant -> [Operand] -> m Operand
+allocateClosure isDelay codePtr printPtr fvs = do
     -- allocate enough space for the closure on the heap:
     -- 2 code pointers + one pointer for each free variable
     size <- mul ptrSize (ConstantOperand $ Int bits $ closureSize + genericLength fvs)
@@ -162,6 +165,7 @@ allocateClosure codePtr printPtr fvs = do
 
     storeAt 0 $ ConstantOperand codePtr
     storeAt 1 $ ConstantOperand printPtr
+    storeAt 2 $ ConstantOperand $ Int bits $ toInteger $ fromEnum isDelay
 
     forM_ (zip [closureSize..] fvs) $ uncurry storeAt
 
@@ -176,10 +180,10 @@ compileDynamicClosure
        , MonadModuleBuilder m
        , MonadIRBuilder m
        )
-    => String -> S.Set T.Text -> T.Text
+    => Bool -> String -> S.Set T.Text -> T.Text
     -> (Operand -> Operand -> IRBuilderT m Operand)
     -> m Operand
-compileDynamicClosure name fvs var codeFun = do
+compileDynamicClosure isDelay name fvs var codeFun = do
     let entryName = mkName $ name <> "_entry"
     let entryTy = mkEntryTy 1
 
@@ -219,7 +223,7 @@ compileDynamicClosure name fvs var codeFun = do
         Nothing -> error "Can't find variable"
         Just val -> pure val
 
-    allocateClosure code_fun print_fun vals
+    allocateClosure isDelay code_fun print_fun vals
 
 compileMsgPrint
     :: (MonadReader CodeGenSt m, MonadIO m, MonadModuleBuilder m)

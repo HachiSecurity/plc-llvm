@@ -5,6 +5,8 @@
 -- | This module contains code generation functions for constants.
 module Hachi.Compiler.CodeGen.Constant (
     generateConstantGlobals,
+    forceErrRef,
+
     CompileConstant,
     compileConst,
     compileConstDynamic,
@@ -47,25 +49,31 @@ generateConstantGlobals = void $ do
         void $ globalStringPtr "True" "trueStr"
         void $ globalStringPtr "False" "falseStr"
 
+        void $ globalStringPtr "Attempted to instantiate a non-polymorphic term.\n" "forceErr"
+
 returnRef :: Operand
 returnRef = ConstantOperand
           $ GlobalReference (ptrOf $ ptrOf VoidType) "returnRegister"
 
 i64FormatRef :: Operand
-i64FormatRef = ConstantOperand $ LLVM.AST.Constant.BitCast
-    (GlobalReference (stringPtr "%d\n") "i64FormatStr") (ptrOf char)
+i64FormatRef = ConstantOperand $ asStringPtr $
+    GlobalReference (stringPtr "%d\n") "i64FormatStr"
 
 strFormatRef :: Operand
-strFormatRef = ConstantOperand $ LLVM.AST.Constant.BitCast
-    (GlobalReference (stringPtr "%s\n") "strFormatStr") (ptrOf char)
+strFormatRef = ConstantOperand $ asStringPtr $
+    GlobalReference (stringPtr "%s\n") "strFormatStr"
 
 trueRef :: Operand
-trueRef = ConstantOperand $ LLVM.AST.Constant.BitCast
-    (GlobalReference (stringPtr "True") "trueStr") (ptrOf char)
+trueRef = ConstantOperand $ asStringPtr $
+    GlobalReference (stringPtr "True") "trueStr"
 
 falseRef :: Operand
-falseRef = ConstantOperand $ LLVM.AST.Constant.BitCast
-    (GlobalReference (stringPtr "False") "falseStr") (ptrOf char)
+falseRef = ConstantOperand $ asStringPtr $
+    GlobalReference (stringPtr "False") "falseStr"
+
+forceErrRef :: Operand
+forceErrRef = ConstantOperand $ asStringPtr $
+    GlobalReference (stringPtr "Attempted to instantiate a non-polymorphic term.\n") "forceErr"
 
 -------------------------------------------------------------------------------
 
@@ -198,7 +206,7 @@ compileConstDynamic val = do
     printPtr <- compileConstPrint name $ compilePrintBody @a name
 
     -- 3. generate a dynamic closure
-    allocateClosure codePtr printPtr [val]
+    allocateClosure False codePtr printPtr [val]
 
 -- | `compileConstPrint` @name builder@ compiles a print function for a
 -- constant which loads the constant value from the closure using @builder@.

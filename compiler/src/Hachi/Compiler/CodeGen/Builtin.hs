@@ -45,7 +45,7 @@ compileBinary name lTy rTy builder = do
         \[_, arg] -> extendScope "x" arg $ do
             compileTrace entryName
 
-            op <- compileDynamicClosure (entryName <> "_2") (S.singleton "x") "y" $ \_ arg2 -> do
+            op <- compileDynamicClosure False (entryName <> "_2") (S.singleton "x") "y" $ \_ arg2 -> do
                 -- the first argument is free in the body of this function;
                 -- retrieve it from the environment and enter the closure
                 -- represented by it; this should be a constant closure

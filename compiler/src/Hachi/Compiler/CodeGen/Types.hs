@@ -10,7 +10,8 @@ module Hachi.Compiler.CodeGen.Types (
     ptrOf,
     funPtr,
     char,
-    stringPtr
+    stringPtr,
+    asStringPtr
 ) where
 
 -------------------------------------------------------------------------------
@@ -19,6 +20,7 @@ import Data.List ( genericLength )
 
 import LLVM.AST
 import LLVM.AST.AddrSpace
+import LLVM.AST.Constant
 
 -------------------------------------------------------------------------------
 
@@ -45,5 +47,9 @@ char = i8
 
 stringPtr :: String -> Type
 stringPtr val = ptrOf $ ArrayType (genericLength val + 1) char
+
+-- | `asStringPtr` @constant@ casts @constant@ to a char pointer.
+asStringPtr :: Constant -> Constant
+asStringPtr ref = LLVM.AST.Constant.BitCast ref $ ptrOf char
 
 -------------------------------------------------------------------------------
