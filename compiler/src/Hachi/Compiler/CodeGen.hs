@@ -130,6 +130,22 @@ compileBody (Apply _ lhs rhs) = do
     -- enter the closure pointed to by l, giving it a pointer to another
     -- closure r as argument
     enterClosure (MkClosurePtr l) [r]
+-- (delay t): we compile this just like a lambda abstraction to prevent it
+-- from being executed straight away - a force expression is then just like
+-- function application, minus the argument
+compileBody (Delay _ term) = do
+    name <- mkFresh "delay"
+
+    -- TODO: the S.map here might be overly pessimistic, we might be able
+    -- to replace it with S.mapMonotonic for better performance
+    let fvs = S.map nameString $ freeVars term
+
+    -- for now we are compiling it exactly the same way as a function and,
+    -- therefore, if evaluation results in a delay term, we get a result
+    -- equivalent to the one we get when evaluation results in a function;
+    -- in the future, we might want to print a different message
+    compileDynamicClosure name fvs "_delayArg" $
+        \_ _ -> compileBody term
 compileBody (Constant _ val) = compileConst val
 compileBody (Builtin _ f) = do
     builtins <- asks codeGenBuiltins
