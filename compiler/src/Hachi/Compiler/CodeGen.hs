@@ -43,12 +43,11 @@ import Hachi.Compiler.CodeGen.Types
 -- | `compileBody` @term@ compiles @term@ to LLVM.
 compileBody
     :: ( MonadReader CodeGenSt m
-       , MonadIRBuilder m
        , MonadModuleBuilder m
        , MonadIO m
        )
     => Term UPLC.Name DefaultUni DefaultFun ()
-    -> m ClosurePtr
+    -> IRBuilderT m ClosurePtr
 -- (error): as soon as execution reaches this term, print a message indicating
 -- that an error condition has been reached and terminate execution
 compileBody (Error _) = do

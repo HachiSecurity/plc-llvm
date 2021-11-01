@@ -36,7 +36,7 @@ compileBinary
     => String
     -> Type
     -> Type
-    -> (Operand -> Operand -> IRBuilderT (IRBuilderT m) ClosurePtr)
+    -> (Operand -> Operand -> IRBuilderT m ClosurePtr)
     -> m ClosurePtr
 compileBinary name lTy rTy builder = do
     let entryName = name <> "_entry"
@@ -74,7 +74,7 @@ compileBinary name lTy rTy builder = do
 
 compileBinaryInteger
     :: forall a m. (MonadCodeGen m, CompileConstant a)
-    => String -> (Operand -> Operand -> IRBuilderT (IRBuilderT m) Operand)
+    => String -> (Operand -> Operand -> IRBuilderT m Operand)
     -> m ClosurePtr
 compileBinaryInteger name builder = compileBinary name i64 i64 $ \x y -> do
     builder x y >>= compileConstDynamic @a

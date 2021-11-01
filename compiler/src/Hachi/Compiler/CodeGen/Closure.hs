@@ -176,16 +176,15 @@ compileDynamicClosure
     :: ( MonadIO m
        , MonadReader CodeGenSt m
        , MonadModuleBuilder m
-       , MonadIRBuilder m
        )
     => Bool -> String -> S.Set T.Text -> T.Text
     -> (Operand -> Operand -> IRBuilderT m ClosurePtr)
-    -> m ClosurePtr
+    -> IRBuilderT m ClosurePtr
 compileDynamicClosure isDelay name fvs var codeFun = do
     let entryName = mkName $ name <> "_entry"
     let entryTy = mkEntryTy 1
 
-    _ <- IR.function entryName [(closureTyPtr, "this"), (closureTyPtr, mkParamName var)] closureTyPtr $
+    _ <- lift $ IR.function entryName [(closureTyPtr, "this"), (closureTyPtr, mkParamName var)] closureTyPtr $
         \[this, arg] -> extendScope var (MkClosurePtr arg) $ do
             compileTrace (name <> "_entry")
 
