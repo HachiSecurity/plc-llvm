@@ -20,6 +20,7 @@ import LLVM.IRBuilder
 import qualified UntypedPlutusCore as UPLC
 
 import Hachi.Compiler.Config
+import Hachi.Compiler.CodeGen.Types
 
 -------------------------------------------------------------------------------
 
@@ -29,8 +30,8 @@ data CodeGenSt = MkCodeGenSt {
     codeGenCfg :: Config,
     codeGenErrMsg :: Constant,
     codeGenCounters :: IORef (M.Map String (IORef Integer)),
-    codeGenEnv :: M.Map T.Text Operand,
-    codeGenBuiltins :: M.Map UPLC.DefaultFun Constant
+    codeGenEnv :: M.Map T.Text ClosurePtr,
+    codeGenBuiltins :: M.Map UPLC.DefaultFun ClosurePtr
 }
 
 -- | The code generator monad.
@@ -61,7 +62,7 @@ mkFresh prefix = asks codeGenCounters >>= \countersRef-> liftIO $ do
 
 -- | `extendScope` @name operand action@ adds @name@ to the scope for
 -- @action@ along with @operand@ which represents the LLVM identifier.
-extendScope :: MonadReader CodeGenSt m => T.Text -> Operand -> m a -> m a
+extendScope :: MonadReader CodeGenSt m => T.Text -> ClosurePtr -> m a -> m a
 extendScope name val = local $ \st ->
     st{ codeGenEnv = M.insert name val (codeGenEnv st) }
 
@@ -71,7 +72,7 @@ extendScope name val = local $ \st ->
 -- @operands@.
 updateEnv
     :: MonadReader CodeGenSt m
-    => S.Set T.Text -> [Operand] -> m a -> m a
+    => S.Set T.Text -> [ClosurePtr] -> m a -> m a
 updateEnv names operands = local $ \st ->
     st{ codeGenEnv = M.union namedOperands (codeGenEnv st) }
     where namedOperands = M.fromList

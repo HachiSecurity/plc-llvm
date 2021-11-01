@@ -48,7 +48,7 @@ compileBody
        , MonadIO m
        )
     => Term UPLC.Name DefaultUni DefaultFun ()
-    -> m Operand
+    -> m ClosurePtr
 -- (error): as soon as execution reaches this term, print a message indicating
 -- that an error condition has been reached and terminate execution
 compileBody (Error _) = do
@@ -60,7 +60,7 @@ compileBody (Error _) = do
 
     -- this part of the program should not be reachable
     unreachable
-    pure $ ConstantOperand $ Null closureTyPtr
+    pure $ MkClosurePtr $ ConstantOperand $ Null closureTyPtr
 -- (x): for variables, there are two possibilities:
 -- 1. the variable is not in scope, in which case we print an error message
 -- as soon as execution reaches the variable expression
@@ -89,7 +89,7 @@ compileBody (Var _ x) = do
 
             -- this part of the program should not be reachable
             unreachable
-            pure $ ConstantOperand $ Null closureTyPtr
+            pure $ MkClosurePtr $ ConstantOperand $ Null closureTyPtr
         Just ptr -> do
             compileTrace $ "Found " <> T.unpack (nameString x) <> " in " <> name
             pure ptr
@@ -130,7 +130,7 @@ compileBody (Apply _ lhs rhs) = do
 
     -- enter the closure pointed to by l, giving it a pointer to another
     -- closure r as argument
-    enterClosure (MkClosurePtr l) [r]
+    enterClosure l [closurePtr r]
 compileBody (Force _ term) = do
     name <- mkFresh "force"
     compileTrace name
@@ -138,7 +138,7 @@ compileBody (Force _ term) = do
     -- Generate code for the term, this can be an arbitrary term and may
     -- not immediately be a delay term - indeed, there may not be a delay
     -- term at all!
-    r <- MkClosurePtr <$> compileBody term
+    r <- compileBody term
 
     -- We need to determine whether evaluation of the body results in a
     -- delay term or not - the PLC interpreter treats the latter as an
@@ -190,7 +190,7 @@ compileBody (Builtin _ f) = do
     builtins <- asks codeGenBuiltins
     case M.lookup f builtins of
         Nothing -> error $ "No such builtin: " <> show f
-        Just ref -> pure $ ConstantOperand ref
+        Just ref -> pure ref
 
 -- | `generateEntry` @term@ generates code for @term@ surrounded by a small
 -- wrapper which calls the print function of the closure that results from
@@ -212,8 +212,8 @@ generateEntry body = void $ IR.function "entry" [] VoidType $ \_ -> do
     ptr <- local (\st -> st{codeGenBuiltins = builtins}) $ compileBody body
 
     -- call the print code of the resulting closure
-    printFun <- loadFromClosure ClosurePrint Nothing $ MkClosurePtr ptr
-    void $ call printFun [(ptr, [])]
+    printFun <- loadFromClosure ClosurePrint Nothing ptr
+    void $ call printFun [(closurePtr ptr, [])]
 
     retVoid
 

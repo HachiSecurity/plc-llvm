@@ -130,7 +130,7 @@ compileConstEntry name loadFn = do
 
 -- | `compileConst` @value@ generates code for a constant whose @value@ is
 -- provided as the first argument.
-compileConst :: MonadCodeGen m => Some (ValueOf DefaultUni) -> m Operand
+compileConst :: MonadCodeGen m => Some (ValueOf DefaultUni) -> m ClosurePtr
 compileConst (Some (ValueOf tag (x :: a))) = do
     name <- mkFresh "con"
 
@@ -146,7 +146,7 @@ compileConst (Some (ValueOf tag (x :: a))) = do
 
     -- 3. generate a static closure: this should be sufficient since constants
     -- hopefully do not contain any free variables
-    ConstantOperand <$> compileClosure name codePtr print_fun [ptr]
+    compileClosure name codePtr print_fun [ptr]
 
 -- | `compileConstDynamic` @value@ generates code which allocates a dynamic
 -- closure for the value given by @value@. Note that this function must be
@@ -155,7 +155,7 @@ compileConst (Some (ValueOf tag (x :: a))) = do
 compileConstDynamic
     :: forall a m. (MonadCodeGen m, MonadIRBuilder m, CompileConstant a)
     => Operand
-    -> m Operand
+    -> m ClosurePtr
 compileConstDynamic val = do
     name <- mkFresh "con"
 

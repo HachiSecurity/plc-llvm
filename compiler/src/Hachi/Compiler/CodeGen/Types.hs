@@ -11,7 +11,9 @@ module Hachi.Compiler.CodeGen.Types (
     funPtr,
     char,
     stringPtr,
-    asStringPtr
+    asStringPtr,
+
+    ClosurePtr(..)
 ) where
 
 -------------------------------------------------------------------------------
@@ -51,5 +53,11 @@ stringPtr val = ptrOf $ ArrayType (genericLength val + 1) char
 -- | `asStringPtr` @constant@ casts @constant@ to a char pointer.
 asStringPtr :: Constant -> Constant
 asStringPtr ref = LLVM.AST.Constant.BitCast ref $ ptrOf char
+
+-------------------------------------------------------------------------------
+
+-- | Represents a pointer to a closure.
+newtype ClosurePtr = MkClosurePtr { closurePtr :: Operand }
+    deriving (Eq, Show)
 
 -------------------------------------------------------------------------------

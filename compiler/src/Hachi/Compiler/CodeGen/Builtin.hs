@@ -36,13 +36,13 @@ compileBinary
     => String
     -> Type
     -> Type
-    -> (Operand -> Operand -> IRBuilderT (IRBuilderT m) Operand)
-    -> m Constant
+    -> (Operand -> Operand -> IRBuilderT (IRBuilderT m) ClosurePtr)
+    -> m ClosurePtr
 compileBinary name lTy rTy builder = do
     let entryName = name <> "_entry"
 
     _ <- IR.function (mkName entryName) [(closureTyPtr, "this"), (closureTyPtr, "x")] closureTyPtr $
-        \[_, arg] -> extendScope "x" arg $ do
+        \[_, arg] -> extendScope "x" (MkClosurePtr arg) $ do
             compileTrace entryName
 
             op <- compileDynamicClosure False (entryName <> "_2") (S.singleton "x") "y" $ \_ arg2 -> do
@@ -62,7 +62,7 @@ compileBinary name lTy rTy builder = do
 
                 -- generate the body of the function
                 builder x y
-            ret op
+            ret $ closurePtr op
 
     let codePtr = GlobalReference (mkEntryTy 1) (mkName entryName)
 
@@ -75,29 +75,29 @@ compileBinary name lTy rTy builder = do
 compileBinaryInteger
     :: forall a m. (MonadCodeGen m, CompileConstant a)
     => String -> (Operand -> Operand -> IRBuilderT (IRBuilderT m) Operand)
-    -> m Constant
+    -> m ClosurePtr
 compileBinaryInteger name builder = compileBinary name i64 i64 $ \x y -> do
     builder x y >>= compileConstDynamic @a
 
-addInteger :: MonadCodeGen m => m Constant
+addInteger :: MonadCodeGen m => m ClosurePtr
 addInteger = compileBinaryInteger @Integer "addInteger" add
 
-subtractInteger :: MonadCodeGen m => m Constant
+subtractInteger :: MonadCodeGen m => m ClosurePtr
 subtractInteger = compileBinaryInteger @Integer "subtractInteger" sub
 
-multiplyInteger :: MonadCodeGen m => m Constant
+multiplyInteger :: MonadCodeGen m => m ClosurePtr
 multiplyInteger = compileBinaryInteger @Integer "multiplyInteger" mul
 
 
-equalsInteger :: MonadCodeGen m => m Constant
+equalsInteger :: MonadCodeGen m => m ClosurePtr
 equalsInteger =
     compileBinaryInteger @Bool "equalsInteger" $ icmp LLVM.EQ
 
-lessThanInteger :: MonadCodeGen m => m Constant
+lessThanInteger :: MonadCodeGen m => m ClosurePtr
 lessThanInteger =
     compileBinaryInteger @Bool "lessThanInteger" $ icmp LLVM.SLT
 
-lessThanEqualsInteger :: MonadCodeGen m => m Constant
+lessThanEqualsInteger :: MonadCodeGen m => m ClosurePtr
 lessThanEqualsInteger =
     compileBinaryInteger @Bool "lessThanEqualsInteger" $ icmp LLVM.SLE
 
@@ -106,7 +106,7 @@ lessThanEqualsInteger =
 -- | `builtins` is a mapping from built-in function tags to code generators
 -- for them. These are used by `compileBuiltins` to generate the code for each
 -- supported built-in function.
-builtins :: MonadCodeGen m => [(DefaultFun, m Constant)]
+builtins :: MonadCodeGen m => [(DefaultFun, m ClosurePtr)]
 builtins =
     [ (AddInteger, addInteger)
     , (SubtractInteger, subtractInteger)
@@ -119,7 +119,7 @@ builtins =
 -- | `compileBuiltins` is a computation which generates code for all the
 -- built-in functions and returns a mapping from their tags to the
 -- corresponding function pointers.
-compileBuiltins :: MonadCodeGen m => m (M.Map DefaultFun Constant)
+compileBuiltins :: MonadCodeGen m => m (M.Map DefaultFun ClosurePtr)
 compileBuiltins = fmap M.fromList $ forM builtins $ \(f, compile) -> do
     ref <- compile
     pure (f, ref)
