@@ -26,6 +26,7 @@ library
       Hachi.Compiler.CodeGen.Constant
       Hachi.Compiler.CodeGen.Constant.String
       Hachi.Compiler.CodeGen.Externals
+      Hachi.Compiler.CodeGen.Globals
       Hachi.Compiler.CodeGen.Monad
       Hachi.Compiler.CodeGen.Types
       Hachi.Compiler.Config

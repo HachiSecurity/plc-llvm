@@ -14,7 +14,7 @@ module Hachi.Compiler.CodeGen.Closure (
     compileClosure,
     allocateClosure,
     compileDynamicClosure,
-    compileMsgPrint,
+    compileFunPrint,
 
     -- * Loading data from closures
     ClosureComponent(..),
@@ -42,6 +42,7 @@ import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Externals
+import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 
@@ -214,7 +215,7 @@ compileDynamicClosure isDelay name fvs var codeFun = do
 
     let code_fun = GlobalReference entryTy entryName
 
-    print_fun <- compileMsgPrint name "Evaluation resulted in a function."
+    print_fun <- compileFunPrint name
 
     env <- asks codeGenEnv
 
@@ -225,19 +226,15 @@ compileDynamicClosure isDelay name fvs var codeFun = do
 
     allocateClosure isDelay code_fun print_fun vals
 
-compileMsgPrint
+compileFunPrint
     :: (MonadReader CodeGenSt m, MonadIO m, MonadModuleBuilder m)
-    => String -> String -> m Constant
-compileMsgPrint name msg = do
+    => String -> m Constant
+compileFunPrint name = do
     let printName = mkName $ name <> "_print"
 
     _ <- IR.function printName [(closureTyPtr, "this")] VoidType $ \[_] -> do
         compileTrace (name <> "_print")
-        (ptr, _) <- runIRBuilderT emptyIRBuilder $
-            globalStringPtr (msg <> "\n") (mkName $ name <> "_print_msg")
-        void $ call
-            (ConstantOperand printfRef)
-            [(ConstantOperand ptr, [])]
+        void $ call (ConstantOperand printfRef) [(funErrRef, [])]
         retVoid
 
     pure $ GlobalReference printFnTy printName

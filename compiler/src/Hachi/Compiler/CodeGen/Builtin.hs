@@ -66,7 +66,7 @@ compileBinary name lTy rTy builder = do
 
     let codePtr = GlobalReference (mkEntryTy 1) (mkName entryName)
 
-    printPtr <- compileMsgPrint name "Evaluation resulted in a function."
+    printPtr <- compileFunPrint name
 
     compileClosure name codePtr printPtr []
 

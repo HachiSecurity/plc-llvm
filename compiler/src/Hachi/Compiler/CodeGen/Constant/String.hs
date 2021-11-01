@@ -10,6 +10,7 @@ globalStrs =
     , ("trueStr", "True")
     , ("falseStr", "False")
     , ("forceErrStr", "Attempted to instantiate a non-polymorphic term.\n")
+    , ("funErrStr", "Evaluation resulted in a function.\n")
     ]
 
 -------------------------------------------------------------------------------

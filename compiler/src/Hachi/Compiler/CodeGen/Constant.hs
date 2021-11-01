@@ -1,6 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeApplications #-}
 
 -- | This module contains code generation functions for constants.
@@ -30,30 +29,12 @@ import LLVM.IRBuilder as IR
 import PlutusCore as PLC
 import PlutusCore.Data as PLC
 
-import Hachi.Compiler.TH
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Common
+import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 import Hachi.Compiler.CodeGen.Externals
-import Hachi.Compiler.CodeGen.Constant.String
-
--------------------------------------------------------------------------------
-
--- | `generateConstantGlobals` is a computation which emits global definitions
--- related to constants.
-generateConstantGlobals :: MonadCodeGen m => m ()
-generateConstantGlobals = void $ do
-    void $ global "returnRegister" (ptrOf VoidType) $ Null (ptrOf VoidType)
-
-    runIRBuilderT emptyIRBuilder $ forM_ globalStrs $ \(name, val) ->
-        globalStringPtr val $ mkName name
-
-$(mkGlobalStrRefs globalStrs)
-
-returnRef :: Operand
-returnRef = ConstantOperand
-          $ GlobalReference (ptrOf $ ptrOf VoidType) "returnRegister"
 
 -------------------------------------------------------------------------------
 
