@@ -67,7 +67,8 @@ withCurried name ps@(sn:dyn) builder = do
         \[_, arg] -> extendScope sn (MkClosurePtr arg) $ do
             compileTrace entryName
 
-            void $ mkCurry 0 (S.singleton sn) dyn
+            ptr <- mkCurry 0 (S.singleton sn) dyn
+            ret $ closurePtr ptr
 
     let codePtr = GlobalReference (mkEntryTy 1) (mkName entryName)
 
