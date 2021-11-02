@@ -170,7 +170,7 @@ compileBody (Builtin _ f) = do
 generateEntry
     :: MonadCodeGen m
     => Term UPLC.Name DefaultUni DefaultFun () -> m ()
-generateEntry body = void $ IR.function "entry" [] VoidType $ \_ -> do
+generateEntry body = void $ IR.function "main" [] VoidType $ \_ -> do
     generateConstantGlobals
 
     -- generate code for all the built-in functions: it is easier for us to
@@ -244,7 +244,7 @@ generateCode cfg@MkConfig{..} p =
         -- compile with LLVM
         let rtsFile = fromMaybe "./rts/rts.c" cfgRTS
         let exeFile = dropExtension objectFile
-        let pcfg = proc "clang" [rtsFile, objectFile, "-o", exeFile]
+        let pcfg = proc "clang" [objectFile, "-o", exeFile]
 
         ec <- runProcess pcfg
 
