@@ -13,7 +13,6 @@ import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
 import Data.String (fromString)
-import qualified Data.Text as T
 
 import System.FilePath
 import System.Process.Typed
@@ -65,33 +64,7 @@ compileBody (Error _) = do
 -- as soon as execution reaches the variable expression
 -- 2. the variable is in scope, in which case it represents a pointer to a
 -- closure which we return up the call stack
-compileBody (Var _ x) = do
-    name <- mkFresh "var"
-
-    compileTrace name
-
-    -- retrieve the current environment to see if this variable is free or not
-    -- if it is free, we just generate some no-op code so that the pointer to
-    -- the closure is returned, which will then cause the rts to print the
-    -- variable name if it ends up being the result of the program
-    -- otherwise, if the variable is not free, we push the closure that
-    -- corresponds to variable in scope
-    env <- asks codeGenEnv
-
-    case M.lookup (nameString x) env of
-        Nothing -> do
-            -- generate code that prints a suitable error message
-            ptr <- globalStringPtr
-                (T.unpack (nameString x) <> " is not in scope.\n") (mkName name)
-            void $ printf (ConstantOperand ptr) []
-            void $ exit (-1)
-
-            -- this part of the program should not be reachable
-            unreachable
-            pure $ MkClosurePtr $ ConstantOperand $ Null closureTyPtr
-        Just ptr -> do
-            compileTrace $ "Found " <> T.unpack (nameString x) <> " in " <> name
-            pure ptr
+compileBody (Var _ x) = MkClosurePtr <$> lookupVar (nameString x) closureTyPtr
 -- (lam x e): since PLC has higher-order functions, functions may escape the
 -- scope in which they are defined in. Therefore, we require closures which
 -- store pointers to the free variables. We compile functions as follows:

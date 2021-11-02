@@ -281,6 +281,13 @@ enterClosure = callClosure ClosureCode
 lookupVar :: (MonadCodeGen m, MonadIRBuilder m) => T.Text -> Type -> m Operand
 lookupVar var ty = do
     name <- mkFresh "var"
+
+    -- retrieve the current environment to see if this variable is free or not
+    -- if it is free, we just generate some no-op code so that the pointer to
+    -- the closure is returned, which will then cause the rts to print the
+    -- variable name if it ends up being the result of the program
+    -- otherwise, if the variable is not free, we push the closure that
+    -- corresponds to variable in scope
     env <- asks codeGenEnv
 
     case M.lookup var env of
