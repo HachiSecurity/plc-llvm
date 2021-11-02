@@ -149,7 +149,7 @@ compileBody (Force _ term) = do
     let falseBr = mkName $ name <> "_fail"
     let contBr = mkName $ name <> "_cont"
 
-    flags <- loadFromClosure ClosureFlags (Just $ ptrOf i64) r
+    flags <- loadFromClosure ClosureFlags i64 r
     cond <- icmp LLVM.EQ flags (ConstantOperand $ Int 64 1)
     condBr cond trueBr falseBr
 
@@ -211,7 +211,7 @@ generateEntry body = void $ IR.function "entry" [] VoidType $ \_ -> do
     ptr <- local (\st -> st{codeGenBuiltins = builtins}) $ compileBody body
 
     -- call the print code of the resulting closure
-    printFun <- loadFromClosure ClosurePrint Nothing ptr
+    printFun <- loadFromClosure ClosurePrint printFnTy ptr
     void $ call printFun [(closurePtr ptr, [])]
 
     retVoid

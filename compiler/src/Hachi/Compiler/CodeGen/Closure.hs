@@ -238,21 +238,19 @@ compileFunPrint name = do
 
 -------------------------------------------------------------------------------
 
--- | `loadFromClosure` @component mType ptr@ loads the component described by
+-- | `loadFromClosure` @component type ptr@ loads the component described by
 -- @component@ from the closure represented by @ptr@ and casts its type to
--- @mType@ if that is not `Nothing`.
+-- @type@.
 loadFromClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => ClosureComponent -> Maybe Type -> ClosurePtr -> m Operand
-loadFromClosure prop mty (MkClosurePtr ptr) = do
-    let ix = indexForComponent prop
-    addr <- gep ptr [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 ix]
+    => ClosureComponent -> Type -> ClosurePtr -> m Operand
+loadFromClosure prop ty (MkClosurePtr ptr) = do
+    let ix = map (ConstantOperand . Int 32) $ indicesForComponent prop
+    ptrt <- bitcast ptr closureTyPtr
+    addr <- gep ptrt $ ConstantOperand (Int 32 0) : ix
 
-    case mty of
-        Nothing -> load addr 0
-        Just ty -> do
-            r <- bitcast addr ty
-            load r 0
+    r <- bitcast addr (ptrOf ty)
+    load r 0
 
 -- | `callClosure` @component ptr args@ loads the component described by
 -- @component@ from the closure represented by @ptr@, assumes it is a function,
@@ -264,7 +262,7 @@ callClosure
     -> [Operand]
     -> m ClosurePtr
 callClosure prop closure argv = do
-    entry <- loadFromClosure prop Nothing closure
+    entry <- loadFromClosure prop clsEntryTy closure
     fmap MkClosurePtr <$> call entry $
         (closurePtr closure, []) : [(arg, []) | arg <- argv]
 

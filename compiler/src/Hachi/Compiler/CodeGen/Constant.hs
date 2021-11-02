@@ -66,7 +66,7 @@ instance CompileConstant Integer where
     compileConstant _ val = pure $ Int 64 val
 
     -- retrieve the integer value from the closure directly
-    compileLoadConstant = loadFromClosure (ClosureFreeVar 0) (Just $ ptrOf i64)
+    compileLoadConstant = loadFromClosure (ClosureFreeVar 0) i64
 
     compilePrintBody _ this = do
         -- retrieve the constant from the closure
@@ -87,7 +87,7 @@ instance CompileConstant Bool where
         pure $ Int 1 $ toInteger $ fromEnum val
 
     -- retrieve the boolean value from the closure directly
-    compileLoadConstant = loadFromClosure (ClosureFreeVar 0) (Just $ ptrOf i1)
+    compileLoadConstant = loadFromClosure (ClosureFreeVar 0) i1
 
     compilePrintBody _ this = do
         -- load the bit value from the closure
