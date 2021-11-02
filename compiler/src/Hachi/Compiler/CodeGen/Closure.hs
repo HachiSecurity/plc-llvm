@@ -83,13 +83,14 @@ data ClosureComponent
     | ClosureFreeVar Integer
     deriving (Eq, Show)
 
--- | `indexForComponent` @component@ determines the index of @component@
+-- | `indicesForComponent` @component@ determines the indices of @component@
 -- within a closure.
-indexForComponent :: ClosureComponent -> Integer
-indexForComponent ClosureCode = 0
-indexForComponent ClosurePrint = 1
-indexForComponent ClosureFlags = 2
-indexForComponent (ClosureFreeVar n) = closureSize + n
+indicesForComponent :: ClosureComponent -> [Operand]
+indicesForComponent ClosureCode = [ConstantOperand $ Int 32 0]
+indicesForComponent ClosurePrint = [ConstantOperand $ Int 32 1]
+indicesForComponent ClosureFlags = [ConstantOperand $ Int 32 2]
+indicesForComponent (ClosureFreeVar n) =
+    [ConstantOperand $ Int 32 closureSize, ConstantOperand $ Int 32 n]
 
 -------------------------------------------------------------------------------
 
@@ -155,23 +156,29 @@ allocateClosure isDelay codePtr printPtr fvs = do
 
     -- store data in the closure: we have the function pointers followed by
     -- any pointers to free variables
-    let storeAt i val = do
-            addr <- gep cc [ ConstantOperand $ Int 32 0
-                           , ConstantOperand $ Int 32 i
-                           ]
+    let storeAt ixs val = do
+            addr <- gep cc $ ConstantOperand (Int 32 0) : ixs
             store addr 0 val
 
-    storeAt 0 $ ConstantOperand codePtr
-    storeAt 1 $ ConstantOperand printPtr
-    storeAt 2 $ ConstantOperand $ Int bits $ toInteger $ fromEnum isDelay
+    storeAt (indicesForComponent ClosureCode) $ ConstantOperand codePtr
+    storeAt (indicesForComponent ClosurePrint) $ ConstantOperand printPtr
+    storeAt (indicesForComponent ClosureFlags) $
+        ConstantOperand $ Int bits $ toInteger $ fromEnum isDelay
 
-    forM_ (zip [closureSize..] fvs) $ uncurry storeAt
+    forM_ (zip [0..] fvs) $ \(i,v) ->
+        storeAt (indicesForComponent $ ClosureFreeVar i) v
 
     -- return an Operand representing a pointer to the dynamic closure that we
     -- have just created
     pure $ MkClosurePtr cc
 
--- | `compileDynamicClosure` @name freeVars var codeFun@
+-- | `compileDynamicClosure` @isDelay name freeVars var codeFun@ generates code
+-- which dynamically creates a new closure when executed. The static parts of
+-- the closure use @name@. The set given by @freeVars@ signals which variables
+-- should be stored in the closure's free variables array. The name given by
+-- @var@ is the variable that is bound by this closure. @codeFun@ is a
+-- computation which generates the code for the body of the closure.
+-- The function returns a `ClosurePtr` representing the new closure.
 compileDynamicClosure
     :: ( MonadIO m
        , MonadReader CodeGenSt m
@@ -193,15 +200,8 @@ compileDynamicClosure isDelay name fvs var codeFun = do
             -- free variables are stored in alphabetical order and the code
             -- which loads them here must correspond to the code that stores
             -- them further down
-            let loadFrom i = do
-                    addr <- gep this [ ConstantOperand $ Int 32 0
-                                     , ConstantOperand $ Int 32 i
-                                     ]
-                    ptr <- bitcast addr closureTyPtr
-                    load ptr 0
-
-            -- load the free variables from the closure pointed to by `this`
-            cvars <- forM (zip [closureSize..] $ S.toList fvs) $ \(idx,_) -> loadFrom idx
+            cvars <- forM (zip [0..] $ S.toList fvs) $ \(i,_) ->
+                loadFromClosure (ClosureFreeVar i) closureTyPtr (MkClosurePtr this)
 
             -- update the local environment with mappings to the free variables
             -- we have obtained from the closure represented by `this` and
@@ -245,7 +245,7 @@ loadFromClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
     => ClosureComponent -> Type -> ClosurePtr -> m Operand
 loadFromClosure prop ty (MkClosurePtr ptr) = do
-    let ix = map (ConstantOperand . Int 32) $ indicesForComponent prop
+    let ix = indicesForComponent prop
     ptrt <- bitcast ptr closureTyPtr
     addr <- gep ptrt $ ConstantOperand (Int 32 0) : ix
 
