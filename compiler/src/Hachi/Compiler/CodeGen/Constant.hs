@@ -146,7 +146,7 @@ compileConst (Some (ValueOf tag (x :: a))) = do
 
     -- 3. generate a static closure: this should be sufficient since constants
     -- hopefully do not contain any free variables
-    compileClosure name codePtr print_fun [ptr]
+    compileClosure False name codePtr print_fun [ptr]
 
 -- | `compileConstDynamic` @value@ generates code which allocates a dynamic
 -- closure for the value given by @value@. Note that this function must be

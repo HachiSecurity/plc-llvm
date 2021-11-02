@@ -115,16 +115,16 @@ varEntryTy = mkEntryTy 1
 printFnTy :: Type
 printFnTy = ptrOf $ FunctionType VoidType [closureTyPtr] False
 
--- | `compileClosure` @name entryPtr printPtr@ generates a global variable
--- representing a closure for @name@.
+-- | `compileClosure` @isPoly name entryPtr printPtr@ generates a global
+-- variable representing a closure for @name@.
 compileClosure
     :: MonadModuleBuilder m
-    => String -> Constant -> Constant -> [Constant] -> m ClosurePtr
-compileClosure name codePtr printPtr fvs = do
+    => Bool -> String -> Constant -> Constant -> [Constant] -> m ClosurePtr
+compileClosure isPoly name codePtr printPtr fvs = do
     let closureName = mkName $ name <> "_closure"
 
     void $ global closureName closureTy $ Struct Nothing False $
-        codePtr : printPtr : Int bits 0 : fvs
+        codePtr : printPtr : Int bits (toInteger $ fromEnum isPoly) : fvs
 
     pure $ MkClosurePtr $ ConstantOperand $
         GlobalReference (PointerType closureTy $ AddrSpace 0) closureName
