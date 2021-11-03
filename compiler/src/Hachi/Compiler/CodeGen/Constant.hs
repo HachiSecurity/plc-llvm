@@ -76,6 +76,21 @@ instance CompileConstant Integer where
         void $ printf i64FormatRef [v]
 
 instance CompileConstant BS.ByteString where
+    compileConstant name val = do
+        let size = BS.length val
+        let bytes = BS.unpack val
+        let arr = Array i8 $ map (Int 8 . fromIntegral) bytes
+
+        _ <- global (mkName name) bytestringTy $
+            Struct Nothing False [Int 64 $ toInteger size, arr]
+
+        pure $ GlobalReference bytestringTyPtr (mkName name)
+
+    compileLoadConstant = loadFromClosure (ClosureFreeVar 0) bytestringTyPtr
+
+    compilePrintBody _ this = do
+        ptr <- compileLoadConstant @BS.ByteString this
+        void $ printBytestring ptr
 
 instance CompileConstant T.Text where
 

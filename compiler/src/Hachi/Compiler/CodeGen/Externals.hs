@@ -1,6 +1,32 @@
 -- | This module contains the types, declarations, and references to external
 -- functions that we import from stdlib.
-module Hachi.Compiler.CodeGen.Externals where
+module Hachi.Compiler.CodeGen.Externals (
+    externalDefinitions,
+
+    -- * Standard C library
+    printfTy,
+    printfRef,
+    printf,
+    exitTy,
+    exitRef,
+    exit,
+    mallocTy,
+    mallocRef,
+    malloc,
+
+    -- * Bytestrings
+    printBytestringTy,
+    printBytestringRef,
+    printBytestring,
+
+    equalsByteStringTy,
+    equalsByteStringRef,
+    equalsByteString,
+
+    lessThanByteStringTy,
+    lessThanByteStringRef,
+    lessThanByteString
+) where
 
 -------------------------------------------------------------------------------
 
@@ -13,6 +39,16 @@ import LLVM.AST.CallingConvention
 import LLVM.IRBuilder
 
 import Hachi.Compiler.CodeGen.Types
+
+-------------------------------------------------------------------------------
+
+globalFromType :: String -> Type -> Global
+globalFromType name (PointerType (FunctionType rt pts varArgs) _) =
+    Function External Default Nothing C [] rt (mkName name) pTy []
+        Nothing Nothing 0 Nothing Nothing [] Nothing []
+    where pTy = ([Parameter ty (mkName "") [] | ty <- pts], varArgs)
+globalFromType _ _ =
+    error "globalFromType must be applied to a function pointer"
 
 -------------------------------------------------------------------------------
 
@@ -63,5 +99,66 @@ mallocRef = GlobalReference mallocTy $ mkName "malloc"
 
 malloc :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
 malloc size = call (ConstantOperand mallocRef) [(size, [])]
+
+-------------------------------------------------------------------------------
+
+printBytestringTy :: Type
+printBytestringTy = ptrOf $ FunctionType VoidType [bytestringTyPtr] False
+
+printBytestringFun :: Global
+printBytestringFun = globalFromType "print_bytestring" printBytestringTy
+
+printBytestringRef :: Constant
+printBytestringRef = GlobalReference printBytestringTy $ mkName "print_bytestring"
+
+printBytestring :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
+printBytestring ptr = call (ConstantOperand printBytestringRef) [(ptr, [])]
+
+equalsByteStringTy :: Type
+equalsByteStringTy = ptrOf $
+    FunctionType i8 [bytestringTyPtr, bytestringTyPtr] False
+
+equalsByteStringFun :: Global
+equalsByteStringFun = globalFromType "equals_bytestring" equalsByteStringTy
+
+equalsByteStringRef :: Constant
+equalsByteStringRef =
+    GlobalReference equalsByteStringTy $ mkName "equals_bytestring"
+
+equalsByteString
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> Operand -> m Operand
+equalsByteString p0 p1 =
+    call (ConstantOperand equalsByteStringRef) [(p0, []), (p1, [])]
+
+lessThanByteStringTy :: Type
+lessThanByteStringTy = ptrOf $
+    FunctionType i8 [bytestringTyPtr, bytestringTyPtr] False
+
+lessThanByteStringFun :: Global
+lessThanByteStringFun =
+    globalFromType "less_than_bytestring" lessThanByteStringTy
+
+lessThanByteStringRef :: Constant
+lessThanByteStringRef =
+    GlobalReference lessThanByteStringTy $ mkName "less_than_bytestring"
+
+lessThanByteString
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> Operand -> m Operand
+lessThanByteString p0 p1 =
+    call (ConstantOperand lessThanByteStringRef) [(p0, []), (p1, [])]
+
+-------------------------------------------------------------------------------
+
+externalDefinitions :: [Definition]
+externalDefinitions = map GlobalDefinition
+    [ printfFun
+    , exitFun
+    , mallocFun
+    , printBytestringFun
+    , equalsByteStringFun
+    , lessThanByteStringFun
+    ]
 
 -------------------------------------------------------------------------------

@@ -13,6 +13,11 @@ module Hachi.Compiler.CodeGen.Types (
     stringPtr,
     asStringPtr,
 
+    -- * Bytestrings
+    bytestringTyDef,
+    bytestringTy,
+    bytestringTyPtr,
+
     ClosurePtr(..)
 ) where
 
@@ -53,6 +58,23 @@ stringPtr val = ptrOf $ ArrayType (genericLength val + 1) char
 -- | `asStringPtr` @constant@ casts @constant@ to a char pointer.
 asStringPtr :: Constant -> Constant
 asStringPtr ref = LLVM.AST.Constant.BitCast ref $ ptrOf char
+
+-------------------------------------------------------------------------------
+
+-- | `bytestringTyDef` is the type definition for bytestrings.
+bytestringTyDef :: Type
+bytestringTyDef = StructureType False
+    [ i64
+    , ArrayType 0 i8
+    ]
+
+-- | `bytestringTy` is a `Type` for bytestrings.
+bytestringTy :: Type
+bytestringTy = NamedTypeReference "bytestring"
+
+-- | `bytestringTyPtr` is a `Type` representing a pointer to a bytestring.
+bytestringTyPtr :: Type
+bytestringTyPtr = ptrOf bytestringTy
 
 -------------------------------------------------------------------------------
 

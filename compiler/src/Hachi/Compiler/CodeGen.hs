@@ -195,11 +195,11 @@ compileProgram
     -> ModuleBuilderT IO ()
 compileProgram cfg (Program _ _ term) = do
     -- global definitions
-    emitDefn $ GlobalDefinition printfFun
-    emitDefn $ GlobalDefinition exitFun
-    emitDefn $ GlobalDefinition mallocFun
+    forM_ externalDefinitions emitDefn
 
     _ <- typedef "closure" $ Just closureTyDef
+    _ <- typedef "bytestring" $ Just bytestringTyDef
+
     (errorMsg, _) <- runIRBuilderT emptyIRBuilder $
         globalStringPtr "Something has gone wrong.\n" "errorMsg"
 
@@ -258,7 +258,7 @@ generateCode cfg@MkConfig{..} p =
             unless cfgNoLink $ do
                 let rtsFile = fromMaybe "./rts/rts.c" cfgRTS
                 let exeFile = dropExtension outputName
-                let pcfg = proc "clang" [objectFile, "-o", exeFile]
+                let pcfg = proc "clang" [rtsFile, objectFile, "-o", exeFile]
 
                 ec <- runProcess pcfg
 

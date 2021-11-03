@@ -24,6 +24,7 @@ import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Constant
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
+import qualified Hachi.Compiler.CodeGen.Externals as E
 
 -------------------------------------------------------------------------------
 
@@ -132,6 +133,32 @@ lessThanEqualsInteger =
 
 -------------------------------------------------------------------------------
 
+lengthOfByteString :: MonadCodeGen m => m ClosurePtr
+lengthOfByteString = withCurried False "lengthOfByteString" ["str"] $ \[str] -> do
+    -- enter the constant closure and load the pointer from the result register
+    _ <- enterClosure (MkClosurePtr str) []
+    ptr <- loadConstVal bytestringTyPtr
+
+    -- the size is stored in the bytestring structure, so we just need to
+    -- retrieve it from there
+    addr <- gep ptr [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 0]
+    val <- load addr 0
+
+    -- allocate a new closure for the size value
+    compileConstDynamic @Integer val
+
+equalsByteString :: MonadCodeGen m => m ClosurePtr
+equalsByteString =
+    compileBinary "equalsByteString" bytestringTyPtr bytestringTyPtr $
+    \s0 s1 -> E.equalsByteString s0 s1 >>= compileConstDynamic @Bool
+
+lessThanByteString :: MonadCodeGen m => m ClosurePtr
+lessThanByteString =
+    compileBinary "lessThanByteString" bytestringTyPtr bytestringTyPtr $
+    \s0 s1 -> E.lessThanByteString s0 s1 >>= compileConstDynamic @Bool
+
+-------------------------------------------------------------------------------
+
 ifThenElse :: MonadCodeGen m => m ClosurePtr
 ifThenElse = withCurried True "ifThenElse" ["s","c","t","f"] $ \[_,cv,tv,fv] -> do
     -- enter the closure for the condition, this should be some expression
@@ -162,6 +189,10 @@ builtins =
     , (EqualsInteger, equalsInteger)
     , (LessThanInteger, lessThanInteger)
     , (LessThanEqualsInteger, lessThanEqualsInteger)
+    -- Bytestrings
+    , (LengthOfByteString, lengthOfByteString)
+    , (EqualsByteString, equalsByteString)
+    , (LessThanByteString, lessThanByteString)
     -- Booleans
     , (IfThenElse, ifThenElse)
     ]
