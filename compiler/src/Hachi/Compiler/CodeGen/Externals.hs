@@ -13,6 +13,9 @@ module Hachi.Compiler.CodeGen.Externals (
     mallocTy,
     mallocRef,
     malloc,
+    memcpyTy,
+    memcpyRef,
+    memcpy,
 
     -- * Bytestrings
     printBytestringTy,
@@ -100,6 +103,22 @@ mallocRef = GlobalReference mallocTy $ mkName "malloc"
 malloc :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
 malloc size = call (ConstantOperand mallocRef) [(size, [])]
 
+memcpyTy :: Type
+memcpyTy = ptrOf $
+    FunctionType (ptrOf VoidType) [ptrOf VoidType, ptrOf VoidType, i64] False
+
+memcpyFun :: Global
+memcpyFun = globalFromType "memcpy" memcpyTy
+
+memcpyRef :: Constant
+memcpyRef = GlobalReference memcpyTy $ mkName "memcpy"
+
+memcpy
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> Operand -> Operand -> m Operand
+memcpy dst src n =
+    call (ConstantOperand memcpyRef) [(dst, []), (src, []), (n, [])]
+
 -------------------------------------------------------------------------------
 
 printBytestringTy :: Type
@@ -156,6 +175,7 @@ externalDefinitions = map GlobalDefinition
     [ printfFun
     , exitFun
     , mallocFun
+    , memcpyFun
     , printBytestringFun
     , equalsByteStringFun
     , lessThanByteStringFun

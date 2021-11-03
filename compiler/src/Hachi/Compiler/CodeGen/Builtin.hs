@@ -8,6 +8,7 @@ module Hachi.Compiler.CodeGen.Builtin ( compileBuiltins ) where
 
 import Control.Monad
 
+import qualified Data.ByteString as BS
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Text as T
@@ -133,6 +134,60 @@ lessThanEqualsInteger =
 
 -------------------------------------------------------------------------------
 
+-- | `bsNew` @size@ generates code which allocates enough space for a new
+-- bytestring with @size@-many elements. The actual memory allocated is
+-- greater than @size@, since we need to store the size in the bytestring
+-- as well. This function performs the latter task as well before returning
+-- the pointer to the new bytestring.
+bsNew :: (MonadCodeGen m, MonadIRBuilder m) => Operand -> m Operand
+bsNew l = do
+    -- we need 8 extra bytes to store the length
+    size <- add l (ConstantOperand $ Int 64 8)
+    ptr <- E.malloc size
+    tptr <- bitcast ptr bytestringTyPtr
+
+    -- store length
+    store tptr 0 l
+
+    pure tptr
+
+-- | `bsLen` @ptr@ generates code which loads the length of a bytestring
+-- which is represented by @ptr@.
+bsLen :: (MonadCodeGen m, MonadIRBuilder m) => Operand -> m Operand
+bsLen str = do
+    addr <- gep str [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 0]
+    load addr 0
+
+-- | `bsDataPtr` @ptr@ generates code which calculates the address of the
+-- data component of a bytestring represented by @ptr@.
+bsDataPtr :: (MonadCodeGen m, MonadIRBuilder m) => Operand -> m Operand
+bsDataPtr str =
+    gep str [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 1]
+
+appendByteString :: MonadCodeGen m => m ClosurePtr
+appendByteString =
+    compileBinary "appendByteString" bytestringTyPtr bytestringTyPtr $
+    \s0 s1 -> do
+        l0 <- bsLen s0
+        l1 <- bsLen s1
+
+        -- allocate a new bytestring which is big enough to store the data
+        -- of both the existing bytestrings combined
+        size <- add l0 l1
+        ptr <- bsNew size
+
+        -- copy data
+        addr <- bsDataPtr ptr
+        srcAddr <- bsDataPtr s0
+        _ <- E.memcpy addr srcAddr l0
+
+        addr1 <- add addr l0
+        srcAddr1 <- bsDataPtr s1
+        _ <- E.memcpy addr1 srcAddr1 l1
+
+        -- allocate a new closure
+        compileConstDynamic @BS.ByteString ptr
+
 lengthOfByteString :: MonadCodeGen m => m ClosurePtr
 lengthOfByteString = withCurried False "lengthOfByteString" ["str"] $ \[str] -> do
     -- enter the constant closure and load the pointer from the result register
@@ -141,8 +196,7 @@ lengthOfByteString = withCurried False "lengthOfByteString" ["str"] $ \[str] -> 
 
     -- the size is stored in the bytestring structure, so we just need to
     -- retrieve it from there
-    addr <- gep ptr [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 0]
-    val <- load addr 0
+    val <- bsLen ptr
 
     -- allocate a new closure for the size value
     compileConstDynamic @Integer val
@@ -190,6 +244,7 @@ builtins =
     , (LessThanInteger, lessThanInteger)
     , (LessThanEqualsInteger, lessThanEqualsInteger)
     -- Bytestrings
+    , (AppendByteString, appendByteString)
     , (LengthOfByteString, lengthOfByteString)
     , (EqualsByteString, equalsByteString)
     , (LessThanByteString, lessThanByteString)
