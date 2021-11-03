@@ -188,6 +188,29 @@ appendByteString =
         -- allocate a new closure
         compileConstDynamic @BS.ByteString ptr
 
+consByteString :: MonadCodeGen m => m ClosurePtr
+consByteString =
+    compileBinary "consByteString" i64 bytestringTyPtr $
+    \x xs -> do
+        l <- bsLen xs
+
+        -- allocate a new bytestring which is big enough to store the data
+        -- of the existing bytestring + 1
+        size <- add l (ConstantOperand $ Int 64 1)
+        ptr <- bsNew size
+
+        -- copy data
+        addr <- bsDataPtr ptr
+        xt <- bitcast x i8
+        store addr 0 xt
+
+        addr1 <- add addr (ConstantOperand $ Int 64 1)
+        srcAddr1 <- bsDataPtr xs
+        _ <- E.memcpy addr1 srcAddr1 l
+
+        -- allocate a new closure
+        compileConstDynamic @BS.ByteString ptr
+
 lengthOfByteString :: MonadCodeGen m => m ClosurePtr
 lengthOfByteString = withCurried False "lengthOfByteString" ["str"] $ \[str] -> do
     -- enter the constant closure and load the pointer from the result register
@@ -245,6 +268,7 @@ builtins =
     , (LessThanEqualsInteger, lessThanEqualsInteger)
     -- Bytestrings
     , (AppendByteString, appendByteString)
+    , (ConsByteString, consByteString)
     , (LengthOfByteString, lengthOfByteString)
     , (EqualsByteString, equalsByteString)
     , (LessThanByteString, lessThanByteString)
