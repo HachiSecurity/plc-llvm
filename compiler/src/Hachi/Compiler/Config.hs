@@ -15,10 +15,20 @@ data Config = MkConfig {
     cfgInput :: FilePath,
     cfgOutput :: Maybe FilePath,
     cfgRTS :: Maybe FilePath,
+    -- | Is the input a binary file that must be deserialised?
     cfgDeserialise :: Bool,
+    -- | Is the input typed?
     cfgTyped :: Bool,
+    -- | Should the resulting LLVM code print diagnostic information?
     cfgTrace :: Bool,
-    cfgVerbose :: Bool
+    -- | Should the compiler print diagnostic information while running?
+    cfgVerbose :: Bool,
+    -- | Should the compiler generate an object file?
+    cfgNoAssemble :: Bool,
+    -- | Should the compiler generate an executable?
+    cfgNoLink :: Bool,
+    -- | Should the LLVM IR be in plain-text?
+    cfgNoSerialise :: Bool
 } deriving (Eq, Show)
 
 -- | `mkDefaultConfig` @input@ constructs a `Config` with reasonable defaults
@@ -31,7 +41,10 @@ mkDefaultConfig fp = MkConfig{
     cfgDeserialise = False,
     cfgTyped = False,
     cfgTrace = False,
-    cfgVerbose = False
+    cfgVerbose = False,
+    cfgNoAssemble = False,
+    cfgNoLink = False,
+    cfgNoSerialise = False
 }
 
 cfgInputP :: Parser FilePath
@@ -72,6 +85,21 @@ cfgVerboseP = switch $
     long "verbose" <>
     help "Print diagnostic messages during compilation"
 
+cfgNoAssembleP :: Parser Bool
+cfgNoAssembleP = switch $
+    short 'S' <>
+    help "Do not assemble the LLVM IR into an object file"
+
+cfgNoLinkP :: Parser Bool
+cfgNoLinkP = switch $
+    short 'c' <>
+    help "Do not link the program into an executable"
+
+cfgNoSerialiseP :: Parser Bool
+cfgNoSerialiseP = switch $
+    long "emit-llvm" <>
+    help "Generate plain-text LLVM IR instead of bitcode"
+
 cmdArgsP :: Parser Config
 cmdArgsP = MkConfig
     <$> cfgInputP
@@ -81,6 +109,9 @@ cmdArgsP = MkConfig
     <*> cfgTypedP
     <*> cfgTraceP
     <*> cfgVerboseP
+    <*> cfgNoAssembleP
+    <*> cfgNoLinkP
+    <*> cfgNoSerialiseP
 
 -- | `parseCmdLineArgs` parses command-line arguments into a `Config` value.
 -- If parsing fails, the program is terminated and a help message is shown.

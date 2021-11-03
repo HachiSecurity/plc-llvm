@@ -232,24 +232,38 @@ generateCode cfg@MkConfig{..} p =
     withHostTargetMachineDefault $ \tm ->
     buildModuleT (fromString $ takeBaseName cfgInput) (compileProgram cfg p) >>= \compiled ->
     withModuleFromAST ctx compiled{ moduleSourceFileName = fromString cfgInput } $ \m -> do
-        let objectFile = fromMaybe (replaceExtension cfgInput "o") cfgOutput
-        -- writeBitcodeToFile (File outPath) m
-        -- writeTargetAssemblyToFile tm (File "out.s") mod
-        writeObjectToFile tm (File objectFile) m
+        let outputName = fromMaybe cfgInput cfgOutput
 
-        when cfgVerbose $ do
+        -- by default, we generate LLVM bitcode (the binary representation),
+        -- but if the user has requested plain-text LLVM IR, we generate
+        -- that instead
+        if cfgNoSerialise
+        then do
+            let llName = replaceExtension outputName "ll"
             asm <- moduleLLVMAssembly m
-            BS.putStrLn asm
+            BS.writeFile llName asm
+        else do
+            let bcName = replaceExtension outputName "bc"
+            writeBitcodeToFile (File bcName) m
 
-        -- compile with LLVM
-        let rtsFile = fromMaybe "./rts/rts.c" cfgRTS
-        let exeFile = dropExtension objectFile
-        let pcfg = proc "clang" [objectFile, "-o", exeFile]
+        -- unless we have been instructed not to assemble the LLVM IR into
+        -- an object file, produce an object file
+        unless cfgNoAssemble $ do
+            let objectFile = replaceExtension outputName "o"
+            writeObjectToFile tm (File objectFile) m
 
-        ec <- runProcess pcfg
+            -- unless we have been instructed not to link together an
+            -- executable, run Clang to produce an executable from the
+            -- object file
+            unless cfgNoLink $ do
+                let rtsFile = fromMaybe "./rts/rts.c" cfgRTS
+                let exeFile = dropExtension outputName
+                let pcfg = proc "clang" [objectFile, "-o", exeFile]
 
-        when cfgVerbose $ do
-            putStr "Ran clang and got: "
-            print ec
+                ec <- runProcess pcfg
+
+                when cfgVerbose $ do
+                    putStr "Ran clang and got: "
+                    print ec
 
 -------------------------------------------------------------------------------
