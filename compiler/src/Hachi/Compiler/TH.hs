@@ -17,10 +17,14 @@ import LLVM.AST as LLVM
 -- | `mkGlobalStrRefs` @globals@ generates LLVM `Constant`s which refer to
 -- global string variables specified by @globals@.
 mkGlobalStrRefs :: [(String, String)] -> Q [Dec]
-mkGlobalStrRefs globals = forM globals $ \(name, val) -> do
-    let defName = take (length name - 3) name
+mkGlobalStrRefs globals = fmap concat $ forM globals $ \(name, val) -> do
+    let defName = TH.mkName $ take (length name - 3) name <> "Ref"
+    ty <- [t| Operand |]
     body <- [| ConstantOperand $ asStringPtr $
                 GlobalReference (stringPtr val) (LLVM.mkName name) |]
-    pure $ ValD (VarP $ TH.mkName $ defName <> "Ref") (NormalB body) []
+    pure [
+        SigD defName ty,
+        ValD (VarP defName) (NormalB body) []
+     ]
 
 -------------------------------------------------------------------------------
