@@ -103,6 +103,17 @@ compileBinary name lTy rTy builder =
 
 -------------------------------------------------------------------------------
 
+-- | `compileMin` @x y@ generates code which returns the lesser of
+-- @x@ and @y@ where both are assumed to be signed integers.
+compileMin
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> Operand -> m Operand
+compileMin x y = do
+    b <- icmp LLVM.SLT x y
+    select b x y
+
+-------------------------------------------------------------------------------
+
 compileBinaryInteger
     :: forall a m. (MonadCodeGen m, CompileConstant a)
     => String -> (Operand -> Operand -> IRBuilderT m Operand)
@@ -134,6 +145,24 @@ lessThanEqualsInteger =
 
 -------------------------------------------------------------------------------
 
+-- | `bsNewStruct` @size@ generates code which allocates enough space for a new
+-- bytestring structure and stores @size@ in it. The pointer to the new
+-- structure is returned. The data pointer of the bytestring is not set
+-- and no memory is allocated for the data.
+bsNewStruct :: (MonadCodeGen m, MonadIRBuilder m) => Operand -> m Operand
+bsNewStruct l = do
+    -- calculate the size of the bytestring structure and allocate memory
+    -- for it
+    size <- IR.sizeof 64 bytestringTy
+    ptr <- E.malloc size
+    tptr <- bitcast ptr bytestringTyPtr
+
+    -- store the length
+    store tptr 0 l
+
+    -- return the pointer to the bytestring structure
+    pure tptr
+
 -- | `bsNew` @size@ generates code which allocates enough space for a new
 -- bytestring with @size@-many elements. The actual memory allocated is
 -- greater than @size@, since we need to store the size in the bytestring
@@ -144,13 +173,8 @@ bsNew l = do
     -- allocate the byte array that will store the actual data
     arrPtr <- E.malloc l
 
-    -- calculate the size of the bystring structure and allocate memory for it
-    size <- IR.sizeof 64 bytestringTy
-    ptr <- E.malloc size
-    tptr <- bitcast ptr bytestringTyPtr
-
-    -- store the length
-    store tptr 0 l
+    -- create the new bytestring structure
+    tptr <- bsNewStruct l
 
     -- store the pointer to the byte array
     dataAddr <- gep tptr [ ConstantOperand $ Int 32 0
@@ -222,6 +246,49 @@ consByteString =
         -- allocate a new closure
         compileConstDynamic @BS.ByteString ptr
 
+sliceByteString :: MonadCodeGen m => m ClosurePtr
+sliceByteString =
+    withCurried False "sliceByteString" ["s","n","str"] $ \[sv,nv,strv] -> do
+    -- enter all three arguments and load the resulting values
+    _ <- enterClosure (MkClosurePtr sv) []
+    s <- loadConstVal i64
+
+    _ <- enterClosure (MkClosurePtr nv) []
+    n <- loadConstVal i64
+
+    _ <- enterClosure (MkClosurePtr strv) []
+    str <- loadConstVal bytestringTyPtr
+
+    -- retrieve the length of the existing bytestring
+    strLen <- bsLen str
+
+    -- calculate the start offset, which is the minimum of the given start
+    -- index and the length of the existing bytestring - i.e. we can't
+    -- choose an index greater than the length of the existing bytestring
+    start <- compileMin s strLen
+
+    -- we need the size of the new bytestring
+    remLen <- sub strLen start
+    newLen <- compileMin remLen n
+
+    -- create the new bytestring structure, but do not allocate a new
+    -- array backing it, so that we can reuse the existing one
+    ptr <- bsNewStruct newLen
+
+    -- calculate the address we want to use as the data pointer; this is the
+    -- data pointer of the existing bytestring + the start offset
+    strData <- bsDataPtr str
+    startAddr <- add strData start
+
+    -- store the pointer to the byte array
+    dataAddr <- gep ptr [ ConstantOperand $ Int 32 0
+                        , ConstantOperand $ Int 32 1
+                        ]
+    store dataAddr 0 startAddr
+
+    -- allocate a new closure
+    compileConstDynamic @BS.ByteString ptr
+
 lengthOfByteString :: MonadCodeGen m => m ClosurePtr
 lengthOfByteString =
     withCurried False "lengthOfByteString" ["str"] $ \[str] -> do
@@ -281,6 +348,7 @@ builtins =
     -- Bytestrings
     , (AppendByteString, appendByteString)
     , (ConsByteString, consByteString)
+    , (SliceByteString, sliceByteString)
     , (LengthOfByteString, lengthOfByteString)
     , (EqualsByteString, equalsByteString)
     , (LessThanByteString, lessThanByteString)
