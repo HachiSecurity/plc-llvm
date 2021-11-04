@@ -80,9 +80,14 @@ instance CompileConstant BS.ByteString where
         let size = BS.length val
         let bytes = BS.unpack val
         let arr = Array i8 $ map (Int 8 . fromIntegral) bytes
+        let arrTy = ArrayType (fromIntegral size) i8
+        let arrName = mkName $ name <> "_data"
+
+        _ <- global arrName arrTy arr
+        let dataRef = GlobalReference (ptrOf arrTy) arrName
 
         _ <- global (mkName name) bytestringTy $
-            Struct Nothing False [Int 64 $ toInteger size, arr]
+            Struct Nothing False [Int 64 $ toInteger size, dataRef]
 
         pure $ GlobalReference bytestringTyPtr (mkName name)
 

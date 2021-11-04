@@ -141,14 +141,24 @@ lessThanEqualsInteger =
 -- the pointer to the new bytestring.
 bsNew :: (MonadCodeGen m, MonadIRBuilder m) => Operand -> m Operand
 bsNew l = do
-    -- we need 8 extra bytes to store the length
-    size <- add l (ConstantOperand $ Int 64 8)
+    -- allocate the byte array that will store the actual data
+    arrPtr <- E.malloc l
+
+    -- calculate the size of the bystring structure and allocate memory for it
+    size <- IR.sizeof 64 bytestringTy
     ptr <- E.malloc size
     tptr <- bitcast ptr bytestringTyPtr
 
-    -- store length
+    -- store the length
     store tptr 0 l
 
+    -- store the pointer to the byte array
+    dataAddr <- gep tptr [ ConstantOperand $ Int 32 0
+                         , ConstantOperand $ Int 32 1
+                         ]
+    store dataAddr 0 arrPtr
+
+    -- return the pointer to the bytestring structure
     pure tptr
 
 -- | `bsLen` @ptr@ generates code which loads the length of a bytestring
@@ -161,8 +171,9 @@ bsLen str = do
 -- | `bsDataPtr` @ptr@ generates code which calculates the address of the
 -- data component of a bytestring represented by @ptr@.
 bsDataPtr :: (MonadCodeGen m, MonadIRBuilder m) => Operand -> m Operand
-bsDataPtr str =
-    gep str [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 1]
+bsDataPtr str = do
+    addr <- gep str [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 1]
+    load addr 0
 
 appendByteString :: MonadCodeGen m => m ClosurePtr
 appendByteString =
@@ -212,7 +223,8 @@ consByteString =
         compileConstDynamic @BS.ByteString ptr
 
 lengthOfByteString :: MonadCodeGen m => m ClosurePtr
-lengthOfByteString = withCurried False "lengthOfByteString" ["str"] $ \[str] -> do
+lengthOfByteString =
+    withCurried False "lengthOfByteString" ["str"] $ \[str] -> do
     -- enter the constant closure and load the pointer from the result register
     _ <- enterClosure (MkClosurePtr str) []
     ptr <- loadConstVal bytestringTyPtr
