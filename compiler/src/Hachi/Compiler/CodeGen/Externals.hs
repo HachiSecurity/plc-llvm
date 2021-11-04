@@ -30,7 +30,9 @@ module Hachi.Compiler.CodeGen.Externals (
 
     lessThanByteStringTy,
     lessThanByteStringRef,
-    lessThanByteString
+    lessThanByteString,
+
+    lessThanEqualsByteString
 ) where
 
 -------------------------------------------------------------------------------
@@ -186,6 +188,20 @@ lessThanByteString
 lessThanByteString p0 p1 =
     call (ConstantOperand lessThanByteStringRef) [(p0, []), (p1, [])]
 
+lessThanEqualsByteStringFun :: Global
+lessThanEqualsByteStringFun =
+    globalFromType "less_than_equals_bytestring" lessThanByteStringTy
+
+lessThanEqualsByteStringRef :: Constant
+lessThanEqualsByteStringRef =
+    GlobalReference lessThanByteStringTy $ mkName "less_than_equals_bytestring"
+
+lessThanEqualsByteString
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> Operand -> m Operand
+lessThanEqualsByteString p0 p1 =
+    call (ConstantOperand lessThanEqualsByteStringRef) [(p0, []), (p1, [])]
+
 -------------------------------------------------------------------------------
 
 externalDefinitions :: [Definition]
@@ -198,6 +214,7 @@ externalDefinitions = map GlobalDefinition
     , indexBytestringFun
     , equalsByteStringFun
     , lessThanByteStringFun
+    , lessThanEqualsByteStringFun
     ]
 
 -------------------------------------------------------------------------------

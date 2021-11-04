@@ -318,6 +318,11 @@ lessThanByteString =
     compileBinary "lessThanByteString" bytestringTyPtr bytestringTyPtr $
     \s0 s1 -> E.lessThanByteString s0 s1 >>= compileConstDynamic @Bool
 
+lessThanEqualsByteString :: MonadCodeGen m => m ClosurePtr
+lessThanEqualsByteString =
+    compileBinary "lessThanEqualsByteString" bytestringTyPtr bytestringTyPtr $
+    \s0 s1 -> E.lessThanEqualsByteString s0 s1 >>= compileConstDynamic @Bool
+
 -------------------------------------------------------------------------------
 
 ifThenElse :: MonadCodeGen m => m ClosurePtr
@@ -358,6 +363,7 @@ builtins =
     , (IndexByteString, indexByteString)
     , (EqualsByteString, equalsByteString)
     , (LessThanByteString, lessThanByteString)
+    , (LessThanEqualsByteString, lessThanEqualsByteString)
     -- Booleans
     , (IfThenElse, ifThenElse)
     ]
