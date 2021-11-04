@@ -303,6 +303,11 @@ lengthOfByteString =
     -- allocate a new closure for the size value
     compileConstDynamic @Integer val
 
+indexByteString :: MonadCodeGen m => m ClosurePtr
+indexByteString =
+    compileBinary "indexByteString" bytestringTyPtr i64 $
+    \str n -> E.indexBytestring str n >>= compileConstDynamic @Integer
+
 equalsByteString :: MonadCodeGen m => m ClosurePtr
 equalsByteString =
     compileBinary "equalsByteString" bytestringTyPtr bytestringTyPtr $
@@ -350,6 +355,7 @@ builtins =
     , (ConsByteString, consByteString)
     , (SliceByteString, sliceByteString)
     , (LengthOfByteString, lengthOfByteString)
+    , (IndexByteString, indexByteString)
     , (EqualsByteString, equalsByteString)
     , (LessThanByteString, lessThanByteString)
     -- Booleans

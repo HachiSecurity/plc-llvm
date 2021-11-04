@@ -22,6 +22,8 @@ module Hachi.Compiler.CodeGen.Externals (
     printBytestringRef,
     printBytestring,
 
+    indexBytestring,
+
     equalsByteStringTy,
     equalsByteStringRef,
     equalsByteString,
@@ -133,6 +135,22 @@ printBytestringRef = GlobalReference printBytestringTy $ mkName "print_bytestrin
 printBytestring :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
 printBytestring ptr = call (ConstantOperand printBytestringRef) [(ptr, [])]
 
+indexBytestringTy :: Type
+indexBytestringTy = ptrOf $ FunctionType i8 [bytestringTyPtr, i64] False
+
+indexBytestringFun :: Global
+indexBytestringFun = globalFromType "index_bytestring" indexBytestringTy
+
+indexBytestringRef :: Constant
+indexBytestringRef =
+    GlobalReference indexBytestringTy $ mkName "index_bytestring"
+
+indexBytestring
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> Operand -> m Operand
+indexBytestring ptr n =
+    call (ConstantOperand indexBytestringRef) [(ptr, []), (n, [])]
+
 equalsByteStringTy :: Type
 equalsByteStringTy = ptrOf $
     FunctionType i8 [bytestringTyPtr, bytestringTyPtr] False
@@ -177,6 +195,7 @@ externalDefinitions = map GlobalDefinition
     , mallocFun
     , memcpyFun
     , printBytestringFun
+    , indexBytestringFun
     , equalsByteStringFun
     , lessThanByteStringFun
     ]
