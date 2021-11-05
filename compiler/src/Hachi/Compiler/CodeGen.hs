@@ -7,6 +7,7 @@ module Hachi.Compiler.CodeGen ( generateCode ) where
 import Control.Monad.IO.Class
 import Control.Monad.Reader
 
+import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.ByteString.Char8 as BS
 import Data.IORef
 import qualified Data.Map as M
@@ -14,6 +15,7 @@ import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
 import Data.String (fromString)
 
+import System.Exit
 import System.FilePath
 import System.Process.Typed
 
@@ -219,6 +221,20 @@ compileProgram cfg (Program _ _ term) = do
 
 -------------------------------------------------------------------------------
 
+-- | `runPkgConfig` @packageName@ runs `pkg-config` for @packageName@ to get
+-- suitable configuration options for the C compiler.
+runPkgConfig :: String -> IO [String]
+runPkgConfig pkg = do
+    let pkgcfg = proc "pkg-config" ["--libs", "--cflags", pkg]
+    (ec, stdout, _) <- readProcess pkgcfg
+
+    case ec of
+        ExitSuccess -> pure $
+            map BS.unpack $ BS.split ' ' $ BS.strip $ LBS.toStrict stdout
+        ExitFailure _ -> do
+            putStrLn $ "pkg-config failed for " ++ show pkgcfg
+            exitWith ec
+
 -- | `generateCode` @config path program@ generates code for @program@
 -- using the configuration given by @config@.
 generateCode
@@ -256,9 +272,14 @@ generateCode cfg@MkConfig{..} p =
             -- executable, run Clang to produce an executable from the
             -- object file
             unless cfgNoLink $ do
+                -- run pkg-config for libsodium
+                sodiumOpts <- runPkgConfig "libsodium"
+
                 let rtsFile = fromMaybe "./rts/rts.c" cfgRTS
                 let exeFile = dropExtension outputName
-                let pcfg = proc "clang" [rtsFile, objectFile, "-o", exeFile]
+                let pcfg = proc "clang" $
+                            [rtsFile, objectFile, "-o", exeFile] ++
+                            sodiumOpts
 
                 ec <- runProcess pcfg
 
