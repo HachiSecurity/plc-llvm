@@ -18,6 +18,11 @@ module Hachi.Compiler.CodeGen.Types (
     bytestringTy,
     bytestringTyPtr,
 
+    -- * Pairs
+    pairTyDef,
+    pairTy,
+    pairTyPtr,
+
     ClosurePtr(..)
 ) where
 
@@ -75,6 +80,23 @@ bytestringTy = NamedTypeReference "bytestring"
 -- | `bytestringTyPtr` is a `Type` representing a pointer to a bytestring.
 bytestringTyPtr :: Type
 bytestringTyPtr = ptrOf bytestringTy
+
+-------------------------------------------------------------------------------
+
+-- | `pairTyDef` is the type definition for pairs.
+pairTyDef :: Type
+pairTyDef = StructureType False
+    [ ptrOf VoidType
+    , ptrOf VoidType
+    ]
+
+-- | `pairTy` is a `Type` for pairs.
+pairTy :: Type
+pairTy = NamedTypeReference "pair"
+
+-- | `pairTyPtr` is a `Type` representing a pointer to a pair.
+pairTyPtr :: Type
+pairTyPtr = ptrOf pairTy
 
 -------------------------------------------------------------------------------
 
