@@ -339,6 +339,50 @@ lessThanEqualsByteString =
 
 -------------------------------------------------------------------------------
 
+sha256 :: MonadCodeGen m => m ClosurePtr
+sha256 =
+    compileCurried "sha2_256" [bytestringTyPtr] $ \[str] -> do
+    -- calculate the SHA256 hash of the bytestring
+    r <- E.sha256 str
+
+    -- allocate a new bytestring with space for 256 bits
+    ptr <- bsNew (ConstantOperand $ Int 64 32)
+
+    -- store the pointer to the byte array
+    dataAddr <- gep ptr [ ConstantOperand $ Int 32 0
+                        , ConstantOperand $ Int 32 1
+                        ]
+    store dataAddr 0 r
+
+    -- create a new dynamic closure for the new bytestring
+    compileConstDynamic @BS.ByteString ptr
+
+blake2b :: MonadCodeGen m => m ClosurePtr
+blake2b =
+    compileCurried "blake2b_256" [bytestringTyPtr] $ \[str] -> do
+    -- calculate the blake2b-256 hash of the bytestring
+    r <- E.blake2b str
+
+    -- allocate a new bytestring with space for 256 bits
+    ptr <- bsNew (ConstantOperand $ Int 64 32)
+
+    -- store the pointer to the byte array
+    dataAddr <- gep ptr [ ConstantOperand $ Int 32 0
+                        , ConstantOperand $ Int 32 1
+                        ]
+    store dataAddr 0 r
+
+    -- create a new dynamic closure for the new bytestring
+    compileConstDynamic @BS.ByteString ptr
+
+verifySignature :: MonadCodeGen m => m ClosurePtr
+verifySignature =
+    compileCurried "verifySignature" [bytestringTyPtr,bytestringTyPtr,bytestringTyPtr] $
+    \[pubKey,message,signature] ->
+        E.verifySig pubKey message signature >>= compileConstDynamic @Bool
+
+-------------------------------------------------------------------------------
+
 ifThenElse :: MonadCodeGen m => m ClosurePtr
 ifThenElse = withCurried True "ifThenElse" ["s","c","t","f"] $ \[_,cv,tv,fv] -> do
     -- enter the closure for the condition, this should be some expression
@@ -378,6 +422,10 @@ builtins =
     , (EqualsByteString, equalsByteString)
     , (LessThanByteString, lessThanByteString)
     , (LessThanEqualsByteString, lessThanEqualsByteString)
+    -- Cryptography and hashes
+    , (Sha2_256, sha256)
+    , (Blake2b_256, blake2b)
+    , (VerifySignature, verifySignature)
     -- Booleans
     , (IfThenElse, ifThenElse)
     ]

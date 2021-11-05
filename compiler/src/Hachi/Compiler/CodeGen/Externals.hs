@@ -33,7 +33,12 @@ module Hachi.Compiler.CodeGen.Externals (
     lessThanByteStringRef,
     lessThanByteString,
 
-    lessThanEqualsByteString
+    lessThanEqualsByteString,
+
+    -- * Cryptography
+    sha256,
+    blake2b,
+    verifySig
 ) where
 
 -------------------------------------------------------------------------------
@@ -221,6 +226,45 @@ lessThanEqualsByteString p0 p1 =
 
 -------------------------------------------------------------------------------
 
+hashTy :: Type
+hashTy = ptrOf $ FunctionType (ptrOf i8) [bytestringTyPtr] False
+
+sha256Fun :: Global
+sha256Fun = globalFromType "sha2_256" hashTy
+
+sha256Ref :: Constant
+sha256Ref = GlobalReference hashTy $ mkName "sha2_256"
+
+sha256 :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
+sha256 ptr = call (ConstantOperand sha256Ref) [(ptr, [])]
+
+blake2bFun :: Global
+blake2bFun = globalFromType "blake2b_256" hashTy
+
+blake2bRef :: Constant
+blake2bRef = GlobalReference hashTy $ mkName "blake2b_256"
+
+blake2b :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
+blake2b ptr = call (ConstantOperand blake2bRef) [(ptr, [])]
+
+verifySigTy :: Type
+verifySigTy = ptrOf $
+    FunctionType i8 [bytestringTyPtr,bytestringTyPtr,bytestringTyPtr] False
+
+verifySigFun :: Global
+verifySigFun = globalFromType "verify_signature" verifySigTy
+
+verifySigRef :: Constant
+verifySigRef = GlobalReference verifySigTy $ mkName "verify_signature"
+
+verifySig
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> Operand -> Operand -> m Operand
+verifySig pubKey msg sig =
+    call (ConstantOperand verifySigRef) [(pubKey, []), (msg, []), (sig, [])]
+
+-------------------------------------------------------------------------------
+
 externalDefinitions :: [Definition]
 externalDefinitions = map GlobalDefinition
     [ rtsInitFun
@@ -233,6 +277,9 @@ externalDefinitions = map GlobalDefinition
     , equalsByteStringFun
     , lessThanByteStringFun
     , lessThanEqualsByteStringFun
+    , sha256Fun
+    , blake2bFun
+    , verifySigFun
     ]
 
 -------------------------------------------------------------------------------
