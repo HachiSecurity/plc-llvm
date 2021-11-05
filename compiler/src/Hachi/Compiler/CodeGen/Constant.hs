@@ -35,6 +35,7 @@ import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 import Hachi.Compiler.CodeGen.Externals
+import Hachi.Compiler.CodeGen.Constant.Pair
 
 -------------------------------------------------------------------------------
 
@@ -124,6 +125,49 @@ instance CompileConstant Bool where
 instance CompileConstant PLC.Data where
 
 instance (CompileConstant a, CompileConstant b) => CompileConstant (a,b) where
+    compileConstant name (x,y) = do
+        -- compile the two components to constant closures; the pair is then
+        -- just two pointers to those closures; we need them as closures so
+        -- that they can have their respective pretty-printing functions
+        let fstName = name <> "_fst"
+        let sndName = name <> "_snd"
+        _ <- compileConstStatic fstName x
+        _ <- compileConstStatic sndName y
+
+        -- unfortunately, `compileClosure` already returns a `ClosurePtr` which
+        -- is a wrapper around `Operand`, but we need `Constant`s here, so we
+        -- need to reconstruct the global references from the closure names;
+        -- this could be improved if we better abstract over static and dynamic
+        -- closures in `ClosurePtr`
+        let xr = GlobalReference closureTyPtr $ mkClosureName fstName
+        let yr = GlobalReference closureTyPtr $ mkClosureName sndName
+
+        -- create a new global for the pair of pointer-sized values
+        _ <- global (mkName name) pairTy $ Struct Nothing False [xr, yr]
+
+        -- return a reference to the global
+        pure $ GlobalReference pairTyPtr (mkName name)
+
+    -- to load a pair, we just retrieve its pointer from the closure
+    compileLoadConstant = loadFromClosure (ClosureFreeVar 0) pairTyPtr
+
+    compilePrintBody _ this = do
+        -- retrieve the pointer to the pair
+        ptr <- compileLoadConstant @(a,b) this
+
+        -- print something to indicate that what follows are the values of
+        -- a pair
+        void $ printf pairResultRef []
+
+        -- both components must be pointers to closures; retrieve them and
+        -- call their respective pretty-printing functions
+        x <- getFst ptr
+        _ <- callClosure ClosurePrint x []
+
+        y <- getSnd ptr
+        _ <- callClosure ClosurePrint y []
+
+        pure ()
 
 instance CompileConstant a => CompileConstant [a] where
 
@@ -154,14 +198,21 @@ compileConst :: MonadCodeGen m => Some (ValueOf DefaultUni) -> m ClosurePtr
 compileConst (Some (ValueOf tag (x :: a))) = do
     name <- mkFresh "con"
 
-    ptr <- bring ccProxy tag (compileConstant name x)
+    bring ccProxy tag $ compileConstStatic name x
+
+-- | `compileConstStatic` @name value@ generates code for a static constant
+-- with the name given by @name@ and the value given by @value@.
+compileConstStatic
+    :: forall a m . (MonadCodeGen m, CompileConstant a) => String -> a -> m ClosurePtr
+compileConstStatic name x = do
+    ptr <- compileConstant name x
 
     let entryName = name <> "_entry"
 
-    codePtr <- compileConstEntry entryName (bring ccProxy tag $ compileLoadConstant @a)
+    codePtr <- compileConstEntry entryName (compileLoadConstant @a)
 
     -- 2. generate print code
-    let builder = bring ccProxy tag (compilePrintBody @a name)
+    let builder = compilePrintBody @a name
     print_fun <- compileConstPrint name builder
 
     -- 3. generate a static closure: this should be sufficient since constants

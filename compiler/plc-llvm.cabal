@@ -24,6 +24,7 @@ library
       Hachi.Compiler.CodeGen.Closure
       Hachi.Compiler.CodeGen.Common
       Hachi.Compiler.CodeGen.Constant
+      Hachi.Compiler.CodeGen.Constant.Pair
       Hachi.Compiler.CodeGen.Constant.String
       Hachi.Compiler.CodeGen.Externals
       Hachi.Compiler.CodeGen.Globals
@@ -54,6 +55,7 @@ library
     , optparse-applicative
     , plutus-core
     , prettyprinter
+    , some
     , template-haskell
     , text
     , transformers
@@ -85,6 +87,7 @@ executable plc-llvm
     , plc-llvm
     , plutus-core
     , prettyprinter
+    , some
     , template-haskell
     , text
     , transformers
@@ -96,6 +99,7 @@ test-suite plc-llvm-test
   main-is: Spec.hs
   other-modules:
       Hachi.CompilerSpec
+      Hachi.PairSpec
       Paths_plc_llvm
   hs-source-dirs:
       test
@@ -119,6 +123,7 @@ test-suite plc-llvm-test
     , plc-llvm
     , plutus-core
     , prettyprinter
+    , some
     , tasty
     , tasty-discover
     , tasty-hedgehog

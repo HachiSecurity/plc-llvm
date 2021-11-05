@@ -11,6 +11,7 @@ module Hachi.Compiler.CodeGen.Closure (
     clsEntryTy,
     varEntryTy,
     printFnTy,
+    mkClosureName,
     compileClosure,
     allocateClosure,
     compileDynamicClosure,
@@ -115,13 +116,17 @@ varEntryTy = mkEntryTy 1
 printFnTy :: Type
 printFnTy = ptrOf $ FunctionType VoidType [closureTyPtr] False
 
+-- | `mkClosureName` @name@ returns the name of a closure for @name@.
+mkClosureName :: String -> Name
+mkClosureName name = mkName $ name <> "_closure"
+
 -- | `compileClosure` @isPoly name entryPtr printPtr@ generates a global
 -- variable representing a closure for @name@.
 compileClosure
     :: MonadModuleBuilder m
     => Bool -> String -> Constant -> Constant -> [Constant] -> m ClosurePtr
 compileClosure isPoly name codePtr printPtr fvs = do
-    let closureName = mkName $ name <> "_closure"
+    let closureName = mkClosureName name
 
     void $ global closureName closureTy $ Struct Nothing False $
         codePtr : printPtr : Int bits (toInteger $ fromEnum isPoly) : fvs
