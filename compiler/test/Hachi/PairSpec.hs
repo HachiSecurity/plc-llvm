@@ -46,10 +46,10 @@ mkPair p@(x,y) = Constant () $ Some $
     ValueOf (DefaultUniPair (uniTag x) (uniTag y)) p
 
 mkFst :: TestTerm -> TestTerm
-mkFst = Apply () (Builtin () FstPair)
+mkFst = Apply () (Force () (Force () (Builtin () FstPair)))
 
 mkSnd :: TestTerm -> TestTerm
-mkSnd = Apply () (Builtin () SndPair)
+mkSnd = Apply () (Force () (Force () (Builtin () SndPair)))
 
 runPairTest :: String -> TestTerm -> Assertion
 runPairTest name term = do
