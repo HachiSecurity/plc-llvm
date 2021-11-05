@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sodium.h>
 
 #define FALSE 0
 #define TRUE 1
@@ -14,6 +15,13 @@ struct bytestring {
     size_t length;
     char* arr[];
 } typedef bytestring;
+
+void rts_init() {
+    if(sodium_init() < 0) {
+        printf("Unable to initialise libsodium!\n");
+        exit(-1);
+    }
+}
 
 void print_bytestring(bytestring* str) {
     for(size_t i=0; i<str->length; i++) {

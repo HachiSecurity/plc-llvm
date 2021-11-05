@@ -175,6 +175,9 @@ generateEntry
 generateEntry body = void $ IR.function "main" [] VoidType $ \_ -> do
     generateConstantGlobals
 
+    -- initialise the runtime system
+    rtsInit
+
     -- generate code for all the built-in functions: it is easier for us to
     -- do this programmatically rather than in e.g. C since the functions
     -- all need to be curried; however, it may be nice to only compile the

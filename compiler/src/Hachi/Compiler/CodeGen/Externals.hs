@@ -2,6 +2,7 @@
 -- functions that we import from stdlib.
 module Hachi.Compiler.CodeGen.Externals (
     externalDefinitions,
+    rtsInit,
 
     -- * Standard C library
     printfTy,
@@ -37,6 +38,8 @@ module Hachi.Compiler.CodeGen.Externals (
 
 -------------------------------------------------------------------------------
 
+import Control.Monad
+
 import LLVM.AST
 import LLVM.AST.AddrSpace
 import LLVM.AST.Constant
@@ -56,6 +59,20 @@ globalFromType name (PointerType (FunctionType rt pts varArgs) _) =
     where pTy = ([Parameter ty (mkName "") [] | ty <- pts], varArgs)
 globalFromType _ _ =
     error "globalFromType must be applied to a function pointer"
+
+-------------------------------------------------------------------------------
+
+rtsInitTy :: Type
+rtsInitTy = ptrOf $ FunctionType VoidType [] False
+
+rtsInitFun :: Global
+rtsInitFun = globalFromType "rts_init" rtsInitTy
+
+rtsInitRef :: Constant
+rtsInitRef = GlobalReference rtsInitTy "rts_init"
+
+rtsInit :: (MonadModuleBuilder m, MonadIRBuilder m) => m ()
+rtsInit = void $ call (ConstantOperand rtsInitRef) []
 
 -------------------------------------------------------------------------------
 
@@ -206,7 +223,8 @@ lessThanEqualsByteString p0 p1 =
 
 externalDefinitions :: [Definition]
 externalDefinitions = map GlobalDefinition
-    [ printfFun
+    [ rtsInitFun
+    , printfFun
     , exitFun
     , mallocFun
     , memcpyFun
