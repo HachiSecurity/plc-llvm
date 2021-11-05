@@ -79,11 +79,32 @@ withCurried isPoly name ps@(sn:dyn) builder = do
 
     compileClosure isPoly name codePtr printPtr []
 
+-- | `compileCurried` @name argTypes builder@ generates code for a built-in
+-- function with @argTypes@-many parameters of the given types. The resulting
+-- function is curried and the body of the inner-most function is produced by
+-- applying @builder@ to the `Operand`s representing the runtime arguments'
+-- values that are obtained after entering the arguments' closures by loading
+-- them from the result register.
+compileCurried
+    :: MonadCodeGen m
+    => String
+    -> [Type]
+    -> ([Operand] -> IRBuilderT m ClosurePtr)
+    -> m ClosurePtr
+compileCurried name tys builder =
+    let params = [ T.pack $ 'v' : show i | (_,i) <- zip tys [0..]]
+    in withCurried False name params $ \argv -> do
+        vars <- forM (zip argv tys) $ \(arg, ty) -> do
+            _ <- enterClosure (MkClosurePtr arg) []
+            loadConstVal ty
+        builder vars
+
 -- | `compileBinary` @name argType0 argType1 builder@ generates code for a
--- built-in function with two arguments of types @argType0@ and @argType1@.
--- The result function is curried and the body of the inner-most function is
+-- built-in function with two parameters of types @argType0@ and @argType1@.
+-- The resulting function is curried and the body of the inner-most function is
 -- produced by applying @builder@ to the `Operand`s representing the runtime
--- arguments.
+-- arguments' values that are obtained after entering the arguments' closures
+-- by loading them from the result register.
 compileBinary
     :: MonadCodeGen m
     => String
@@ -92,14 +113,7 @@ compileBinary
     -> (Operand -> Operand -> IRBuilderT m ClosurePtr)
     -> m ClosurePtr
 compileBinary name lTy rTy builder =
-    withCurried False name ["x", "y"] $ \[xv,yv] -> do
-        _ <- enterClosure (MkClosurePtr xv) []
-        x <- loadConstVal lTy
-
-        _ <- enterClosure (MkClosurePtr yv) []
-        y <- loadConstVal rTy
-
-        builder x y
+    compileCurried name [lTy, rTy] $ \[x,y] -> builder x y
 
 -------------------------------------------------------------------------------
 
