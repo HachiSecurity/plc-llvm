@@ -23,6 +23,7 @@ import LLVM.IRBuilder as IR
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Constant
+import Hachi.Compiler.CodeGen.Constant.Pair
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 import qualified Hachi.Compiler.CodeGen.Externals as E
@@ -402,6 +403,14 @@ ifThenElse = withCurried True "ifThenElse" ["s","c","t","f"] $ \[_,cv,tv,fv] -> 
 
 -------------------------------------------------------------------------------
 
+fstPair :: MonadCodeGen m => m ClosurePtr
+fstPair = compileCurried "fstPair" [pairTyPtr] $ getFst . head
+
+sndPair :: MonadCodeGen m => m ClosurePtr
+sndPair = compileCurried "sndPair" [pairTyPtr] $ getSnd . head
+
+-------------------------------------------------------------------------------
+
 -- | `builtins` is a mapping from built-in function tags to code generators
 -- for them. These are used by `compileBuiltins` to generate the code for each
 -- supported built-in function.
@@ -428,6 +437,9 @@ builtins =
     , (VerifySignature, verifySignature)
     -- Booleans
     , (IfThenElse, ifThenElse)
+    -- Pairs
+    , (FstPair, fstPair)
+    , (SndPair, sndPair)
     ]
 
 -- | `compileBuiltins` is a computation which generates code for all the
