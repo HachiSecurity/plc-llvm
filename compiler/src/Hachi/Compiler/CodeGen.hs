@@ -209,6 +209,7 @@ compileProgram cfg (Program _ _ term) = do
     _ <- typedef "bytestring" $ Just bytestringTyDef
     _ <- typedef "pair" $ Just pairTyDef
     _ <- typedef "list" $ Just listTyDef
+    _ <- typedef "data" $ Just dataTyDef
 
     (errorMsg, _) <- runIRBuilderT emptyIRBuilder $
         globalStringPtr "Something has gone wrong.\n" "errorMsg"

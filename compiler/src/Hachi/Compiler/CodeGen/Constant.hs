@@ -1,4 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -36,6 +37,7 @@ import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 import Hachi.Compiler.CodeGen.Externals
+import Hachi.Compiler.CodeGen.Constant.Data
 import Hachi.Compiler.CodeGen.Constant.Pair
 import Hachi.Compiler.CodeGen.Constant.List
 
@@ -149,7 +151,55 @@ instance CompileConstant Bool where
 
         void $ printf strFormatRef [bstr]
 
+-- | `compileDataConstant` @tag fieldName name value extraArgs@ generates a
+-- static data constant named @name@ of kind @tag@. The provided @value@ is
+-- compiled to another static constant and stored as argument to the data
+-- constant, using a name derived from @fieldName@. For `DataConstr`,
+-- @extra@ may include an additional argument.
+compileDataConstant
+    :: (MonadCodeGen m, CompileConstant a)
+    => DataTag -> String -> String -> a -> [Constant] -> m Constant
+compileDataConstant tag fieldName name val extra = do
+    ref <- compileSubConstant fieldName val
+
+    dataGlobal (mkName name) tag (ref : extra)
+
 instance CompileConstant PLC.Data where
+    compileConstant name (Constr t xs) =
+        compileDataConstant DataConstr "constr_list" name xs [Int 64 t]
+    compileConstant name (Map xs) =
+        compileDataConstant DataMap "map_list" name xs []
+    compileConstant name (List xs) =
+        compileDataConstant DataList "list_list" name xs []
+    compileConstant name (I v) =
+        compileDataConstant DataI "i_integer" name v []
+    compileConstant name (B bs) =
+        compileDataConstant DataB "b_bytestring" name bs []
+
+    compileLoadConstant = loadFromClosure (ClosureFreeVar 0) dataTyPtr
+
+    compilePrintBody _ this = do
+        -- retrieve the pointer to the data structure from the closure
+        ptr <- compileLoadConstant @Data this
+
+        let handleCase ref = do
+                _ <- printf ref []
+                cls <- loadDataPtr ptr
+                _ <- callClosure ClosurePrint cls []
+                retVoid
+
+        -- depending on the constructor tag, use the relevant pretty-printer
+        withDataTag ptr $ \case
+            DataConstr -> do
+                tag <- loadConstrTag ptr
+                _ <- printf dataConstrRef [tag]
+                cls <- loadDataPtr ptr
+                _ <- callClosure ClosurePrint cls []
+                retVoid
+            DataMap -> handleCase dataMapRef
+            DataList -> handleCase dataListRef
+            DataI -> handleCase dataIntegerRef
+            DataB -> handleCase dataByteStringRef
 
 instance (CompileConstant a, CompileConstant b) => CompileConstant (a,b) where
     compileConstant name (x,y) = do

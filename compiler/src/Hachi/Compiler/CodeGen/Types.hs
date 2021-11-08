@@ -29,6 +29,11 @@ module Hachi.Compiler.CodeGen.Types (
     listTyPtr,
     ListPtr(..),
 
+    -- * Data
+    dataTyDef,
+    dataTy,
+    dataTyPtr,
+
     ClosurePtr(..)
 ) where
 
@@ -124,6 +129,29 @@ listTyPtr = ptrOf listTy
 -- | Represents a pointer to a linked list.
 newtype ListPtr = MkListPtr { listPtr :: Operand }
     deriving (Eq, Show)
+
+-------------------------------------------------------------------------------
+
+-- | The Plutus `Data` type is a sum type with five different constructors.
+-- Our representation is as a tagged array of pointers:
+-- For `Constr`, we have a constructor tag and a pointer to a @list@ structure
+-- For `Map`, we have a pointer to a @list@ structure
+-- For `List`, we have a pointer to a @list@ structure
+-- For `I`, we have an integer value
+-- For `B`, we have a pointer to a @bytestring@ structure
+dataTyDef :: Type
+dataTyDef = StructureType False
+    [ i8
+    , ArrayType 0 (ptrOf VoidType)
+    ]
+
+-- | `dataTy` is a `Type` for data values.
+dataTy :: Type
+dataTy = NamedTypeReference "data"
+
+-- | `dataTyPtr` is a `Type` representing a pointer to a data value.
+dataTyPtr :: Type
+dataTyPtr = ptrOf dataTy
 
 -------------------------------------------------------------------------------
 

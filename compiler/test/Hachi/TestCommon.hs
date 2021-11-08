@@ -18,6 +18,7 @@ import System.Directory
 import System.FilePath
 import System.Process.Typed
 
+import PlutusCore.Data
 import PlutusCore.Default
 import UntypedPlutusCore as UPLC
 
@@ -47,6 +48,9 @@ instance Tagged Bool where
 
 instance Tagged BS.ByteString where
     uniTag = DefaultUniByteString
+
+instance Tagged Data where
+    uniTag = DefaultUniData
 
 -------------------------------------------------------------------------------
 
@@ -87,6 +91,9 @@ mkTail xs = mkForce (Builtin () TailList) `mkApp` xs
 
 mkNull :: TestTerm -> TestTerm
 mkNull xs = mkForce (Builtin () NullList) `mkApp` xs
+
+mkData :: Data -> TestTerm
+mkData = mkConst @Data
 
 -------------------------------------------------------------------------------
 
