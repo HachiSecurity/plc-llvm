@@ -205,6 +205,7 @@ compileProgram cfg (Program _ _ term) = do
     _ <- typedef "closure" $ Just closureTyDef
     _ <- typedef "bytestring" $ Just bytestringTyDef
     _ <- typedef "pair" $ Just pairTyDef
+    _ <- typedef "list" $ Just listTyDef
 
     (errorMsg, _) <- runIRBuilderT emptyIRBuilder $
         globalStringPtr "Something has gone wrong.\n" "errorMsg"

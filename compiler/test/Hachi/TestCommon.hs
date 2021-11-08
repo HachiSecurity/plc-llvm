@@ -1,3 +1,7 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+
 -- | This module contains types and definitions which are shared among the
 -- different test suites.
 module Hachi.TestCommon where
@@ -27,29 +31,38 @@ type TestTerm = UPLC.Term UPLC.Name DefaultUni DefaultFun ()
 -- this feels like it should exist in the plutus library somewhere, but I
 -- couldn't find it; if there is something like this there, replace this
 class Tagged a where
-    uniTag :: a -> DefaultUni (Esc a)
+    uniTag :: DefaultUni (Esc a)
 
 instance (Tagged a, Tagged b) => Tagged (a,b) where
-    uniTag (x,y) = DefaultUniPair (uniTag x) (uniTag y)
+    uniTag = DefaultUniPair (uniTag @a) (uniTag @b)
+
+instance Tagged a => Tagged [a] where
+    uniTag = DefaultUniList (uniTag @a)
 
 instance Tagged Integer where
-    uniTag _ = DefaultUniInteger
+    uniTag = DefaultUniInteger
 
 instance Tagged Bool where
-    uniTag _ = DefaultUniBool
+    uniTag = DefaultUniBool
 
 instance Tagged BS.ByteString where
-    uniTag _ = DefaultUniByteString
+    uniTag = DefaultUniByteString
 
-mkPair :: (Tagged a, Tagged b) => (a,b) -> TestTerm
-mkPair p@(x,y) = Constant () $ Some $
-    ValueOf (DefaultUniPair (uniTag x) (uniTag y)) p
+-------------------------------------------------------------------------------
+
+mkPair :: forall a b. (Tagged a, Tagged b) => (a,b) -> TestTerm
+mkPair p = Constant () $ Some $ ValueOf (uniTag @(a,b)) p
 
 mkFst :: TestTerm -> TestTerm
 mkFst = Apply () (Force () (Force () (Builtin () FstPair)))
 
 mkSnd :: TestTerm -> TestTerm
 mkSnd = Apply () (Force () (Force () (Builtin () SndPair)))
+
+mkList :: forall a. Tagged a => [a] -> TestTerm
+mkList xs = Constant () $ Some $ ValueOf (uniTag @[a]) xs
+
+-------------------------------------------------------------------------------
 
 runTest :: String -> TestTerm -> Assertion
 runTest name term = do

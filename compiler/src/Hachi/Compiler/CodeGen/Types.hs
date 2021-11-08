@@ -23,6 +23,12 @@ module Hachi.Compiler.CodeGen.Types (
     pairTy,
     pairTyPtr,
 
+    -- * Lists
+    listTyDef,
+    listTy,
+    listTyPtr,
+    ListPtr(..),
+
     ClosurePtr(..)
 ) where
 
@@ -97,6 +103,27 @@ pairTy = NamedTypeReference "pair"
 -- | `pairTyPtr` is a `Type` representing a pointer to a pair.
 pairTyPtr :: Type
 pairTyPtr = ptrOf pairTy
+
+-------------------------------------------------------------------------------
+
+-- | `listTyDef` is the type definition for lists.
+listTyDef :: Type
+listTyDef = StructureType False
+    [ ptrOf VoidType
+    , listTyPtr
+    ]
+
+-- | `listTy` is a `Type` for lists.
+listTy :: Type
+listTy = NamedTypeReference "list"
+
+-- | `listTyPtr` is a `Type` representing a pointer to a list.
+listTyPtr :: Type
+listTyPtr = ptrOf listTy
+
+-- | Represents a pointer to a linked list.
+newtype ListPtr = MkListPtr { listPtr :: Operand }
+    deriving (Eq, Show)
 
 -------------------------------------------------------------------------------
 

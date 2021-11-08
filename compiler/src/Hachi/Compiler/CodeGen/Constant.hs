@@ -36,6 +36,7 @@ import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Constant.Pair
+import Hachi.Compiler.CodeGen.Constant.List
 
 -------------------------------------------------------------------------------
 
@@ -170,6 +171,49 @@ instance (CompileConstant a, CompileConstant b) => CompileConstant (a,b) where
         pure ()
 
 instance CompileConstant a => CompileConstant [a] where
+    -- we represent an empty list as a null pointer while a cons cell is
+    -- represented as a non-null pointer to a structure containing two
+    -- pointers to closures: the head and the tail
+    compileConstant _ [] = pure $ Null listTyPtr
+    compileConstant name (x:xs) = do
+        -- generate a static closure for the head
+        let headName = name <> "_head"
+        _ <- compileConstStatic headName x
+
+        let xr = GlobalReference closureTyPtr $ mkClosureName headName
+
+        -- generate a static closure for the tail
+        tailName <- mkFresh "list"
+        _ <- compileConstStatic tailName xs
+
+        let xsr = GlobalReference closureTyPtr $ mkClosureName tailName
+
+        -- create a new global for this cons cell comprised of the
+        -- pointers to the head and tail
+        _ <- global (mkName name) listTy $ Struct Nothing False [xr, xsr]
+
+        -- return a reference to the global
+        pure $ GlobalReference listTyPtr (mkName name)
+
+    -- to load a list, we just retrieve its pointer from the closure
+    compileLoadConstant = loadFromClosure (ClosureFreeVar 0) listTyPtr
+
+    compilePrintBody _ this = do
+        -- retrieve the pointer to the pair
+        ptr <- compileLoadConstant @[a] this
+
+        -- the pair pointer may be null if the list is empty, which we check
+        -- for here -- if the list is empty, we do nothing
+        listCase ptr retVoid $ do
+            -- list is a cons cell: both components are pointers to closures;
+            -- retrieve them and call their respective pretty-printing functions
+            x <- getHead ptr
+            _ <- callClosure ClosurePrint x []
+
+            xs <- getTail ptr
+            _ <- callClosure ClosurePrint xs []
+
+            retVoid
 
 -------------------------------------------------------------------------------
 

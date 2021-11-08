@@ -24,6 +24,7 @@ library
       Hachi.Compiler.CodeGen.Closure
       Hachi.Compiler.CodeGen.Common
       Hachi.Compiler.CodeGen.Constant
+      Hachi.Compiler.CodeGen.Constant.List
       Hachi.Compiler.CodeGen.Constant.Pair
       Hachi.Compiler.CodeGen.Constant.String
       Hachi.Compiler.CodeGen.Externals
@@ -99,6 +100,7 @@ test-suite plc-llvm-test
   main-is: Spec.hs
   other-modules:
       Hachi.CompilerSpec
+      Hachi.ListSpec
       Hachi.PairSpec
       Hachi.TestCommon
       Paths_plc_llvm
