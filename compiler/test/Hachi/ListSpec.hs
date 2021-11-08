@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeApplications #-}
+
 module Hachi.ListSpec where
 
 -------------------------------------------------------------------------------
@@ -15,6 +17,12 @@ test_lists :: [TestTree]
 test_lists =
     [ testCase "List constants" $
         runTest "list0" $ mkList [True, False, True, False]
+    , testCase "chooseList: empty list" $
+        runTest "chooseList0" $
+            mkChooseList (mkList @Bool []) (mkConst True) (mkConst False)
+    , testCase "chooseList: non-empty list" $
+        runTest "chooseList1" $
+            mkChooseList (mkList @Bool [False]) (mkConst False) (mkConst True)
     ]
 
 -------------------------------------------------------------------------------

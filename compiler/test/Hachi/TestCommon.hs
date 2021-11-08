@@ -50,17 +50,31 @@ instance Tagged BS.ByteString where
 
 -------------------------------------------------------------------------------
 
+mkConst :: forall a. Tagged a => a -> TestTerm
+mkConst = Constant () . Some . ValueOf (uniTag @a)
+
+infixl 5 `mkApp`
+mkApp :: TestTerm -> TestTerm -> TestTerm
+mkApp = Apply ()
+
+mkForce :: TestTerm -> TestTerm
+mkForce = Force ()
+
 mkPair :: forall a b. (Tagged a, Tagged b) => (a,b) -> TestTerm
-mkPair p = Constant () $ Some $ ValueOf (uniTag @(a,b)) p
+mkPair = mkConst @(a,b)
 
 mkFst :: TestTerm -> TestTerm
-mkFst = Apply () (Force () (Force () (Builtin () FstPair)))
+mkFst = mkApp (Force () (Force () (Builtin () FstPair)))
 
 mkSnd :: TestTerm -> TestTerm
-mkSnd = Apply () (Force () (Force () (Builtin () SndPair)))
+mkSnd = mkApp (Force () (Force () (Builtin () SndPair)))
 
 mkList :: forall a. Tagged a => [a] -> TestTerm
-mkList xs = Constant () $ Some $ ValueOf (uniTag @[a]) xs
+mkList = mkConst @[a]
+
+mkChooseList :: TestTerm -> TestTerm -> TestTerm -> TestTerm
+mkChooseList xs a b =
+    mkForce (mkForce $ Builtin () ChooseList) `mkApp` xs `mkApp` a `mkApp` b
 
 -------------------------------------------------------------------------------
 
