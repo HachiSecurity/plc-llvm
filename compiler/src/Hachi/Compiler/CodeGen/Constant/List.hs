@@ -1,5 +1,6 @@
 
 module Hachi.Compiler.CodeGen.Constant.List (
+    listNew,
     getHead,
     getTail,
     listCase
@@ -10,11 +11,36 @@ module Hachi.Compiler.CodeGen.Constant.List (
 import LLVM.AST
 import LLVM.AST.Constant
 import LLVM.AST.IntegerPredicate as LLVM
-import LLVM.IRBuilder
+import LLVM.IRBuilder as IR
 
+import Hachi.Compiler.CodeGen.Externals
+import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 
 -------------------------------------------------------------------------------
+
+-- | `listNew` @head tail@ generates code which allocates enough space for a new
+-- list structure. @head@ and @tail@ are then stored in this structure.
+listNew
+    :: (MonadCodeGen m, MonadIRBuilder m)
+    => Operand -> Operand -> m Operand
+listNew x xs = do
+    -- allocate space for the list structure (two pointers)
+    size <- IR.sizeof 64 listTy
+    ptr <- malloc size
+    tptr <- bitcast ptr listTyPtr
+
+    -- store the head pointer
+    store tptr 0 x
+
+    -- store the tail pointer
+    tailAddr <- gep tptr [ ConstantOperand $ Int 32 0
+                         , ConstantOperand $ Int 32 1
+                         ]
+    store tailAddr 0 xs
+
+    -- return the pointer to the list structure
+    pure tptr
 
 -- | `getHead` @listPtr@ generates code which retrieves the head of the list
 -- pointed at by @listPtr@.

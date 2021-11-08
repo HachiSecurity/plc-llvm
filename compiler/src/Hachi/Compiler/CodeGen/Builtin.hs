@@ -23,6 +23,7 @@ import LLVM.IRBuilder as IR
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Constant
+import Hachi.Compiler.CodeGen.Constant.List
 import Hachi.Compiler.CodeGen.Constant.Pair
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
@@ -447,6 +448,17 @@ chooseList =
         ptr <- select r a b
         pure $ MkClosurePtr ptr
 
+mkCons :: MonadCodeGen m => m ClosurePtr
+mkCons =
+    let ps = mkParams 1 ["x", "xs"]
+    in withCurried "mkCons" ps $ \[_,x,xs] -> do
+        ptr <- listNew x xs
+
+        -- the element type only matters for `compileConstant` so we can
+        -- safely just set it to `()` here and it will work regardless of the
+        -- actual element type
+        compileConstDynamic @[()] ptr
+
 -------------------------------------------------------------------------------
 
 -- | `builtins` is a mapping from built-in function tags to code generators
@@ -480,6 +492,7 @@ builtins =
     , (SndPair, sndPair)
     -- Lists
     , (ChooseList, chooseList)
+    , (MkCons, mkCons)
     ]
 
 -- | `compileBuiltins` is a computation which generates code for all the

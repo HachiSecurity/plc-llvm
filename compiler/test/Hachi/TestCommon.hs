@@ -76,6 +76,9 @@ mkChooseList :: TestTerm -> TestTerm -> TestTerm -> TestTerm
 mkChooseList xs a b =
     mkForce (mkForce $ Builtin () ChooseList) `mkApp` xs `mkApp` a `mkApp` b
 
+mkCons :: TestTerm -> TestTerm -> TestTerm
+mkCons x xs = mkForce (Builtin () MkCons) `mkApp` x `mkApp` xs
+
 -------------------------------------------------------------------------------
 
 runTest :: String -> TestTerm -> Assertion

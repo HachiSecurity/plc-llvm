@@ -23,6 +23,8 @@ test_lists =
     , testCase "chooseList: non-empty list" $
         runTest "chooseList1" $
             mkChooseList (mkList @Bool [False]) (mkConst False) (mkConst True)
+    , testCase "mkCons" $
+        runTest "mkCons0" $ mkCons (mkConst True) (mkList @Bool [False])
     ]
 
 -------------------------------------------------------------------------------
