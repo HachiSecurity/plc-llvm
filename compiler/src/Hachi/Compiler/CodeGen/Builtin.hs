@@ -1,4 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 
@@ -23,6 +24,7 @@ import LLVM.IRBuilder as IR
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Constant
+import Hachi.Compiler.CodeGen.Constant.Data
 import Hachi.Compiler.CodeGen.Constant.List
 import Hachi.Compiler.CodeGen.Constant.Pair
 import Hachi.Compiler.CodeGen.Globals
@@ -502,6 +504,23 @@ nullList =
 
 -------------------------------------------------------------------------------
 
+chooseData :: MonadCodeGen m => m ClosurePtr
+chooseData =
+    let ps = mkParams 1 ["d","constr","map","list","i","b"]
+    in withCurried "chooseData" ps $ \[_,d,kConstr,kMap,kList,kI,kB] -> do
+        -- enter the closure for the data value and get the pointer to it
+        _ <- enterClosure (MkClosurePtr d) []
+        ptr <- loadConstVal dataTyPtr
+
+        withDataTag ptr $ \case
+            DataConstr -> ret kConstr
+            DataMap -> ret kMap
+            DataList -> ret kList
+            DataI -> ret kI
+            DataB -> ret kB
+
+-------------------------------------------------------------------------------
+
 -- | `builtins` is a mapping from built-in function tags to code generators
 -- for them. These are used by `compileBuiltins` to generate the code for each
 -- supported built-in function.
@@ -539,6 +558,8 @@ builtins =
     , (HeadList, headList)
     , (TailList, tailList)
     , (NullList, nullList)
+    -- Data
+    , (ChooseData, chooseData)
     ]
 
 -- | `compileBuiltins` is a computation which generates code for all the

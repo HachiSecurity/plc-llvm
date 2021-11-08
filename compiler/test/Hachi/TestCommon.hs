@@ -54,6 +54,14 @@ instance Tagged Data where
 
 -------------------------------------------------------------------------------
 
+true :: TestTerm
+true = mkConst True
+
+false :: TestTerm
+false = mkConst False
+
+-------------------------------------------------------------------------------
+
 mkConst :: forall a. Tagged a => a -> TestTerm
 mkConst = Constant () . Some . ValueOf (uniTag @a)
 
@@ -94,6 +102,13 @@ mkNull xs = mkForce (Builtin () NullList) `mkApp` xs
 
 mkData :: Data -> TestTerm
 mkData = mkConst @Data
+
+mkChooseData
+    :: TestTerm -> TestTerm -> TestTerm -> TestTerm -> TestTerm -> TestTerm
+    -> TestTerm
+mkChooseData d kConstr kMap kList kI kB =
+    mkForce (Builtin () ChooseData) `mkApp` d `mkApp`
+    kConstr `mkApp` kMap `mkApp` kList `mkApp` kI `mkApp` kB
 
 -------------------------------------------------------------------------------
 
