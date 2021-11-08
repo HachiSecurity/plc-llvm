@@ -484,6 +484,13 @@ tailList =
 
         listCase xs nullCode $ getTail xs >>= retClosure
 
+nullList :: MonadCodeGen m => m ClosurePtr
+nullList =
+    let ps = mkParams 1 [listTyPtr]
+    in compileCurried "nullList" ps $ \[xs] -> do
+        b <- icmp LLVM.EQ xs (ConstantOperand $ Null listTyPtr)
+        retConstDynamic @Bool b
+
 -------------------------------------------------------------------------------
 
 -- | `builtins` is a mapping from built-in function tags to code generators
@@ -520,6 +527,7 @@ builtins =
     , (MkCons, mkCons)
     , (HeadList, headList)
     , (TailList, tailList)
+    , (NullList, nullList)
     ]
 
 -- | `compileBuiltins` is a computation which generates code for all the

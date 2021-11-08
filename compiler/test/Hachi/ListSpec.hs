@@ -33,6 +33,10 @@ test_lists =
         runTest "tailList0" $ mkTail $ mkList @Bool []
     , testCase "tailList: non-empty list" $
         runTest "tailList1" $ mkTail $ mkList @Bool [True, False]
+    , testCase "nullList: empty list" $
+        runTest "nullList0" $ mkNull $ mkList @Bool []
+    , testCase "nullList: non-empty list" $
+        runTest "nullList1" $ mkNull $ mkList @Bool [True]
     ]
 
 -------------------------------------------------------------------------------

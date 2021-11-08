@@ -85,6 +85,9 @@ mkHead xs = mkForce (Builtin () HeadList) `mkApp` xs
 mkTail :: TestTerm -> TestTerm
 mkTail xs = mkForce (Builtin () TailList) `mkApp` xs
 
+mkNull :: TestTerm -> TestTerm
+mkNull xs = mkForce (Builtin () NullList) `mkApp` xs
+
 -------------------------------------------------------------------------------
 
 runTest :: String -> TestTerm -> Assertion
