@@ -103,6 +103,13 @@ instance CompileConstant BS.ByteString where
 instance CompileConstant T.Text where
 
 instance CompileConstant () where
+    compileConstant _ () =
+        pure $ Int 1 1
+
+    compileLoadConstant = loadFromClosure (ClosureFreeVar 0) i1
+
+    compilePrintBody _ _ =
+        void $ printf unitRef []
 
 instance CompileConstant Bool where
     -- we can just stick the boolean value directly into the closure
