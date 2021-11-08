@@ -36,6 +36,7 @@ import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Constant
 import Hachi.Compiler.CodeGen.Externals
+import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 
@@ -191,6 +192,8 @@ generateEntry body = void $ IR.function "main" [] VoidType $ \_ -> do
     -- call the print code of the resulting closure
     printFun <- loadFromClosure ClosurePrint printFnTy ptr
     void $ call printFun [(closurePtr ptr, [])]
+
+    void $ printf nlRef []
 
     retVoid
 

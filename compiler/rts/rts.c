@@ -27,7 +27,6 @@ void print_bytestring(bytestring* str) {
     for(size_t i=0; i<str->length; i++) {
         printf("%02X", (*str->arr)[i]);
     }
-    printf("\n");
 }
 
 char index_bytestring(bytestring* str, size_t n) {

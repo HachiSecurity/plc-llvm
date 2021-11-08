@@ -164,19 +164,21 @@ instance (CompileConstant a, CompileConstant b) => CompileConstant (a,b) where
         -- retrieve the pointer to the pair
         ptr <- compileLoadConstant @(a,b) this
 
-        -- print something to indicate that what follows are the values of
-        -- a pair
-        void $ printf pairResultRef []
+        -- print the opening bracket
+        void $ printf openParenRef []
 
         -- both components must be pointers to closures; retrieve them and
         -- call their respective pretty-printing functions
         x <- getFst ptr
         _ <- callClosure ClosurePrint x []
 
+        void $ printf commaRef []
+
         y <- getSnd ptr
         _ <- callClosure ClosurePrint y []
 
-        pure ()
+        -- print the closing bracket
+        void $ printf closeParenRef []
 
 instance CompileConstant a => CompileConstant [a] where
     -- we represent an empty list as a null pointer while a cons cell is
@@ -210,16 +212,22 @@ instance CompileConstant a => CompileConstant [a] where
         -- retrieve the pointer to the pair
         ptr <- compileLoadConstant @[a] this
 
-        -- the pair pointer may be null if the list is empty, which we check
-        -- for here -- if the list is empty, we do nothing
-        listCase ptr retVoid $ do
+        -- check whether the list is empty or a cons cell and use the
+        -- appropriate pretty-printing code for each case
+        listCase ptr (printf emptyListRef [] >> retVoid) $ do
+            _ <- printf openParenRef []
+
             -- list is a cons cell: both components are pointers to closures;
             -- retrieve them and call their respective pretty-printing functions
             x <- getHead ptr
             _ <- callClosure ClosurePrint x []
 
+            _ <- printf consRef []
+
             xs <- getTail ptr
             _ <- callClosure ClosurePrint xs []
+
+            _ <- printf closeParenRef []
 
             retVoid
 
