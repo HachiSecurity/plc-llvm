@@ -22,7 +22,10 @@ module Hachi.Compiler.CodeGen.Closure (
     loadFromClosure,
     callClosure,
     enterClosure,
-    lookupVar
+    lookupVar,
+
+    -- * Misc
+    retClosure
 ) where
 
 -------------------------------------------------------------------------------
@@ -185,12 +188,9 @@ allocateClosure isDelay codePtr printPtr fvs = do
 -- computation which generates the code for the body of the closure.
 -- The function returns a `ClosurePtr` representing the new closure.
 compileDynamicClosure
-    :: ( MonadIO m
-       , MonadReader CodeGenSt m
-       , MonadModuleBuilder m
-       )
+    :: MonadCodeGen m
     => Bool -> String -> S.Set T.Text -> T.Text
-    -> (Operand -> Operand -> IRBuilderT m ClosurePtr)
+    -> (Operand -> Operand -> IRBuilderT m ())
     -> IRBuilderT m ClosurePtr
 compileDynamicClosure isDelay name fvs var codeFun = do
     let entryName = mkName $ name <> "_entry"
@@ -211,9 +211,7 @@ compileDynamicClosure isDelay name fvs var codeFun = do
             -- update the local environment with mappings to the free variables
             -- we have obtained from the closure represented by `this` and
             -- compile the body of the function
-            termClosure <-
-                updateEnv fvs (map MkClosurePtr cvars) $ codeFun this arg
-            ret $ closurePtr termClosure
+            updateEnv fvs (map MkClosurePtr cvars) $ codeFun this arg
 
     let code_fun = GlobalReference entryTy entryName
 
@@ -309,5 +307,9 @@ lookupVar var ty = do
         Just ptr -> do
             compileTrace $ "Found " <> T.unpack var <> " in " <> name
             bitcast (closurePtr ptr) ty
+
+-- | `retClosure` @closurePtr@ returns the pointer represented by @closurePtr@.
+retClosure :: MonadIRBuilder m => ClosurePtr -> m ()
+retClosure = ret . closurePtr
 
 -------------------------------------------------------------------------------

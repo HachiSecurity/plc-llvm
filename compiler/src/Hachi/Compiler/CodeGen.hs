@@ -89,7 +89,7 @@ compileBody (LamAbs _ var term) = do
     let fvs = S.map nameString $ S.delete var $ freeVars term
 
     compileDynamicClosure False name fvs (UPLC.nameString var) $
-        \_ _ -> compileBody term
+        \_ _ -> compileBody term >>= retClosure
 compileBody (Apply _ lhs rhs) = do
     name <- mkFresh "app"
 
@@ -158,7 +158,7 @@ compileBody (Delay _ term) = do
     -- equivalent to the one we get when evaluation results in a function;
     -- in the future, we might want to print a different message
     compileDynamicClosure True name fvs "_delayArg" $
-        \_ _ -> compileBody term
+        \_ _ -> compileBody term >>= retClosure
 compileBody (Constant _ val) = compileConst val
 compileBody (Builtin _ f) = do
     builtins <- asks codeGenBuiltins

@@ -10,6 +10,7 @@ module Hachi.Compiler.CodeGen.Constant (
     CompileConstant,
     compileConst,
     compileConstDynamic,
+    retConstDynamic,
     loadConstVal
 ) where
 
@@ -283,6 +284,15 @@ compileConstDynamic val = do
 
     -- 3. generate a dynamic closure
     allocateClosure False codePtr printPtr [val]
+
+-- | `retConstDynamic` @value@ is like `compileConstDynamic`, except that a
+-- return instruction is inserted at the end which returns the pointer to the
+-- new closure.
+retConstDynamic
+    :: forall a m. (MonadCodeGen m, MonadIRBuilder m, CompileConstant a)
+    => Operand
+    -> m ()
+retConstDynamic val = compileConstDynamic @a val >>= retClosure
 
 -- | `compileConstPrint` @name builder@ compiles a print function for a
 -- constant which loads the constant value from the closure using @builder@.

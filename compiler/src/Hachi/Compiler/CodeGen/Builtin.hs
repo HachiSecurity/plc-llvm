@@ -51,7 +51,7 @@ withCurried
     :: forall m. MonadCodeGen m
     => String
     -> [(T.Text,Bool)]
-    -> ([Operand] -> IRBuilderT m ClosurePtr)
+    -> ([Operand] -> IRBuilderT m ())
     -> m ClosurePtr
 withCurried _ [] _ = error "withCurried needs at least one argument"
 withCurried name ps@((sn,isTyVar):dyn) builder = do
@@ -60,7 +60,7 @@ withCurried name ps@((sn,isTyVar):dyn) builder = do
     -- this helper function generates code which creates dynamic closures for
     -- the functions that are returned to bind the 2nd argument onwards
     let mkCurry :: Int -> S.Set T.Text -> [(T.Text,Bool)]
-                -> IRBuilderT m ClosurePtr
+                -> IRBuilderT m ()
         mkCurry _ _ [] = do
             -- if there are no further parameters, retrieve all of the
             -- parameters from the current environment
@@ -72,9 +72,10 @@ withCurried name ps@((sn,isTyVar):dyn) builder = do
             -- if we have another parameter, generate code which allocates a
             -- dynamic closure for the function that binds it
             let dynName = name <> "_dynamic_" <> show ix
-            compileDynamicClosure isTyVar' dynName fvs vn $ \_ arg -> do
+            ptr <- compileDynamicClosure isTyVar' dynName fvs vn $ \_ arg -> do
                 extendScope vn (MkClosurePtr arg) $
                     mkCurry (ix+1) (S.union (S.singleton vn) fvs) vs
+            retClosure ptr
 
     -- construct the static closure for this built-in function, which brings
     -- the first argument into scope and (if there is more than one parameter)
@@ -84,8 +85,7 @@ withCurried name ps@((sn,isTyVar):dyn) builder = do
         \[_, arg] -> extendScope sn (MkClosurePtr arg) $ do
             compileTrace entryName
 
-            ptr <- mkCurry 0 (S.singleton sn) dyn
-            ret $ closurePtr ptr
+            mkCurry 0 (S.singleton sn) dyn
 
     let codePtr = GlobalReference (mkEntryTy 1) (mkName entryName)
 
@@ -103,7 +103,7 @@ compileCurried
     :: MonadCodeGen m
     => String
     -> [(Type,Bool)]
-    -> ([Operand] -> IRBuilderT m ClosurePtr)
+    -> ([Operand] -> IRBuilderT m ())
     -> m ClosurePtr
 compileCurried name tys builder =
     let params = [ (T.pack $ 'v' : show i, v) | ((_,v),i) <- zip tys [0..]]
@@ -126,7 +126,7 @@ compileBinary
     => String
     -> Type
     -> Type
-    -> (Operand -> Operand -> IRBuilderT m ClosurePtr)
+    -> (Operand -> Operand -> IRBuilderT m ())
     -> m ClosurePtr
 compileBinary name lTy rTy builder =
     compileCurried name [(lTy, False), (rTy, False)] $ \[x,y] -> builder x y
@@ -149,7 +149,7 @@ compileBinaryInteger
     => String -> (Operand -> Operand -> IRBuilderT m Operand)
     -> m ClosurePtr
 compileBinaryInteger name builder = compileBinary name i64 i64 $ \x y -> do
-    builder x y >>= compileConstDynamic @a
+    builder x y >>= retConstDynamic @a
 
 addInteger :: MonadCodeGen m => m ClosurePtr
 addInteger = compileBinaryInteger @Integer "addInteger" add
@@ -251,7 +251,7 @@ appendByteString =
         _ <- E.memcpy addr1 srcAddr1 l1
 
         -- allocate a new closure
-        compileConstDynamic @BS.ByteString ptr
+        retConstDynamic @BS.ByteString ptr
 
 consByteString :: MonadCodeGen m => m ClosurePtr
 consByteString =
@@ -274,7 +274,7 @@ consByteString =
         _ <- E.memcpy addr1 srcAddr1 l
 
         -- allocate a new closure
-        compileConstDynamic @BS.ByteString ptr
+        retConstDynamic @BS.ByteString ptr
 
 sliceByteString :: MonadCodeGen m => m ClosurePtr
 sliceByteString =
@@ -318,7 +318,7 @@ sliceByteString =
     store dataAddr 0 startAddr
 
     -- allocate a new closure
-    compileConstDynamic @BS.ByteString ptr
+    retConstDynamic @BS.ByteString ptr
 
 lengthOfByteString :: MonadCodeGen m => m ClosurePtr
 lengthOfByteString =
@@ -332,27 +332,27 @@ lengthOfByteString =
     val <- bsLen ptr
 
     -- allocate a new closure for the size value
-    compileConstDynamic @Integer val
+    retConstDynamic @Integer val
 
 indexByteString :: MonadCodeGen m => m ClosurePtr
 indexByteString =
     compileBinary "indexByteString" bytestringTyPtr i64 $
-    \str n -> E.indexBytestring str n >>= compileConstDynamic @Integer
+    \str n -> E.indexBytestring str n >>= retConstDynamic @Integer
 
 equalsByteString :: MonadCodeGen m => m ClosurePtr
 equalsByteString =
     compileBinary "equalsByteString" bytestringTyPtr bytestringTyPtr $
-    \s0 s1 -> E.equalsByteString s0 s1 >>= compileConstDynamic @Bool
+    \s0 s1 -> E.equalsByteString s0 s1 >>= retConstDynamic @Bool
 
 lessThanByteString :: MonadCodeGen m => m ClosurePtr
 lessThanByteString =
     compileBinary "lessThanByteString" bytestringTyPtr bytestringTyPtr $
-    \s0 s1 -> E.lessThanByteString s0 s1 >>= compileConstDynamic @Bool
+    \s0 s1 -> E.lessThanByteString s0 s1 >>= retConstDynamic @Bool
 
 lessThanEqualsByteString :: MonadCodeGen m => m ClosurePtr
 lessThanEqualsByteString =
     compileBinary "lessThanEqualsByteString" bytestringTyPtr bytestringTyPtr $
-    \s0 s1 -> E.lessThanEqualsByteString s0 s1 >>= compileConstDynamic @Bool
+    \s0 s1 -> E.lessThanEqualsByteString s0 s1 >>= retConstDynamic @Bool
 
 -------------------------------------------------------------------------------
 
@@ -372,7 +372,7 @@ sha256 =
     store dataAddr 0 r
 
     -- create a new dynamic closure for the new bytestring
-    compileConstDynamic @BS.ByteString ptr
+    retConstDynamic @BS.ByteString ptr
 
 blake2b :: MonadCodeGen m => m ClosurePtr
 blake2b =
@@ -390,14 +390,16 @@ blake2b =
     store dataAddr 0 r
 
     -- create a new dynamic closure for the new bytestring
-    compileConstDynamic @BS.ByteString ptr
+    retConstDynamic @BS.ByteString ptr
 
 verifySignature :: MonadCodeGen m => m ClosurePtr
 verifySignature =
     let pty = (bytestringTyPtr, False)
     in compileCurried "verifySignature" [pty,pty,pty] $
     \[pubKey,message,signature] ->
-        E.verifySig pubKey message signature >>= compileConstDynamic @Bool
+        E.verifySig pubKey message signature >>=
+        compileConstDynamic @Bool >>=
+        retClosure
 
 -------------------------------------------------------------------------------
 
@@ -418,19 +420,19 @@ ifThenElse =
     cr <- icmp LLVM.NE c (ConstantOperand $ Int 1 0)
     ptr <- select cr tv fv
 
-    pure $ MkClosurePtr ptr
+    retClosure $ MkClosurePtr ptr
 
 -------------------------------------------------------------------------------
 
 fstPair :: MonadCodeGen m => m ClosurePtr
 fstPair =
     let ps = mkParams 2 [pairTyPtr]
-    in compileCurried "fstPair" ps $ \[ptr] -> getFst ptr
+    in compileCurried "fstPair" ps $ \[ptr] -> getFst ptr >>= retClosure
 
 sndPair :: MonadCodeGen m => m ClosurePtr
 sndPair =
     let ps = mkParams 2 [pairTyPtr]
-    in compileCurried "sndPair" ps $ \[ptr] -> getSnd ptr
+    in compileCurried "sndPair" ps $ \[ptr] -> getSnd ptr >>= retClosure
 
 -------------------------------------------------------------------------------
 
@@ -446,7 +448,7 @@ chooseList =
         -- i.e. whether it is a null pointer or not
         r <- icmp LLVM.EQ xs (ConstantOperand $ Null listTyPtr)
         ptr <- select r a b
-        pure $ MkClosurePtr ptr
+        retClosure $ MkClosurePtr ptr
 
 mkCons :: MonadCodeGen m => m ClosurePtr
 mkCons =
@@ -457,7 +459,7 @@ mkCons =
         -- the element type only matters for `compileConstant` so we can
         -- safely just set it to `()` here and it will work regardless of the
         -- actual element type
-        compileConstDynamic @[()] ptr
+        retConstDynamic @[()] ptr
 
 -------------------------------------------------------------------------------
 
