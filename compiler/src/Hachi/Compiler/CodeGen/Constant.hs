@@ -64,6 +64,24 @@ class CompileConstant a where
 ccProxy :: Proxy CompileConstant
 ccProxy = Proxy
 
+-- | `compileSubConstant` @baseName value@ is a wrapper around
+-- `compileConstStatic` for @value@ which additionally generates a fresh
+-- name based on the suggestion given by @baseName@ and constructs a global
+-- reference to the resulting closure.
+compileSubConstant
+    :: (MonadCodeGen m, CompileConstant a)
+    => String -> a -> m Constant
+compileSubConstant baseName v = do
+    name <- mkFresh baseName
+    _ <- compileConstStatic name v
+
+    -- unfortunately, `compileClosure` already returns a `ClosurePtr` which
+    -- is a wrapper around `Operand`, but we need `Constant`s here, so we
+    -- need to reconstruct the global references from the closure names;
+    -- this could be improved if we better abstract over static and dynamic
+    -- closures in `ClosurePtr`
+    pure $ GlobalReference closureTyPtr $ mkClosureName name
+
 instance CompileConstant Integer where
     -- we can just stick the integer value directly into the closure
     compileConstant _ val = pure $ Int 64 val
@@ -140,16 +158,9 @@ instance (CompileConstant a, CompileConstant b) => CompileConstant (a,b) where
         -- that they can have their respective pretty-printing functions
         let fstName = name <> "_fst"
         let sndName = name <> "_snd"
-        _ <- compileConstStatic fstName x
-        _ <- compileConstStatic sndName y
 
-        -- unfortunately, `compileClosure` already returns a `ClosurePtr` which
-        -- is a wrapper around `Operand`, but we need `Constant`s here, so we
-        -- need to reconstruct the global references from the closure names;
-        -- this could be improved if we better abstract over static and dynamic
-        -- closures in `ClosurePtr`
-        let xr = GlobalReference closureTyPtr $ mkClosureName fstName
-        let yr = GlobalReference closureTyPtr $ mkClosureName sndName
+        xr <- compileSubConstant fstName x
+        yr <- compileSubConstant sndName y
 
         -- create a new global for the pair of pointer-sized values
         _ <- global (mkName name) pairTy $ Struct Nothing False [xr, yr]
@@ -187,16 +198,10 @@ instance CompileConstant a => CompileConstant [a] where
     compileConstant _ [] = pure $ Null listTyPtr
     compileConstant name (x:xs) = do
         -- generate a static closure for the head
-        let headName = name <> "_head"
-        _ <- compileConstStatic headName x
-
-        let xr = GlobalReference closureTyPtr $ mkClosureName headName
+        xr <- compileSubConstant (name <> "_head") x
 
         -- generate a static closure for the tail
-        tailName <- mkFresh "list"
-        _ <- compileConstStatic tailName xs
-
-        let xsr = GlobalReference closureTyPtr $ mkClosureName tailName
+        xsr <- compileSubConstant "list" xs
 
         -- create a new global for this cons cell comprised of the
         -- pointers to the head and tail
