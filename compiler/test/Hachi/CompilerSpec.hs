@@ -5,18 +5,17 @@ module Hachi.CompilerSpec where
 
 import Control.Monad
 
-import qualified Data.ByteString.Lazy as LBS
+import Data.List (sort)
 
 import System.Directory
 import System.FilePath
-import System.Process.Typed
 
 import Test.Tasty
 import Test.Tasty.HUnit
 
 import Hachi.Compiler
 import Hachi.Compiler.Config
-import Data.List (sort)
+import Hachi.TestCommon
 
 -------------------------------------------------------------------------------
 
@@ -37,15 +36,6 @@ test_samples = do
             compile (mkDefaultConfig fp)
 
             -- run the resulting program
-            let pcfg = proc (dropExtension fp) []
-            (ec, stdout, stderr) <- readProcess pcfg
-
-            -- read the expected output
-            exStdout <- LBS.readFile $ replaceExtension fp "out"
-
-            -- check that the output we got from the program matches the
-            -- expected output
-            assertEqual "Expected output does not match actual output"
-                exStdout stdout
+            runAndVerify fp
 
 -------------------------------------------------------------------------------

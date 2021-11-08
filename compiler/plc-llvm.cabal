@@ -100,6 +100,7 @@ test-suite plc-llvm-test
   other-modules:
       Hachi.CompilerSpec
       Hachi.PairSpec
+      Hachi.TestCommon
       Paths_plc_llvm
   hs-source-dirs:
       test
