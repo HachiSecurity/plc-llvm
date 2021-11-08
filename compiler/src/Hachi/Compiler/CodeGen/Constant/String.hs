@@ -9,6 +9,7 @@ globalStrs =
     , ("strFormatStr", "%s\n")
     , ("trueStr", "True")
     , ("falseStr", "False")
+    , ("unitStr", "()\n")
     , ("forceErrStr", "Attempted to instantiate a non-polymorphic term.\n")
     , ("funErrStr", "Evaluation resulted in a function.\n")
     , ("headErrStr", "headList called on an empty list\n")

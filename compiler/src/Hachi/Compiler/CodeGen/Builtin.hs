@@ -425,6 +425,15 @@ ifThenElse =
 
 -------------------------------------------------------------------------------
 
+chooseUnit :: MonadCodeGen m => m ClosurePtr
+chooseUnit =
+    let ps = mkParams 1 ["v","k"]
+    in withCurried "chooseUnit" ps $ \[_,v,k] -> do
+        _ <- enterClosure (MkClosurePtr v) []
+        retClosure $ MkClosurePtr k
+
+-------------------------------------------------------------------------------
+
 fstPair :: MonadCodeGen m => m ClosurePtr
 fstPair =
     let ps = mkParams 2 [pairTyPtr]
@@ -519,6 +528,8 @@ builtins =
     , (VerifySignature, verifySignature)
     -- Booleans
     , (IfThenElse, ifThenElse)
+    -- Unit
+    , (ChooseUnit, chooseUnit)
     -- Pairs
     , (FstPair, fstPair)
     , (SndPair, sndPair)
