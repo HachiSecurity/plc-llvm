@@ -25,6 +25,7 @@ import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Constant
 import Hachi.Compiler.CodeGen.Constant.List
 import Hachi.Compiler.CodeGen.Constant.Pair
+import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 import qualified Hachi.Compiler.CodeGen.Externals as E
@@ -461,6 +462,28 @@ mkCons =
         -- actual element type
         retConstDynamic @[()] ptr
 
+headList :: MonadCodeGen m => m ClosurePtr
+headList =
+    let ps = mkParams 1 [listTyPtr]
+    in compileCurried "headList" ps $ \[xs] -> do
+        let nullCode = do
+                void $ E.printf headErrRef []
+                void $ E.exit (-1)
+                ret $ ConstantOperand $ Null closureTyPtr
+
+        listCase xs nullCode $ getHead xs >>= retClosure
+
+tailList :: MonadCodeGen m => m ClosurePtr
+tailList =
+    let ps = mkParams 1 [listTyPtr]
+    in compileCurried "tailList" ps $ \[xs] -> do
+        let nullCode = do
+                void $ E.printf tailErrRef []
+                void $ E.exit (-1)
+                ret $ ConstantOperand $ Null closureTyPtr
+
+        listCase xs nullCode $ getTail xs >>= retClosure
+
 -------------------------------------------------------------------------------
 
 -- | `builtins` is a mapping from built-in function tags to code generators
@@ -495,6 +518,8 @@ builtins =
     -- Lists
     , (ChooseList, chooseList)
     , (MkCons, mkCons)
+    , (HeadList, headList)
+    , (TailList, tailList)
     ]
 
 -- | `compileBuiltins` is a computation which generates code for all the

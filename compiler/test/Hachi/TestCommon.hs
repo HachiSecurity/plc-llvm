@@ -79,6 +79,12 @@ mkChooseList xs a b =
 mkCons :: TestTerm -> TestTerm -> TestTerm
 mkCons x xs = mkForce (Builtin () MkCons) `mkApp` x `mkApp` xs
 
+mkHead :: TestTerm -> TestTerm
+mkHead xs = mkForce (Builtin () HeadList) `mkApp` xs
+
+mkTail :: TestTerm -> TestTerm
+mkTail xs = mkForce (Builtin () TailList) `mkApp` xs
+
 -------------------------------------------------------------------------------
 
 runTest :: String -> TestTerm -> Assertion

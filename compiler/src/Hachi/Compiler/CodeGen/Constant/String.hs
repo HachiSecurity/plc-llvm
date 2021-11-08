@@ -11,6 +11,8 @@ globalStrs =
     , ("falseStr", "False")
     , ("forceErrStr", "Attempted to instantiate a non-polymorphic term.\n")
     , ("funErrStr", "Evaluation resulted in a function.\n")
+    , ("headErrStr", "headList called on an empty list\n")
+    , ("tailErrStr", "tailList called on an empty list\n")
     , ("pairResultStr", "Pair of:\n")
     ]
 

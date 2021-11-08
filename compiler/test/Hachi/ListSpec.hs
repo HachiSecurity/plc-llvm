@@ -25,6 +25,14 @@ test_lists =
             mkChooseList (mkList @Bool [False]) (mkConst False) (mkConst True)
     , testCase "mkCons" $
         runTest "mkCons0" $ mkCons (mkConst True) (mkList @Bool [False])
+    , testCase "headList: empty list" $
+        runTest "headList0" $ mkHead $ mkList @Bool []
+    , testCase "headList: non-empty list" $
+        runTest "headList1" $ mkHead $ mkList @Bool [True]
+    , testCase "tailList: empty list" $
+        runTest "tailList0" $ mkTail $ mkList @Bool []
+    , testCase "tailList: non-empty list" $
+        runTest "tailList1" $ mkTail $ mkList @Bool [True, False]
     ]
 
 -------------------------------------------------------------------------------
