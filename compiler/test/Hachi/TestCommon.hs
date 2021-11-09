@@ -110,6 +110,21 @@ mkChooseData d kConstr kMap kList kI kB =
     mkForce (Builtin () ChooseData) `mkApp` d `mkApp`
     kConstr `mkApp` kMap `mkApp` kList `mkApp` kI `mkApp` kB
 
+mkConstrData :: TestTerm -> TestTerm -> TestTerm
+mkConstrData ix xs = Builtin () ConstrData `mkApp` ix `mkApp` xs
+
+mkMapData :: TestTerm -> TestTerm
+mkMapData xs = Builtin () MapData `mkApp` xs
+
+mkListData :: TestTerm -> TestTerm
+mkListData xs = Builtin () ListData `mkApp` xs
+
+mkIData :: TestTerm -> TestTerm
+mkIData i = Builtin () IData `mkApp` i
+
+mkBData :: TestTerm -> TestTerm
+mkBData xs = Builtin () BData `mkApp` xs
+
 -------------------------------------------------------------------------------
 
 runTest :: String -> TestTerm -> Assertion

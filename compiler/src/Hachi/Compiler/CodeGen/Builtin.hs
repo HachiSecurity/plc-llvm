@@ -14,6 +14,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Text as T
 
+import PlutusCore.Data (Data)
 import PlutusCore.Default
 
 import LLVM.AST
@@ -518,6 +519,47 @@ chooseData =
             DataI -> ret kI
             DataB -> ret kB
 
+constrData :: MonadCodeGen m => m ClosurePtr
+constrData =
+    let ps = mkParams 0 ["ix", "xs"]
+    in withCurried "constrData" ps $ \[ix,xs] -> do
+        -- the constructor tag is stored as an i64 rather than a pointer to
+        -- a closure; maybe that's a mistake and should be fixed, but for now
+        -- we retrieve the i64 from its closure so that we can store the raw
+        -- value in the Data value we are constructing
+        _ <- enterClosure (MkClosurePtr ix) []
+        val <- loadConstVal i64
+
+        -- instantiate the new Data value and construct a new, dynamic
+        -- closure for it
+        ptr <- newData DataConstr xs (Just val)
+        retConstDynamic @Data ptr
+
+mapData :: MonadCodeGen m => m ClosurePtr
+mapData =
+    let ps = mkParams 0 ["xs"]
+    in withCurried "mapData" ps $ \[xs] -> do
+        newData DataMap xs Nothing >>= retConstDynamic @Data
+
+
+listData :: MonadCodeGen m => m ClosurePtr
+listData =
+    let ps = mkParams 0 ["xs"]
+    in withCurried "listData" ps $ \[xs] -> do
+        newData DataList xs Nothing >>= retConstDynamic @Data
+
+iData :: MonadCodeGen m => m ClosurePtr
+iData =
+    let ps = mkParams 0 ["i"]
+    in withCurried "iData" ps $ \[i] -> do
+        newData DataI i Nothing >>= retConstDynamic @Data
+
+bData :: MonadCodeGen m => m ClosurePtr
+bData =
+    let ps = mkParams 0 ["xs"]
+    in withCurried "bData" ps $ \[xs] -> do
+        newData DataB xs Nothing >>= retConstDynamic @Data
+
 -------------------------------------------------------------------------------
 
 -- | `builtins` is a mapping from built-in function tags to code generators
@@ -559,6 +601,11 @@ builtins =
     , (NullList, nullList)
     -- Data
     , (ChooseData, chooseData)
+    , (ConstrData, constrData)
+    , (MapData, mapData)
+    , (ListData, listData)
+    , (IData, iData)
+    , (BData, bData)
     ]
 
 -- | `compileBuiltins` is a computation which generates code for all the

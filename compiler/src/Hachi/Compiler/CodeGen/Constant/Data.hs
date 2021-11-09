@@ -4,6 +4,7 @@ module Hachi.Compiler.CodeGen.Constant.Data (
 
     -- * Code generation
     dataGlobal,
+    newData,
     withDataTag,
     loadDataPtr,
     loadConstrTag
@@ -11,8 +12,10 @@ module Hachi.Compiler.CodeGen.Constant.Data (
 
 -------------------------------------------------------------------------------
 
+import Control.Monad
+
 import LLVM.AST.Constant
-import LLVM.IRBuilder
+import LLVM.IRBuilder as IR
 import LLVM.AST
 
 import Hachi.Compiler.CodeGen.Closure
@@ -65,6 +68,40 @@ dataGlobal name tag ps = do
 
     pure $ GlobalReference dataTyPtr name
 
+-- | `newData` @tag dataPtr extraData@ allocates a new Data value on the heap
+-- for the constructor identified by @tag@ where the data pointer is given by
+-- @dataPtr@ and an additional argument by @extraData@ which is normally empty
+-- or an extra tag in the case of `DataConstr`.
+newData
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => DataTag -> Operand -> Maybe Operand -> m Operand
+newData tag dPtr ps = do
+    -- `sizeof` calculates the base size of a Data value at 16 bytes, which
+    -- is enough for the tag+data pointer
+    baseSize <- IR.sizeof 64 listTy
+
+    -- however, if we have additional arguments, we need space for those too
+    -- calculating this by *8 assumes a 64-bit platform
+    size <- add baseSize (ConstantOperand $ Int 64 $ toInteger $ length ps * 8)
+
+    -- allocate the memory we need
+    ptr <- malloc dataTyPtr size
+
+    -- store the tag
+    tAddr <- tagAddr ptr
+    store tAddr 0 $ ConstantOperand (tagToConstant tag)
+
+    -- store the data pointer
+    dAddr <- gep ptr dataIndex
+    store dAddr 0 dPtr
+
+    -- if there is a parameter, store it
+    forM_ ps $ \p -> do
+        eAddr <- gep ptr constrTagIndex
+        void $ store eAddr 0 p
+
+    pure ptr
+
 -- | `withDataTag` @ptr builder@ generates code which loads the tag from @ptr@
 -- and then performs different actions, produced by @builder@, depending on
 -- the tag value.
@@ -72,7 +109,7 @@ withDataTag
     :: (MonadModuleBuilder m, MonadIRBuilder m)
     => Operand -> (DataTag -> m ()) -> m ()
 withDataTag ptr k = do
-    addr <- bitcast ptr (ptrOf i8)
+    addr <- tagAddr ptr
     val <- load addr 0
 
     constrBr <- freshName "constr"
@@ -109,16 +146,32 @@ withDataTag ptr k = do
     _ <- exit (-1)
     unreachable
 
+-------------------------------------------------------------------------------
+
+dataIndex :: [Operand]
+dataIndex =
+    [ ConstantOperand $ Int 32 0
+    , ConstantOperand $ Int 32 1
+    , ConstantOperand $ Int 32 0
+    ]
+
+constrTagIndex :: [Operand]
+constrTagIndex =
+    [ ConstantOperand $ Int 32 0
+    , ConstantOperand $ Int 32 1
+    , ConstantOperand $ Int 32 1
+    ]
+
+tagAddr :: MonadIRBuilder m => Operand -> m Operand
+tagAddr ptr = bitcast ptr (ptrOf i8)
+
 -- | `loadDataPtr` @ptr@ retrieves the payload from the Data value pointed at
 -- by @ptr@. This function works for all forms of Data value.
 loadDataPtr
     :: (MonadModuleBuilder m, MonadIRBuilder m)
     => Operand -> m ClosurePtr
 loadDataPtr ptr = do
-    addr <- gep ptr [ ConstantOperand $ Int 32 0
-                    , ConstantOperand $ Int 32 1
-                    , ConstantOperand $ Int 32 0
-                    ]
+    addr <- gep ptr dataIndex
     val <- load addr 0
     MkClosurePtr <$> bitcast val closureTyPtr
 
@@ -129,10 +182,7 @@ loadConstrTag
     :: (MonadModuleBuilder m, MonadIRBuilder m)
     => Operand -> m Operand
 loadConstrTag ptr = do
-    addr <- gep ptr [ ConstantOperand $ Int 32 0
-                    , ConstantOperand $ Int 32 1
-                    , ConstantOperand $ Int 32 1
-                    ]
+    addr <- gep ptr constrTagIndex
     val <- load addr 0
     bitcast val i64
 

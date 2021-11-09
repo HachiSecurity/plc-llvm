@@ -4,6 +4,8 @@ module Hachi.DataSpec where
 
 -------------------------------------------------------------------------------
 
+import Data.ByteString (ByteString)
+
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -42,6 +44,21 @@ test_data =
     , testCase "chooseData: bytestring" $
         runTest "chooseData4" $
             mkChooseData (mkData $ B "Lie") false false false false true
+    , testCase "constrData" $
+        runTest "constrData0" $
+            mkConstrData (mkConst @Integer 42) (mkConst @[Data] [])
+    , testCase "mapData" $
+        runTest "mapData0" $
+            mkMapData (mkConst @[(Data,Data)] [])
+    , testCase "listData" $
+        runTest "listData0" $
+            mkListData (mkConst @[Data] [])
+    , testCase "iData" $
+        runTest "iData0" $
+            mkIData (mkConst @Integer 42)
+    , testCase "bData" $
+        runTest "bData0" $
+            mkBData (mkConst @ByteString "Cake")
     ]
 
 -------------------------------------------------------------------------------
