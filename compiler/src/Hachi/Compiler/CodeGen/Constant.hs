@@ -158,23 +158,27 @@ instance CompileConstant Bool where
 -- @extra@ may include an additional argument.
 compileDataConstant
     :: (MonadCodeGen m, CompileConstant a)
-    => DataTag -> String -> String -> a -> [Constant] -> m Constant
+    => DataTag -> String -> String -> a -> Maybe Integer -> m Constant
 compileDataConstant tag fieldName name val extra = do
     ref <- compileSubConstant fieldName val
 
-    dataGlobal (mkName name) tag (ref : extra)
+    mRef <- forM extra $ \constrTag -> do
+        tagName <- mkFresh "tag"
+        compileSubConstant tagName constrTag
+
+    dataGlobal (mkName name) tag (ref : maybe [] pure mRef)
 
 instance CompileConstant PLC.Data where
     compileConstant name (Constr t xs) =
-        compileDataConstant DataConstr "constr_list" name xs [Int 64 t]
+        compileDataConstant DataConstr "constr_list" name xs (Just t)
     compileConstant name (Map xs) =
-        compileDataConstant DataMap "map_list" name xs []
+        compileDataConstant DataMap "map_list" name xs Nothing
     compileConstant name (List xs) =
-        compileDataConstant DataList "list_list" name xs []
+        compileDataConstant DataList "list_list" name xs Nothing
     compileConstant name (I v) =
-        compileDataConstant DataI "i_integer" name v []
+        compileDataConstant DataI "i_integer" name v Nothing
     compileConstant name (B bs) =
-        compileDataConstant DataB "b_bytestring" name bs []
+        compileDataConstant DataB "b_bytestring" name bs Nothing
 
     compileLoadConstant = loadFromClosure (ClosureFreeVar 0) dataTyPtr
 
@@ -191,8 +195,10 @@ instance CompileConstant PLC.Data where
         -- depending on the constructor tag, use the relevant pretty-printer
         withDataTag ptr $ \case
             DataConstr -> do
+                _ <- printf dataConstrRef []
                 tag <- loadConstrTag ptr
-                _ <- printf dataConstrRef [tag]
+                _ <- callClosure ClosurePrint tag []
+                _ <- printf spaceRef []
                 cls <- loadDataPtr ptr
                 _ <- callClosure ClosurePrint cls []
                 retVoid

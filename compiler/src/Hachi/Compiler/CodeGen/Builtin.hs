@@ -522,18 +522,10 @@ chooseData =
 constrData :: MonadCodeGen m => m ClosurePtr
 constrData =
     let ps = mkParams 0 ["ix", "xs"]
-    in withCurried "constrData" ps $ \[ix,xs] -> do
-        -- the constructor tag is stored as an i64 rather than a pointer to
-        -- a closure; maybe that's a mistake and should be fixed, but for now
-        -- we retrieve the i64 from its closure so that we can store the raw
-        -- value in the Data value we are constructing
-        _ <- enterClosure (MkClosurePtr ix) []
-        val <- loadConstVal i64
-
+    in withCurried "constrData" ps $ \[ix,xs] ->
         -- instantiate the new Data value and construct a new, dynamic
         -- closure for it
-        ptr <- newData DataConstr xs (Just val)
-        retConstDynamic @Data ptr
+        newData DataConstr xs (Just ix) >>= retConstDynamic @Data
 
 mapData :: MonadCodeGen m => m ClosurePtr
 mapData =

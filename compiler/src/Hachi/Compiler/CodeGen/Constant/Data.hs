@@ -180,10 +180,10 @@ loadDataPtr ptr = do
 -- a data constructor and no such check is performed.
 loadConstrTag
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> m Operand
+    => Operand -> m ClosurePtr
 loadConstrTag ptr = do
     addr <- gep ptr constrTagIndex
     val <- load addr 0
-    bitcast val i64
+    MkClosurePtr <$> bitcast val closureTyPtr
 
 -------------------------------------------------------------------------------
