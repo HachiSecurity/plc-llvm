@@ -40,6 +40,9 @@ instance (Tagged a, Tagged b) => Tagged (a,b) where
 instance Tagged a => Tagged [a] where
     uniTag = DefaultUniList (uniTag @a)
 
+instance Tagged () where
+    uniTag = DefaultUniUnit
+
 instance Tagged Integer where
     uniTag = DefaultUniInteger
 

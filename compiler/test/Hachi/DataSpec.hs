@@ -90,6 +90,15 @@ test_data =
     , testCase "unBData failure" $
         runTest "unBData1" $
             mkBuiltIn UnBData `mkApp` mkData (List [I 42])
+    , testCase "mkPairData" $
+        runTest "mkPairData0" $
+            mkBuiltIn MkPairData `mkApp` mkData (I 42) `mkApp` mkData (I 23)
+    , testCase "mkNilData" $
+        runTest "mkNilData0" $
+            mkBuiltIn MkNilData `mkApp` mkConst ()
+    , testCase "mkNilPairData" $
+        runTest "mkNilPairData0" $
+            mkBuiltIn MkNilPairData `mkApp` mkConst ()
     ]
 
 -------------------------------------------------------------------------------

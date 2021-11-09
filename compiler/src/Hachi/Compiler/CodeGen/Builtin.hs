@@ -601,6 +601,25 @@ unBData =
         DataB -> loadDataPtr d >>= retClosure
         _ -> fatal unBDataErrRef []
 
+mkPairData :: MonadCodeGen m => m ClosurePtr
+mkPairData =
+    let ps = mkParams 0 ["x","y"]
+    in withCurried "mkPairData" ps $ \[x,y] ->
+        newPair (MkClosurePtr x) (MkClosurePtr y) >>=
+        retConstDynamic @(Data, Data)
+
+mkNilData :: MonadCodeGen m => m ClosurePtr
+mkNilData =
+    let ps = mkParams 0 [i8]
+    in compileCurried "mkNilData" ps $ \[_] ->
+        retConstDynamic @[Data] $ ConstantOperand $ Null listTyPtr
+
+mkNilPairData :: MonadCodeGen m => m ClosurePtr
+mkNilPairData =
+    let ps = mkParams 0 [i8]
+    in compileCurried "mkNilPairData" ps $ \[_] ->
+        retConstDynamic @[(Data,Data)] $ ConstantOperand $ Null listTyPtr
+
 -------------------------------------------------------------------------------
 
 -- | `builtins` is a mapping from built-in function tags to code generators
@@ -652,6 +671,10 @@ builtins =
     , (UnListData, unListData)
     , (UnIData, unIData)
     , (UnBData, unBData)
+    -- Misc constructors
+    , (MkPairData, mkPairData)
+    , (MkNilData, mkNilData)
+    , (MkNilPairData, mkNilPairData)
     ]
 
 -- | `compileBuiltins` is a computation which generates code for all the
