@@ -28,6 +28,7 @@ import Hachi.Compiler.CodeGen.Constant
 import Hachi.Compiler.CodeGen.Constant.Data
 import Hachi.Compiler.CodeGen.Constant.List
 import Hachi.Compiler.CodeGen.Constant.Pair
+import Hachi.Compiler.CodeGen.Equality
 import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
@@ -601,6 +602,17 @@ unBData =
         DataB -> loadDataPtr d >>= retClosure
         _ -> fatal unBDataErrRef []
 
+equalsData :: MonadCodeGen m => m ClosurePtr
+equalsData =
+    let ps = mkParams 0 ["x","y"]
+    in withCurried "equalsData" ps $ \[x,y] -> do
+        cmpFun <- eqData
+
+        -- call the data equality function and construct a new dynamic closure
+        -- for the resulting boolean value
+        r <- call cmpFun [(x, []), (y, [])]
+        retConstDynamic @Bool r
+
 mkPairData :: MonadCodeGen m => m ClosurePtr
 mkPairData =
     let ps = mkParams 0 ["x","y"]
@@ -671,6 +683,7 @@ builtins =
     , (UnListData, unListData)
     , (UnIData, unIData)
     , (UnBData, unBData)
+    , (EqualsData, equalsData)
     -- Misc constructors
     , (MkPairData, mkPairData)
     , (MkNilData, mkNilData)

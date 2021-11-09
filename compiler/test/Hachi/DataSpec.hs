@@ -90,6 +90,67 @@ test_data =
     , testCase "unBData failure" $
         runTest "unBData1" $
             mkBuiltIn UnBData `mkApp` mkData (List [I 42])
+    , testCase "equalsData: same tag" $
+        runTest "equalsData0" $
+            mkBuiltIn EqualsData `mkApp` mkData (I 42) `mkApp` mkData (I 42)
+    , testCase "equalsData: different tag" $
+        runTest "equalsData1" $
+            mkBuiltIn EqualsData `mkApp`
+            mkData (I 42) `mkApp`
+            mkData (B "Cake")
+    , testCase "equalsData: different integer" $
+        runTest "equalsData2" $
+            mkBuiltIn EqualsData `mkApp` mkData (I 42) `mkApp` mkData (I 23)
+    , testCase "equalsData: different bytestrings" $
+        runTest "equalsData3" $
+            mkBuiltIn EqualsData `mkApp`
+            mkData (B "Foo") `mkApp`
+            mkData (B "Bar")
+    , testCase "equalsData: same list" $
+        runTest "equalsData4" $
+            mkBuiltIn EqualsData `mkApp`
+            mkData (List [I 4, I 8, I 15]) `mkApp`
+            mkData (List [I 4, I 8, I 15])
+    , testCase "equalsData: list with different elements" $
+        runTest "equalsData5" $
+            mkBuiltIn EqualsData `mkApp`
+            mkData (List [I 4, I 8, I 15]) `mkApp`
+            mkData (List [I 4, B "Cake", I 15])
+    , testCase "equalsData: different list length" $
+        runTest "equalsData6" $
+            mkBuiltIn EqualsData `mkApp`
+            mkData (List [I 4, I 8, I 15]) `mkApp`
+            mkData (List [I 4, I 8])
+    , testCase "equalsData: same map" $
+        runTest "equalsData7" $
+            mkBuiltIn EqualsData `mkApp`
+            mkData (Map [(I 0, B "A"), (I 1, B "B")]) `mkApp`
+            mkData (Map [(I 0, B "A"), (I 1, B "B")])
+    , testCase "equalsData: map with different elements" $
+        runTest "equalsData8" $
+            mkBuiltIn EqualsData `mkApp`
+            mkData (Map [(I 0, B "A"), (I 1, B "B")]) `mkApp`
+            mkData (Map [(I 0, B "A"), (I 1, B "C")])
+    , testCase "equalsData: different map size" $
+        runTest "equalsData9" $
+            mkBuiltIn EqualsData `mkApp`
+            mkData (Map [(I 0, B "A"), (I 1, B "B")]) `mkApp`
+            mkData (Map [(I 0, B "A")])
+    , testCase "equalsData: same constructor" $
+        runTest "equalsData10" $
+            mkBuiltIn EqualsData `mkApp`
+            mkData (Constr 23 [I 5, B "Cake"]) `mkApp`
+            mkData (Constr 23 [I 5, B "Cake"])
+    , testCase "equalsData: different constructor" $
+        runTest "equalsData11" $
+            mkBuiltIn EqualsData `mkApp`
+            mkData (Constr 23 [I 5, B "Cake"]) `mkApp`
+            mkData (Constr 42 [I 5, B "Cake"])
+    , testCase "equalsData: different constructor arguments" $
+        runTest "equalsData12" $
+            mkBuiltIn EqualsData `mkApp`
+            mkData (Constr 23 [I 5, B "Cake"]) `mkApp`
+            mkData (Constr 23 [I 5, B "Lake"])
     , testCase "mkPairData" $
         runTest "mkPairData0" $
             mkBuiltIn MkPairData `mkApp` mkData (I 42) `mkApp` mkData (I 23)

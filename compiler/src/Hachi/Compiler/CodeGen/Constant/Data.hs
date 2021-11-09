@@ -6,6 +6,7 @@ module Hachi.Compiler.CodeGen.Constant.Data (
     dataGlobal,
     newData,
     withDataTag,
+    loadDataTag,
     loadDataPtr,
     loadConstrTag
 ) where
@@ -109,8 +110,7 @@ withDataTag
     :: (MonadModuleBuilder m, MonadIRBuilder m)
     => Operand -> (DataTag -> m ()) -> m ()
 withDataTag ptr k = do
-    addr <- tagAddr ptr
-    val <- load addr 0
+    val <- loadDataTag ptr
 
     constrBr <- freshName "constr"
     mapBr <- freshName "map"
@@ -164,6 +164,14 @@ constrTagIndex =
 
 tagAddr :: MonadIRBuilder m => Operand -> m Operand
 tagAddr ptr = bitcast ptr (ptrOf i8)
+
+-- | `loadDataTag` @ptr@ retrieves the data tag from @ptr@.
+loadDataTag
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> m Operand
+loadDataTag ptr = do
+    addr <- tagAddr ptr
+    load addr 0
 
 -- | `loadDataPtr` @ptr@ retrieves the payload from the Data value pointed at
 -- by @ptr@. This function works for all forms of Data value.
