@@ -126,8 +126,15 @@ mallocFun =
 mallocRef :: Constant
 mallocRef = GlobalReference mallocTy $ mkName "malloc"
 
-malloc :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
-malloc size = call (ConstantOperand mallocRef) [(size, [])]
+-- | `malloc` @type size@ generates code which calls @malloc@ to allocate
+-- @size@-many bytes. The return value is cast to @type@, which should
+-- normally be a pointer to something.
+malloc
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Type -> Operand -> m Operand
+malloc ty size = do
+    addr <- call (ConstantOperand mallocRef) [(size, [])]
+    bitcast addr ty
 
 memcpyTy :: Type
 memcpyTy = ptrOf $

@@ -27,20 +27,19 @@ listNew
 listNew x xs = do
     -- allocate space for the list structure (two pointers)
     size <- IR.sizeof 64 listTy
-    ptr <- malloc size
-    tptr <- bitcast ptr listTyPtr
+    ptr <- malloc listTyPtr size
 
     -- store the head pointer
-    store tptr 0 x
+    store ptr 0 x
 
     -- store the tail pointer
-    tailAddr <- gep tptr [ ConstantOperand $ Int 32 0
-                         , ConstantOperand $ Int 32 1
-                         ]
+    tailAddr <- gep ptr [ ConstantOperand $ Int 32 0
+                        , ConstantOperand $ Int 32 1
+                        ]
     store tailAddr 0 xs
 
     -- return the pointer to the list structure
-    pure tptr
+    pure ptr
 
 -- | `getHead` @listPtr@ generates code which retrieves the head of the list
 -- pointed at by @listPtr@.

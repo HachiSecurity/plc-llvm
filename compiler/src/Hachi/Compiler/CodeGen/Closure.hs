@@ -159,13 +159,12 @@ allocateClosure isDelay codePtr printPtr fvs = do
     -- allocate enough space for the closure on the heap:
     -- 2 code pointers + one pointer for each free variable
     size <- mul ptrSize (ConstantOperand $ Int bits $ closureSize + genericLength fvs)
-    c <- malloc size
-    cc <- bitcast c closureTyPtr
+    c <- malloc closureTyPtr size
 
     -- store data in the closure: we have the function pointers followed by
     -- any pointers to free variables
     let storeAt ixs val = do
-            addr <- gep cc $ ConstantOperand (Int 32 0) : ixs
+            addr <- gep c $ ConstantOperand (Int 32 0) : ixs
             store addr 0 val
 
     storeAt (indicesForComponent ClosureCode) $ ConstantOperand codePtr
@@ -178,7 +177,7 @@ allocateClosure isDelay codePtr printPtr fvs = do
 
     -- return an Operand representing a pointer to the dynamic closure that we
     -- have just created
-    pure $ MkClosurePtr cc
+    pure $ MkClosurePtr c
 
 -- | `compileDynamicClosure` @isDelay name freeVars var codeFun@ generates code
 -- which dynamically creates a new closure when executed. The static parts of

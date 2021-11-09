@@ -187,14 +187,13 @@ bsNewStruct l = do
     -- calculate the size of the bytestring structure and allocate memory
     -- for it
     size <- IR.sizeof 64 bytestringTy
-    ptr <- E.malloc size
-    tptr <- bitcast ptr bytestringTyPtr
+    ptr <- E.malloc bytestringTyPtr size
 
     -- store the length
-    store tptr 0 l
+    store ptr 0 l
 
     -- return the pointer to the bytestring structure
-    pure tptr
+    pure ptr
 
 -- | `bsNew` @size@ generates code which allocates enough space for a new
 -- bytestring with @size@-many elements. The actual memory allocated is
@@ -204,7 +203,7 @@ bsNewStruct l = do
 bsNew :: (MonadCodeGen m, MonadIRBuilder m) => Operand -> m Operand
 bsNew l = do
     -- allocate the byte array that will store the actual data
-    arrPtr <- E.malloc l
+    arrPtr <- E.malloc (ptrOf i8) l
 
     -- create the new bytestring structure
     tptr <- bsNewStruct l
