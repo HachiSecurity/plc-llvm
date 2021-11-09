@@ -552,6 +552,55 @@ bData =
     in withCurried "bData" ps $ \[xs] -> do
         newData DataB xs Nothing >>= retConstDynamic @Data
 
+unConstrData :: MonadCodeGen m => m ClosurePtr
+unConstrData =
+    let ps = mkParams 0 [dataTyPtr]
+    in compileCurried "unConstrData" ps $ \[d] ->
+    withDataTag d $ \case
+        DataConstr -> do
+            -- retrieve the two components from the constructor
+            ptr <- loadDataPtr d
+            tag <- loadConstrTag d
+
+            -- construct a new pair with them
+            pair <- newPair tag ptr
+
+            -- return a new closure for the pair
+            retConstDynamic @((),()) pair
+        _ -> fatal unConstrDataErrRef []
+
+unMapData :: MonadCodeGen m => m ClosurePtr
+unMapData =
+    let ps = mkParams 0 [dataTyPtr]
+    in compileCurried "unMapData" ps $ \[d] ->
+    withDataTag d $ \case
+        DataMap -> loadDataPtr d >>= retClosure
+        _ -> fatal unMapDataErrRef []
+
+unListData :: MonadCodeGen m => m ClosurePtr
+unListData =
+    let ps = mkParams 0 [dataTyPtr]
+    in compileCurried "unListData" ps $ \[d] ->
+    withDataTag d $ \case
+        DataList -> loadDataPtr d >>= retClosure
+        _ -> fatal unListDataErrRef []
+
+unIData :: MonadCodeGen m => m ClosurePtr
+unIData =
+    let ps = mkParams 0 [dataTyPtr]
+    in compileCurried "unIData" ps $ \[d] ->
+    withDataTag d $ \case
+        DataI -> loadDataPtr d >>= retClosure
+        _ -> fatal unIDataErrRef []
+
+unBData :: MonadCodeGen m => m ClosurePtr
+unBData =
+    let ps = mkParams 0 [dataTyPtr]
+    in compileCurried "unBData" ps $ \[d] ->
+    withDataTag d $ \case
+        DataB -> loadDataPtr d >>= retClosure
+        _ -> fatal unBDataErrRef []
+
 -------------------------------------------------------------------------------
 
 -- | `builtins` is a mapping from built-in function tags to code generators
@@ -598,6 +647,11 @@ builtins =
     , (ListData, listData)
     , (IData, iData)
     , (BData, bData)
+    , (UnConstrData, unConstrData)
+    , (UnMapData, unMapData)
+    , (UnListData, unListData)
+    , (UnIData, unIData)
+    , (UnBData, unBData)
     ]
 
 -- | `compileBuiltins` is a computation which generates code for all the

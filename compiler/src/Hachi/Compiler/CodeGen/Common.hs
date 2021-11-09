@@ -1,6 +1,7 @@
 -- | This module contains common code generation functions.
 module Hachi.Compiler.CodeGen.Common (
     mkParamName,
+    fatal,
     compileTrace
 ) where
 
@@ -12,6 +13,7 @@ import Data.String ( fromString )
 import qualified Data.Text as T
 
 import LLVM.AST
+import LLVM.AST.Constant
 import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.CodeGen.Externals
@@ -25,6 +27,18 @@ mkParamName :: T.Text -> ParameterName
 mkParamName = fromString . T.unpack
 
 -------------------------------------------------------------------------------
+
+-- | `fatal` @strRef args@ generates code which terminates execution of the
+-- resulting program after displaying the string pointed to by @strRef@.
+-- Optionally, if the string contains formatting characters, @args@ are used
+-- as values for those placeholders.
+fatal
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> [Operand] -> m ()
+fatal ptr argv = do
+    _ <- printf ptr argv
+    _ <- exit (-1)
+    unreachable
 
 -- | `compileTrace` @message@ generates an instruction which prints @message@
 -- to the standard output, if tracing is enabled in the code generation

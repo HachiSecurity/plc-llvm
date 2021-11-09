@@ -65,6 +65,9 @@ false = mkConst False
 mkConst :: forall a. Tagged a => a -> TestTerm
 mkConst = Constant () . Some . ValueOf (uniTag @a)
 
+mkBuiltIn :: DefaultFun -> TestTerm
+mkBuiltIn = Builtin ()
+
 infixl 5 `mkApp`
 mkApp :: TestTerm -> TestTerm -> TestTerm
 mkApp = Apply ()
@@ -124,6 +127,9 @@ mkIData i = Builtin () IData `mkApp` i
 
 mkBData :: TestTerm -> TestTerm
 mkBData xs = Builtin () BData `mkApp` xs
+
+mkUnConstrData :: TestTerm -> TestTerm
+mkUnConstrData t = Builtin () UnConstrData `mkApp` t
 
 -------------------------------------------------------------------------------
 
