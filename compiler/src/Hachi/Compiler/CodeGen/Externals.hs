@@ -17,6 +17,9 @@ module Hachi.Compiler.CodeGen.Externals (
     memcpyTy,
     memcpyRef,
     memcpy,
+    strlen,
+    strcpy,
+    strcmp,
 
     -- * Bytestrings
     printBytestringTy,
@@ -152,6 +155,46 @@ memcpy
 memcpy dst src n =
     call (ConstantOperand memcpyRef) [(dst, []), (src, []), (n, [])]
 
+strlenTy :: Type
+strlenTy = ptrOf $ FunctionType i64 [ptrOf i8] False
+
+strlenFun :: Global
+strlenFun = globalFromType "strlen" strlenTy
+
+strlenRef :: Constant
+strlenRef = GlobalReference strlenTy $ mkName "strlen"
+
+strlen :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
+strlen str = call (ConstantOperand strlenRef) [(str, [])]
+
+strcpyTy :: Type
+strcpyTy = ptrOf $ FunctionType (ptrOf i8) [ptrOf i8, ptrOf i8] False
+
+strcpyFun :: Global
+strcpyFun = globalFromType "strcpy" strcpyTy
+
+strcpyRef :: Constant
+strcpyRef = GlobalReference strcpyTy $ mkName "strcpy"
+
+strcpy
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> Operand -> m Operand
+strcpy dst src = call (ConstantOperand strcpyRef) [(dst, []), (src, [])]
+
+strcmpTy :: Type
+strcmpTy = ptrOf $ FunctionType i32 [ptrOf i8, ptrOf i8] False
+
+strcmpFun :: Global
+strcmpFun = globalFromType "strcmp" strcmpTy
+
+strcmpRef :: Constant
+strcmpRef = GlobalReference strcmpTy "strcmp"
+
+strcmp
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> Operand -> m Operand
+strcmp xs ys = call (ConstantOperand strcmpRef) [(xs, []), (ys, [])]
+
 -------------------------------------------------------------------------------
 
 printBytestringTy :: Type
@@ -279,6 +322,9 @@ externalDefinitions = map GlobalDefinition
     , exitFun
     , mallocFun
     , memcpyFun
+    , strlenFun
+    , strcpyFun
+    , strcmpFun
     , printBytestringFun
     , indexBytestringFun
     , equalsByteStringFun

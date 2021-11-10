@@ -407,6 +407,78 @@ verifySignature =
 
 -------------------------------------------------------------------------------
 
+appendString :: MonadCodeGen m => m ClosurePtr
+appendString =
+    let ps = mkParams 0 [ptrOf i8, ptrOf i8]
+    in compileCurried "appendString" ps $ \[xs, ys] -> do
+        -- determine the lengths of the two strings
+        l0 <- E.strlen xs
+        l1 <- E.strlen ys
+
+        -- allocate memory for the new string
+        lb <- add l0 l1
+        ln <- add lb (ConstantOperand $ Int 64 1)
+        ptr <- E.malloc (ptrOf i8) ln
+
+        -- copy the first string
+        _ <- E.strcpy ptr xs
+
+        -- copy the second string
+        addr <- add ptr l0
+        _ <- E.strcpy addr ys
+
+        retConstDynamic @T.Text ptr
+
+equalsString :: MonadCodeGen m => m ClosurePtr
+equalsString =
+    let ps = mkParams 0 [ptrOf i8, ptrOf i8]
+    in compileCurried "equalsString" ps $ \[xs, ys] -> do
+        r <- E.strcmp xs ys
+        b <- icmp LLVM.EQ r (ConstantOperand $ Int 32 0)
+        retConstDynamic @Bool b
+
+encodeUtf8 :: MonadCodeGen m => m ClosurePtr
+encodeUtf8 =
+    let ps = mkParams 0 [ptrOf i8]
+    in compileCurried "encodeUtf8" ps $ \[str] -> do
+        -- our strings are already UTF-8 so we just need to construct a
+        -- bytestring for it
+        l <- E.strlen str
+        ptr <- bsNew l
+
+        -- store the pointer to the byte array
+        dataAddr <- gep ptr [ ConstantOperand $ Int 32 0
+                            , ConstantOperand $ Int 32 1
+                            ]
+        store dataAddr 0 str
+
+        retConstDynamic @BS.ByteString ptr
+
+decodeUtf8 :: MonadCodeGen m => m ClosurePtr
+decodeUtf8 =
+    let ps = mkParams 0 [bytestringTyPtr]
+    in compileCurried "decodeUtf8" ps $ \[bs] -> do
+        -- assuming that the bytestring is already UTF-8, we don't have to do
+        -- much since we just store UTF-8 strings internally anyway except
+        -- allocate enough memory for the bytestring + 1, for the \0 char
+        len <- bsLen bs
+        addr <- bsDataPtr bs
+
+        size <- add len $ ConstantOperand (Int 64 1)
+        ptr <- E.malloc (ptrOf i8) size
+
+        -- copy the actual string
+        _ <- E.memcpy ptr addr len
+
+        -- add the \0
+        zeroAddr <- add ptr len
+        store zeroAddr 0 $ ConstantOperand (Int 8 0)
+
+        -- return a new closure
+        retConstDynamic @T.Text ptr
+
+-------------------------------------------------------------------------------
+
 ifThenElse :: MonadCodeGen m => m ClosurePtr
 ifThenElse =
     let ps = [("s",True),("c",False),("t",False),("f",False)]
@@ -672,6 +744,11 @@ builtins =
     , (Sha2_256, sha256)
     , (Blake2b_256, blake2b)
     , (VerifySignature, verifySignature)
+    -- Strings
+    , (AppendString, appendString)
+    , (EqualsString, equalsString)
+    , (EncodeUtf8, encodeUtf8)
+    , (DecodeUtf8, decodeUtf8)
     -- Booleans
     , (IfThenElse, ifThenElse)
     -- Unit
