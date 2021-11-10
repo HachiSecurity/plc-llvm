@@ -20,8 +20,10 @@ module Hachi.Compiler.CodeGen.Constant (
 import Control.Monad
 
 import qualified Data.ByteString as BS
+import Data.List
 import Data.Proxy
 import qualified Data.Text as T
+import Data.Text.Encoding (encodeUtf8)
 
 import LLVM.AST as LLVM
 import LLVM.AST.Constant
@@ -121,6 +123,21 @@ instance CompileConstant BS.ByteString where
         void $ printBytestring ptr
 
 instance CompileConstant T.Text where
+    compileConstant name txt = do
+        -- Text is strict, packed UTF-16
+        -- we convert it to UTF-8 here since that is easier for us to work with
+        let bd = BS.unpack (encodeUtf8 txt) ++ [0]
+        let arr = Array i8 $ map (Int 8 . fromIntegral) bd
+        let arrTy = ArrayType (genericLength bd) i8
+
+        _ <- global (mkName name) arrTy arr
+        pure $ GlobalReference (ptrOf arrTy) (mkName name)
+
+    compileLoadConstant = loadFromClosure (ClosureFreeVar 0) (ptrOf i8)
+
+    compilePrintBody _ this = do
+        ptr <- compileLoadConstant @T.Text this
+        void $ printf strFormatRef [ptr]
 
 instance CompileConstant () where
     compileConstant _ () =
