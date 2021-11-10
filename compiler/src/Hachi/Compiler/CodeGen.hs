@@ -283,12 +283,13 @@ generateCode cfg@MkConfig{..} p =
             unless cfgNoLink $ do
                 -- run pkg-config for libsodium
                 sodiumOpts <- runPkgConfig "libsodium"
+                gmpOpts <- runPkgConfig "gmp"
 
                 let rtsFile = fromMaybe "./rts/rts.c" cfgRTS
                 let exeFile = dropExtension outputName
                 let pcfg = proc "clang" $
                             [rtsFile, objectFile, "-o", exeFile] ++
-                            sodiumOpts
+                            sodiumOpts ++ gmpOpts
 
                 ec <- runProcess pcfg
 

@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sodium.h>
+#include <gmp.h>
 
 #define FALSE 0
 #define TRUE 1
