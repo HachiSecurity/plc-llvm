@@ -437,6 +437,20 @@ chooseUnit =
 
 -------------------------------------------------------------------------------
 
+trace :: MonadCodeGen m => m ClosurePtr
+trace =
+    let ps = mkParams 1 ["text","a"]
+    in withCurried "trace" ps $ \[_,txt,a] -> do
+        -- this should be some string, so let's just call its pretty-printing
+        -- function to render it
+        _ <- callClosure ClosurePrint (MkClosurePtr txt) []
+        -- then add a \n character and return the pointer to the other
+        -- argument as the result of this built-in
+        _ <- E.printf nlRef []
+        ret a
+
+-------------------------------------------------------------------------------
+
 fstPair :: MonadCodeGen m => m ClosurePtr
 fstPair =
     let ps = mkParams 2 [pairTyPtr]
@@ -662,6 +676,8 @@ builtins =
     , (IfThenElse, ifThenElse)
     -- Unit
     , (ChooseUnit, chooseUnit)
+    -- Trace
+    , (Trace, trace)
     -- Pairs
     , (FstPair, fstPair)
     , (SndPair, sndPair)
