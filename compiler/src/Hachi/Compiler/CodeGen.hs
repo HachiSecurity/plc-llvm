@@ -210,6 +210,7 @@ compileProgram cfg (Program _ _ term) = do
     _ <- typedef "pair" $ Just pairTyDef
     _ <- typedef "list" $ Just listTyDef
     _ <- typedef "data" $ Just dataTyDef
+    _ <- typedef "mpz_t" $ Just gmpTyDef
 
     (errorMsg, _) <- runIRBuilderT emptyIRBuilder $
         globalStringPtr "Something has gone wrong.\n" "errorMsg"

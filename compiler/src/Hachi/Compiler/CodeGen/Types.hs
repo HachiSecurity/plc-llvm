@@ -34,6 +34,12 @@ module Hachi.Compiler.CodeGen.Types (
     dataTy,
     dataTyPtr,
 
+    -- * GMP
+    gmpTyDef,
+    emptyGmpTy,
+    gmpTy,
+    gmpTyPtr,
+
     ClosurePtr(..)
 ) where
 
@@ -44,6 +50,8 @@ import Data.List ( genericLength )
 import LLVM.AST
 import LLVM.AST.AddrSpace
 import LLVM.AST.Constant
+
+import Hachi.Compiler.Platform
 
 -------------------------------------------------------------------------------
 
@@ -152,6 +160,30 @@ dataTy = NamedTypeReference "data"
 -- | `dataTyPtr` is a `Type` representing a pointer to a data value.
 dataTyPtr :: Type
 dataTyPtr = ptrOf dataTy
+
+-------------------------------------------------------------------------------
+
+-- | `gmpTyDef` attempts to capture the structure of @__mpz_struct@ from the
+-- gmp library.
+gmpTyDef :: Type
+gmpTyDef = StructureType False [ iHost, iHost, ptrOf gmpLimb ]
+
+emptyGmpTy :: Constant
+emptyGmpTy = Array gmpTyDef [
+    Struct Nothing False [
+        Int platformIntSize 0,
+        Int platformIntSize 0,
+        Null (ptrOf gmpLimb)
+    ]
+ ]
+
+-- | `gmpTy` is equivalent to @mpz_t@ from the gmp library.
+gmpTy :: Type
+gmpTy = ArrayType 1 (NamedTypeReference "mpz_t")
+
+-- | `gmpTyPtr` is a pointer to `gmpTy`.
+gmpTyPtr :: Type
+gmpTyPtr = ptrOf gmpTy
 
 -------------------------------------------------------------------------------
 

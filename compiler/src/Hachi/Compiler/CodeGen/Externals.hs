@@ -41,7 +41,11 @@ module Hachi.Compiler.CodeGen.Externals (
     -- * Cryptography
     sha256,
     blake2b,
-    verifySig
+    verifySig,
+
+    -- * GMP
+    mpzInitSetStr,
+    mpzGetStr
 ) where
 
 -------------------------------------------------------------------------------
@@ -56,6 +60,7 @@ import LLVM.AST.Visibility
 import LLVM.AST.CallingConvention
 import LLVM.IRBuilder
 
+import Hachi.Compiler.CodeGen.Externals.GMP
 import Hachi.Compiler.CodeGen.Externals.Utility
 import Hachi.Compiler.CodeGen.Types
 
@@ -324,6 +329,8 @@ externalDefinitions = map GlobalDefinition
     , sha256Fun
     , blake2bFun
     , verifySigFun
+    , mpzInitSetStrFun
+    , mpzGetStrFun
     ]
 
 -------------------------------------------------------------------------------

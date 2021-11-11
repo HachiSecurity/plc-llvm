@@ -42,6 +42,7 @@ import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Constant.Data
 import Hachi.Compiler.CodeGen.Constant.Pair
 import Hachi.Compiler.CodeGen.Constant.List
+import Hachi.Compiler.Platform
 
 -------------------------------------------------------------------------------
 
@@ -50,7 +51,9 @@ class CompileConstant a where
     -- constant given by @val@. In simple cases, this may just return a
     -- constant expression, while in other cases we may generate a global
     -- and return a pointer to it.
-    compileConstant :: MonadCodeGen m => String -> a -> m Constant
+    compileConstant
+        :: (MonadCodeGen m, MonadIRBuilder m)
+        => String -> a -> m Constant
 
     -- | `compileLoadConstant` @closurePtr@ loads the constant from a closure
     -- given by @closurePtr@. This function must be used with
@@ -73,7 +76,7 @@ ccProxy = Proxy
 -- name based on the suggestion given by @baseName@ and constructs a global
 -- reference to the resulting closure.
 compileSubConstant
-    :: (MonadCodeGen m, CompileConstant a)
+    :: (MonadCodeGen m, MonadIRBuilder m, CompileConstant a)
     => String -> a -> m Constant
 compileSubConstant baseName v = do
     name <- mkFresh baseName
@@ -88,17 +91,38 @@ compileSubConstant baseName v = do
 
 instance CompileConstant Integer where
     -- we can just stick the integer value directly into the closure
-    compileConstant _ val = pure $ Int 64 val
+    compileConstant name val = do
+        -- generate a global variable for the arbitrary precision integer
+        let gmpName = mkName $ name <> "_gmp"
+        _ <- global gmpName gmpTy emptyGmpTy
+        let gmpRef = GlobalReference gmpTyPtr gmpName
 
-    -- retrieve the integer value from the closure directly
-    compileLoadConstant = loadFromClosure (ClosureFreeVar 0) i64
+        -- the arbitrary precision integer needs to be initialised, but we
+        -- can only do this by calling a function from the gmp library, so
+        -- it can't be done in a constant initialiser; we insert a call to
+        -- the initialisation function in the current code block which may
+        -- run multiple times, but since the data is immutable, this should
+        -- not be a problem.... TODO: fix if it is a problem
+        mpzInitSetStr (mkName name) gmpRef (show val)
+
+        -- return the pointer to the global
+        pure gmpRef
+
+    -- retrieve the pointer from the closure directly
+    compileLoadConstant = loadFromClosure (ClosureFreeVar 0) gmpTyPtr
 
     compilePrintBody _ this = do
-        -- retrieve the constant from the closure
-        v <- compileLoadConstant @Integer this
+        -- retrieve the pointer from the closure
+        addr <- compileLoadConstant @Integer this
+
+        -- convert the arbitrary precision integer to a string
+        str <- mpzGetStr
+            (ConstantOperand $ Null $ ptrOf i8)
+            (ConstantOperand $ Int platformIntSize 10)
+            addr
 
         -- use printf to pretty-print it
-        void $ printf i64FormatRef [v]
+        void $ printf strFormatRef [str]
 
 instance CompileConstant BS.ByteString where
     compileConstant name val = do
@@ -174,7 +198,7 @@ instance CompileConstant Bool where
 -- constant, using a name derived from @fieldName@. For `DataConstr`,
 -- @extra@ may include an additional argument.
 compileDataConstant
-    :: (MonadCodeGen m, CompileConstant a)
+    :: (MonadCodeGen m, MonadIRBuilder m, CompileConstant a)
     => DataTag -> String -> String -> a -> Maybe Integer -> m Constant
 compileDataConstant tag fieldName name val extra = do
     ref <- compileSubConstant fieldName val
@@ -332,7 +356,9 @@ compileConstEntry name loadFn = do
 
 -- | `compileConst` @value@ generates code for a constant whose @value@ is
 -- provided as the first argument.
-compileConst :: MonadCodeGen m => Some (ValueOf DefaultUni) -> m ClosurePtr
+compileConst
+    :: (MonadCodeGen m, MonadIRBuilder m)
+    => Some (ValueOf DefaultUni) -> m ClosurePtr
 compileConst (Some (ValueOf tag (x :: a))) = do
     name <- mkFresh "con"
 
@@ -341,7 +367,8 @@ compileConst (Some (ValueOf tag (x :: a))) = do
 -- | `compileConstStatic` @name value@ generates code for a static constant
 -- with the name given by @name@ and the value given by @value@.
 compileConstStatic
-    :: forall a m . (MonadCodeGen m, CompileConstant a) => String -> a -> m ClosurePtr
+    :: forall a m . (MonadCodeGen m, MonadIRBuilder m, CompileConstant a)
+    => String -> a -> m ClosurePtr
 compileConstStatic name x = do
     ptr <- compileConstant name x
 

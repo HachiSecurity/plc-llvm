@@ -30,12 +30,14 @@ library
       Hachi.Compiler.CodeGen.Constant.String
       Hachi.Compiler.CodeGen.Equality
       Hachi.Compiler.CodeGen.Externals
+      Hachi.Compiler.CodeGen.Externals.GMP
       Hachi.Compiler.CodeGen.Externals.Utility
       Hachi.Compiler.CodeGen.Globals
       Hachi.Compiler.CodeGen.Monad
       Hachi.Compiler.CodeGen.Types
       Hachi.Compiler.Config
       Hachi.Compiler.FreeVars
+      Hachi.Compiler.Platform
       Hachi.Compiler.TH
   other-modules:
       Paths_plc_llvm

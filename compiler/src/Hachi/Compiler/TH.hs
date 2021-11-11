@@ -1,7 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module Hachi.Compiler.TH (
-    mkGlobalStrRefs
+    mkGlobalStrRefs,
+    mkExternal
 ) where
 
 -------------------------------------------------------------------------------
@@ -11,6 +12,7 @@ import Control.Monad
 import Language.Haskell.TH as TH
 
 import LLVM.AST as LLVM
+import LLVM.AST.Constant
 
 -------------------------------------------------------------------------------
 
@@ -25,6 +27,24 @@ mkGlobalStrRefs globals = fmap concat $ forM globals $ \(name, val) -> do
     pure [
         SigD defName ty,
         ValD (VarP defName) (NormalB body) []
+     ]
+
+mkExternal :: String -> String -> TH.Name -> Q [Dec]
+mkExternal name extName tyDec = do
+    let tyDecVar = pure $ VarE tyDec
+    let globalName = TH.mkName $ name <> "Fun"
+    globalTy <- [t| Global |]
+    globalBody <- [| globalFromType extName $(tyDecVar) |]
+
+    let refName = TH.mkName $ name <> "Ref"
+    refTy <- [t| Constant |]
+    refBody <- [| GlobalReference $(tyDecVar) $ LLVM.mkName extName |]
+
+    pure [
+        SigD globalName globalTy,
+        ValD (VarP globalName) (NormalB globalBody) [],
+        SigD refName refTy,
+        ValD (VarP refName) (NormalB refBody) []
      ]
 
 -------------------------------------------------------------------------------
