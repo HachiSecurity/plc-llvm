@@ -3,8 +3,12 @@
 module Hachi.Compiler.CodeGen.Externals.GMP (
     mpzInitSetStrFun,
     mpzInitSetStr,
+    mpzInitSetUIntFun,
+    mpzInitSetUInt,
     mpzGetStrFun,
     mpzGetStr,
+    mpzGetUIntFun,
+    mpzGetUInt,
     mpzAddFun,
     mpzAdd,
     mpzSubFun,
@@ -54,6 +58,17 @@ mpzInitSetStr name ptr str = do
         , (ConstantOperand $ Int platformIntSize 10, [])
         ]
 
+mpzInitSetUIntTy :: Type
+mpzInitSetUIntTy = ptrOf $ FunctionType VoidType [gmpTy, iUnsignedLongInt] False
+
+$(mkExternal "mpzInitSetUInt" "__gmpz_init_set_ui" 'mpzInitSetUIntTy)
+
+mpzInitSetUInt
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> Operand -> m ()
+mpzInitSetUInt ptr val = void $
+    call (ConstantOperand mpzInitSetUIntRef) [(ptr, []), (val, [])]
+
 mpzGetStrTy :: Type
 mpzGetStrTy = ptrOf $ FunctionType (ptrOf i8) [ptrOf i8, iHost, gmpTy] False
 
@@ -64,6 +79,16 @@ mpzGetStr
     => Operand -> Operand -> Operand -> m Operand
 mpzGetStr strPtr base ptr = call (ConstantOperand mpzGetStrRef)
     [(strPtr, []), (base, []), (ptr, [])]
+
+mpzGetUIntTy :: Type
+mpzGetUIntTy = ptrOf $ FunctionType iUnsignedLongInt [gmpTy] False
+
+$(mkExternal "mpzGetUInt" "__gmpz_get_ui" 'mpzGetUIntTy)
+
+mpzGetUInt
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> m Operand
+mpzGetUInt ptr = call (ConstantOperand mpzGetUIntRef) [(ptr, [])]
 
 mpzBinTy :: Type
 mpzBinTy = ptrOf $ FunctionType VoidType [gmpTy, gmpTy, gmpTy] False

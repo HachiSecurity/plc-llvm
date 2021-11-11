@@ -20,6 +20,7 @@ import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 import Hachi.Compiler.CodeGen.Constant.Pair
 import Hachi.Compiler.CodeGen.Constant.List
+import Hachi.Compiler.Platform
 
 -------------------------------------------------------------------------------
 
@@ -39,12 +40,13 @@ eqInteger
     => ClosurePtr -> ClosurePtr -> m ()
 eqInteger n m = do
     _ <- enterClosure n []
-    x <- loadConstVal i64
+    x <- loadConstVal gmpTyPtr
 
     _ <- enterClosure m []
-    y <- loadConstVal i64
+    y <- loadConstVal gmpTyPtr
 
-    icmp LLVM.EQ x y >>= ret
+    r <- mpzCmp x y
+    icmp LLVM.EQ r (ConstantOperand $ Int platformIntSize 0) >>= ret
 
 -- | `eqByteString` @ptr0 ptr1@ forces two closures representing bytestring
 -- values and checks that the resulting values are the same.
@@ -218,15 +220,17 @@ eqData = IR.function "eqData" [(closureTyPtr, "x"), (closureTyPtr, "y")] i8 $ \[
             -- force both constructor tags and obtain the integer values
             d0ctr <- loadConstrTag d0
             _ <- enterClosure d0ctr []
-            d0ctrTag <- loadConstVal i64
+            d0ctrTag <- loadConstVal gmpTyPtr
 
             d1ctr <- loadConstrTag d1
             _ <- enterClosure d1ctr []
-            d1ctrTag <- loadConstVal i64
+            d1ctrTag <- loadConstVal gmpTyPtr
 
             -- check to see if the constructor tags match
             ctrBranch <- freshName "ctr"
-            ctrMatch <- icmp LLVM.EQ d0ctrTag d1ctrTag
+            cmpResult <- mpzCmp d0ctrTag d1ctrTag
+            ctrMatch <- icmp LLVM.EQ cmpResult
+                (ConstantOperand $ Int platformIntSize 0)
             condBr ctrMatch ctrBranch neqBranch
 
             -- they match: check the arguments

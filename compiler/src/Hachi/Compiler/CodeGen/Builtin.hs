@@ -296,9 +296,12 @@ appendByteString =
 
 consByteString :: MonadCodeGen m => m ClosurePtr
 consByteString =
-    compileBinary "consByteString" i64 bytestringTyPtr $
-    \x xs -> do
+    compileBinary "consByteString" gmpTyPtr bytestringTyPtr $
+    \xp xs -> do
+        -- obtain the current length of the bystring and convert the arbitrary
+        -- precision integer to an unsigned long int
         l <- bsLen xs
+        x <- E.mpzGetUInt xp
 
         -- allocate a new bytestring which is big enough to store the data
         -- of the existing bytestring + 1
@@ -319,20 +322,14 @@ consByteString =
 
 sliceByteString :: MonadCodeGen m => m ClosurePtr
 sliceByteString =
-    let ps = [("s",False),("n",False),("str",False)]
-    in withCurried "sliceByteString" ps $ \[sv,nv,strv] -> do
-    -- enter all three arguments and load the resulting values
-    _ <- enterClosure (MkClosurePtr sv) []
-    s <- loadConstVal i64
-
-    _ <- enterClosure (MkClosurePtr nv) []
-    n <- loadConstVal i64
-
-    _ <- enterClosure (MkClosurePtr strv) []
-    str <- loadConstVal bytestringTyPtr
-
+    let ps = mkParams 0 [gmpTyPtr,gmpTyPtr,bytestringTyPtr]
+    in compileCurried "sliceByteString" ps $ \[sp,np,str] -> do
     -- retrieve the length of the existing bytestring
     strLen <- bsLen str
+
+    -- convert the arbitrary precision integers to unsigned long ints
+    s <- E.mpzGetUInt sp
+    n <- E.mpzGetUInt np
 
     -- calculate the start offset, which is the minimum of the given start
     -- index and the length of the existing bytestring - i.e. we can't
@@ -372,13 +369,29 @@ lengthOfByteString =
     -- retrieve it from there
     val <- bsLen ptr
 
+    -- initialise an integer
+    int <- newInteger
+    E.mpzInitSetUInt int val
+
     -- allocate a new closure for the size value
-    retConstDynamic @Integer val
+    retConstDynamic @Integer int
 
 indexByteString :: MonadCodeGen m => m ClosurePtr
 indexByteString =
-    compileBinary "indexByteString" bytestringTyPtr i64 $
-    \str n -> E.indexBytestring str n >>= retConstDynamic @Integer
+    compileBinary "indexByteString" bytestringTyPtr gmpTyPtr $
+    \str n -> do
+        -- conver the arbitrary precision integer to an unsigned long int
+        ix <- E.mpzGetUInt n
+
+        -- index into the bytestring to retrieve the character at the
+        -- given index
+        c <- E.indexBytestring str ix
+
+        -- we only have arbitrary precision integers, so we allocate a new one
+        -- as the result to store the character
+        int <- newInteger
+        E.mpzInitSetUInt int c
+        retConstDynamic @Integer int
 
 equalsByteString :: MonadCodeGen m => m ClosurePtr
 equalsByteString =

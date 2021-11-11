@@ -45,7 +45,9 @@ module Hachi.Compiler.CodeGen.Externals (
 
     -- * GMP
     mpzInitSetStr,
+    mpzInitSetUInt,
     mpzGetStr,
+    mpzGetUInt,
     mpzAdd,
     mpzSub,
     mpzMul,
@@ -338,7 +340,9 @@ externalDefinitions = map GlobalDefinition
     , blake2bFun
     , verifySigFun
     , mpzInitSetStrFun
+    , mpzInitSetUIntFun
     , mpzGetStrFun
+    , mpzGetUIntFun
     , mpzAddFun
     , mpzSubFun
     , mpzMulFun
