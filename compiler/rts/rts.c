@@ -67,7 +67,6 @@ bool less_than_equals_bytestring(bytestring* s0, bytestring* s1) {
 }
 
 unsigned char* sha2_256(bytestring* str) {
-    rts_init();
     unsigned char* result = (unsigned char*)malloc(crypto_hash_sha256_BYTES);
     crypto_hash_sha256(result, (unsigned char*)(*str->arr), str->length);
 
@@ -75,7 +74,6 @@ unsigned char* sha2_256(bytestring* str) {
 }
 
 unsigned char* blake2b_256(bytestring* str) {
-    rts_init();
     unsigned char* result = (unsigned char*)malloc(32);
     crypto_generichash(result, 32, (*str->arr), str->length, NULL, 0);
 
@@ -83,6 +81,5 @@ unsigned char* blake2b_256(bytestring* str) {
 }
 
 bool verify_signature(bytestring* pubKey, bytestring* message, bytestring* signature) {
-    rts_init();
     return crypto_sign_verify_detached((*signature->arr), (*message->arr), message->length, (*pubKey->arr)) == 0;
 }
