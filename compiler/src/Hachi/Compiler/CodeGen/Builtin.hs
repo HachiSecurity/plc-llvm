@@ -26,6 +26,7 @@ import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Constant
 import Hachi.Compiler.CodeGen.Constant.Data
+import Hachi.Compiler.CodeGen.Constant.Integer
 import Hachi.Compiler.CodeGen.Constant.List
 import Hachi.Compiler.CodeGen.Constant.Pair
 import Hachi.Compiler.CodeGen.Equality
@@ -33,6 +34,7 @@ import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 import qualified Hachi.Compiler.CodeGen.Externals as E
+import Hachi.Compiler.Platform
 
 -------------------------------------------------------------------------------
 
@@ -149,34 +151,69 @@ compileMin x y = do
 
 -------------------------------------------------------------------------------
 
+-- | `compileBinaryInteger` @name builder@ generates a built-in function
+-- named @name@ with two integer parameters whose body is generated
+-- using @builder@.
 compileBinaryInteger
     :: forall a m. (MonadCodeGen m, CompileConstant a)
     => String -> (Operand -> Operand -> IRBuilderT m Operand)
     -> m ClosurePtr
-compileBinaryInteger name builder = compileBinary name i64 i64 $ \x y -> do
+compileBinaryInteger name builder =
+    compileBinary name gmpTyPtr gmpTyPtr $ \x y ->
     builder x y >>= retConstDynamic @a
 
+-- | `compileBinaryNewInteger` @name builder@ generates a built-in function
+-- named @name@ with two integer parameters whose body is generated using
+-- @builder@ and which returns a new integer as result.
+compileBinaryNewInteger
+    :: forall a m. (MonadCodeGen m, CompileConstant a)
+    => String -> (Operand -> Operand -> Operand -> IRBuilderT m ())
+    -> m ClosurePtr
+compileBinaryNewInteger name builder =
+    compileBinaryInteger @a name $ \x y -> do
+    ptr <- newInteger
+    builder ptr x y
+    pure ptr
+
 addInteger :: MonadCodeGen m => m ClosurePtr
-addInteger = compileBinaryInteger @Integer "addInteger" add
+addInteger = compileBinaryNewInteger @Integer "addInteger" E.mpzAdd
 
 subtractInteger :: MonadCodeGen m => m ClosurePtr
-subtractInteger = compileBinaryInteger @Integer "subtractInteger" sub
+subtractInteger = compileBinaryNewInteger @Integer "subtractInteger" E.mpzSub
 
 multiplyInteger :: MonadCodeGen m => m ClosurePtr
-multiplyInteger = compileBinaryInteger @Integer "multiplyInteger" mul
+multiplyInteger = compileBinaryNewInteger @Integer "multiplyInteger" E.mpzMul
 
+divideInteger :: MonadCodeGen m => m ClosurePtr
+divideInteger = compileBinaryNewInteger @Integer "divideInteger" E.mpzFDivQ
+
+quotientInteger :: MonadCodeGen m => m ClosurePtr
+quotientInteger = compileBinaryNewInteger @Integer "quotientInteger" E.mpzTDivQ
+
+remainderInteger :: MonadCodeGen m => m ClosurePtr
+remainderInteger =
+    compileBinaryNewInteger @Integer "remainderInteger" E.mpzTDivR
+
+modInteger :: MonadCodeGen m => m ClosurePtr
+modInteger = compileBinaryNewInteger @Integer "modInteger" E.mpzFDivR
 
 equalsInteger :: MonadCodeGen m => m ClosurePtr
 equalsInteger =
-    compileBinaryInteger @Bool "equalsInteger" $ icmp LLVM.EQ
+    compileBinaryInteger @Bool "equalsInteger" $ \x y -> do
+    r <- E.mpzCmp x y
+    icmp LLVM.EQ r $ ConstantOperand $ Int platformIntSize 0
 
 lessThanInteger :: MonadCodeGen m => m ClosurePtr
 lessThanInteger =
-    compileBinaryInteger @Bool "lessThanInteger" $ icmp LLVM.SLT
+    compileBinaryInteger @Bool "lessThanInteger" $ \x y -> do
+    r <- E.mpzCmp x y
+    icmp LLVM.SLT r $ ConstantOperand $ Int platformIntSize 0
 
 lessThanEqualsInteger :: MonadCodeGen m => m ClosurePtr
 lessThanEqualsInteger =
-    compileBinaryInteger @Bool "lessThanEqualsInteger" $ icmp LLVM.SLE
+    compileBinaryInteger @Bool "lessThanEqualsInteger" $ \x y -> do
+    r <- E.mpzCmp x y
+    icmp LLVM.SLE r $ ConstantOperand $ Int platformIntSize 0
 
 -------------------------------------------------------------------------------
 
@@ -728,6 +765,10 @@ builtins =
     [ (AddInteger, addInteger)
     , (SubtractInteger, subtractInteger)
     , (MultiplyInteger, multiplyInteger)
+    , (DivideInteger, divideInteger)
+    , (QuotientInteger, quotientInteger)
+    , (RemainderInteger, remainderInteger)
+    , (ModInteger, modInteger)
     , (EqualsInteger, equalsInteger)
     , (LessThanInteger, lessThanInteger)
     , (LessThanEqualsInteger, lessThanEqualsInteger)
