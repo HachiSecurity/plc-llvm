@@ -10,15 +10,15 @@ RUN apt-get update && \
 # so that code changes don't invalidate the Docker cache
 COPY ["stack*.yaml", "lts*.yaml", "/src/"]
 COPY ["compiler/package.yaml", "/src/compiler/package.yaml"]
-RUN stack build --system-ghc --only-dependencies 
+RUN stack build --system-ghc --only-dependencies
 # then we copy the rest and compile that
 COPY ["compiler/", "/src/compiler/"]
 RUN ls -la /src/compiler/ && stack build --system-ghc && \
-    stack install --system-ghc --local-bin-path=/ 
+    stack install --system-ghc --local-bin-path=/
 
 FROM debian:buster-slim
 RUN apt-get update && \
-    apt-get install -y gnupg lsb-release wget software-properties-common libsodium-dev && \
+    apt-get install -y gnupg lsb-release wget software-properties-common pkg-config libsodium-dev libgmp-dev && \
     wget https://apt.llvm.org/llvm.sh && \
     chmod +x llvm.sh && \
     ./llvm.sh 12
