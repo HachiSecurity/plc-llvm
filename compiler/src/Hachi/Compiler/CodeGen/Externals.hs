@@ -56,17 +56,8 @@ import LLVM.AST.Visibility
 import LLVM.AST.CallingConvention
 import LLVM.IRBuilder
 
+import Hachi.Compiler.CodeGen.Externals.Utility
 import Hachi.Compiler.CodeGen.Types
-
--------------------------------------------------------------------------------
-
-globalFromType :: String -> Type -> Global
-globalFromType name (PointerType (FunctionType rt pts varArgs) _) =
-    Function External Default Nothing C [] rt (mkName name) pTy []
-        Nothing Nothing 0 Nothing Nothing [] Nothing []
-    where pTy = ([Parameter ty (mkName "") [] | ty <- pts], varArgs)
-globalFromType _ _ =
-    error "globalFromType must be applied to a function pointer"
 
 -------------------------------------------------------------------------------
 
