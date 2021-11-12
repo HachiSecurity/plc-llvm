@@ -2,14 +2,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sodium.h>
+#include <stdbool.h>
 #include <gmp.h>
 
-#define FALSE 0
-#define TRUE 1
-
 int min(int x, int y) {
-    if(x < y) return x;
-    return y;
+    return x < y ? x : y;
 }
 
 struct bytestring {
@@ -39,17 +36,17 @@ char index_bytestring(bytestring* str, size_t n) {
     return (*str->arr)[n];
 }
 
-char equals_bytestring(bytestring* s0, bytestring* s1) {
-    if(s0->length != s1->length) return FALSE;
+bool equals_bytestring(bytestring* s0, bytestring* s1) {
+    if(s0->length != s1->length) return false;
 
     for(size_t i=0; i<s0->length; i++) {
-        if((*s0->arr)[i] != (*s1->arr)[i]) return FALSE;
+        if((*s0->arr)[i] != (*s1->arr)[i]) return false;
     }
 
-    return TRUE;
+    return true;
 }
 
-char less_than_bytestring(bytestring* s0, bytestring* s1) {
+bool less_than_bytestring(bytestring* s0, bytestring* s1) {
     int r = memcmp((*s0->arr), (*s1->arr), min(s0->length, s1->length));
 
     if(r == 0) {
@@ -59,7 +56,7 @@ char less_than_bytestring(bytestring* s0, bytestring* s1) {
     return r < 0;
 }
 
-char less_than_equals_bytestring(bytestring* s0, bytestring* s1) {
+bool less_than_equals_bytestring(bytestring* s0, bytestring* s1) {
     int r = memcmp((*s0->arr), (*s1->arr), min(s0->length, s1->length));
 
     if(r == 0) {
@@ -85,10 +82,7 @@ unsigned char* blake2b_256(bytestring* str) {
     return result;
 }
 
-unsigned char verify_signature(bytestring* pubKey, bytestring* message, bytestring* signature) {
+bool verify_signature(bytestring* pubKey, bytestring* message, bytestring* signature) {
     rts_init();
-    if(crypto_sign_verify_detached((*signature->arr), (*message->arr), message->length, (*pubKey->arr)) == 0) {
-        return TRUE;
-    }
-    return FALSE;
+    return crypto_sign_verify_detached((*signature->arr), (*message->arr), message->length, (*pubKey->arr)) == 0;
 }
