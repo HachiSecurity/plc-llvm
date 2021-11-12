@@ -84,8 +84,5 @@ unsigned char* blake2b_256(bytestring* str) {
 
 bool verify_signature(bytestring* pubKey, bytestring* message, bytestring* signature) {
     rts_init();
-    if(crypto_sign_verify_detached((*signature->arr), (*message->arr), message->length, (*pubKey->arr)) == 0) {
-        return true;
-    }
-    return false;
+    return (crypto_sign_verify_detached((*signature->arr), (*message->arr), message->length, (*pubKey->arr)) == 0);
 }
