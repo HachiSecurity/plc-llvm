@@ -40,7 +40,7 @@ bool equals_bytestring(bytestring* s0, bytestring* s1) {
     if(s0->length != s1->length) return false;
 
     for(size_t i=0; i<s0->length; i++) {
-        if((*s0->arr)[i] != (*s1->arr)[i]) return true;
+        if((*s0->arr)[i] != (*s1->arr)[i]) return false;
     }
 
     return true;
