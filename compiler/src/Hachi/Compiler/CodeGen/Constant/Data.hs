@@ -148,6 +148,12 @@ withDataTag ptr k = do
 
 -------------------------------------------------------------------------------
 
+tagIndex :: [Operand]
+tagIndex =
+    [ ConstantOperand $ Int 32 0
+    , ConstantOperand $ Int 32 0
+    ]
+
 dataIndex :: [Operand]
 dataIndex =
     [ ConstantOperand $ Int 32 0
@@ -162,8 +168,8 @@ constrTagIndex =
     , ConstantOperand $ Int 32 1
     ]
 
-tagAddr :: MonadIRBuilder m => Operand -> m Operand
-tagAddr ptr = bitcast ptr (ptrOf i8)
+tagAddr :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
+tagAddr ptr = gep ptr tagIndex >>= \addr -> bitcast addr (ptrOf i8)
 
 -- | `loadDataTag` @ptr@ retrieves the data tag from @ptr@.
 loadDataTag

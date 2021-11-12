@@ -63,7 +63,7 @@ closureTyDef :: Type
 closureTyDef = StructureType False
     [ clsEntryTy
     , printFnTy
-    , ptrOf VoidType
+    , ptrOf i8
     , ArrayType 0 closureTyPtr
     ]
 

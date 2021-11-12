@@ -113,8 +113,8 @@ bytestringTyPtr = ptrOf bytestringTy
 -- | `pairTyDef` is the type definition for pairs.
 pairTyDef :: Type
 pairTyDef = StructureType False
-    [ ptrOf VoidType
-    , ptrOf VoidType
+    [ closureTyPtr
+    , closureTyPtr
     ]
 
 -- | `pairTy` is a `Type` for pairs.
@@ -130,8 +130,8 @@ pairTyPtr = ptrOf pairTy
 -- | `listTyDef` is the type definition for lists.
 listTyDef :: Type
 listTyDef = StructureType False
-    [ ptrOf VoidType
-    , listTyPtr
+    [ closureTyPtr
+    , closureTyPtr
     ]
 
 -- | `listTy` is a `Type` for lists.
@@ -158,7 +158,7 @@ newtype ListPtr = MkListPtr { listPtr :: Operand }
 dataTyDef :: Type
 dataTyDef = StructureType False
     [ i8
-    , ArrayType 0 (ptrOf VoidType)
+    , ArrayType 0 closureTyPtr
     ]
 
 -- | `dataTy` is a `Type` for data values.
