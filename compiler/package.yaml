@@ -24,7 +24,10 @@ dependencies:
 - typed-process
 
 default-extensions:
+- DataKinds
 - FlexibleContexts
+- GADTs
+- KindSignatures
 - OverloadedStrings
 - StandaloneKindSignatures
 

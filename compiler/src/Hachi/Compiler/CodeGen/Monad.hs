@@ -13,7 +13,6 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Text as T
 
-import LLVM.AST
 import LLVM.AST.Constant
 import LLVM.IRBuilder
 
@@ -30,8 +29,8 @@ data CodeGenSt = MkCodeGenSt {
     codeGenCfg :: Config,
     codeGenErrMsg :: Constant,
     codeGenCounters :: IORef (M.Map String (IORef Integer)),
-    codeGenEnv :: M.Map T.Text ClosurePtr,
-    codeGenBuiltins :: M.Map UPLC.DefaultFun ClosurePtr
+    codeGenEnv :: M.Map T.Text (ClosurePtr 'DynamicPtr),
+    codeGenBuiltins :: M.Map UPLC.DefaultFun (ClosurePtr 'StaticPtr)
 }
 
 -- | The code generator monad.
@@ -62,7 +61,9 @@ mkFresh prefix = asks codeGenCounters >>= \countersRef-> liftIO $ do
 
 -- | `extendScope` @name operand action@ adds @name@ to the scope for
 -- @action@ along with @operand@ which represents the LLVM identifier.
-extendScope :: MonadReader CodeGenSt m => T.Text -> ClosurePtr -> m a -> m a
+extendScope
+    :: MonadReader CodeGenSt m
+    => T.Text -> ClosurePtr 'DynamicPtr -> m a -> m a
 extendScope name val = local $ \st ->
     st{ codeGenEnv = M.insert name val (codeGenEnv st) }
 
@@ -72,7 +73,7 @@ extendScope name val = local $ \st ->
 -- @operands@.
 updateEnv
     :: MonadReader CodeGenSt m
-    => S.Set T.Text -> [ClosurePtr] -> m a -> m a
+    => S.Set T.Text -> [ClosurePtr 'DynamicPtr] -> m a -> m a
 updateEnv names operands = local $ \st ->
     st{ codeGenEnv = M.union namedOperands (codeGenEnv st) }
     where namedOperands = M.fromList

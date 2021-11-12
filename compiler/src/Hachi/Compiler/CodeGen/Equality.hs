@@ -24,8 +24,7 @@ import Hachi.Compiler.Platform
 
 -------------------------------------------------------------------------------
 
-
-type EqFun m = ClosurePtr -> ClosurePtr -> m Operand
+type EqFun m = ClosurePtr 'DynamicPtr -> ClosurePtr 'DynamicPtr -> m Operand
 
 eqType :: Type
 eqType = ptrOf $ FunctionType i8 [closureTyPtr, closureTyPtr] False
@@ -37,7 +36,7 @@ eqDataRef = ConstantOperand $ GlobalReference eqType "eqData"
 -- and checks that the resulting values are the same.
 eqInteger
     :: (MonadCodeGen m, MonadIRBuilder m)
-    => ClosurePtr -> ClosurePtr -> m ()
+    => ClosurePtr 'DynamicPtr -> ClosurePtr 'DynamicPtr -> m ()
 eqInteger n m = do
     _ <- enterClosure n []
     x <- loadConstVal gmpTyPtr
@@ -52,7 +51,7 @@ eqInteger n m = do
 -- values and checks that the resulting values are the same.
 eqByteString
     :: (MonadCodeGen m, MonadIRBuilder m)
-    => ClosurePtr -> ClosurePtr -> m ()
+    => ClosurePtr 'DynamicPtr -> ClosurePtr 'DynamicPtr -> m ()
 eqByteString xs ys = do
     _ <- enterClosure xs []
     s0 <- loadConstVal bytestringTyPtr
@@ -66,7 +65,7 @@ eqByteString xs ys = do
 -- `Data` values and checks that both components of the pair are the same.
 eqPair
     :: (MonadCodeGen m, MonadIRBuilder m)
-    => ClosurePtr -> ClosurePtr -> m Operand
+    => ClosurePtr 'DynamicPtr -> ClosurePtr 'DynamicPtr -> m Operand
 eqPair x y = do
     -- force the two argument closures
     _ <- enterClosure x []
@@ -97,7 +96,7 @@ eqPair x y = do
 -- produced by @compare@.
 eqList
     :: (MonadCodeGen m, MonadIRBuilder m)
-    => EqFun m -> ClosurePtr -> ClosurePtr -> m ()
+    => EqFun m -> ClosurePtr 'DynamicPtr -> ClosurePtr 'DynamicPtr -> m ()
 eqList xEq xs ys = do
     -- allocate stack space for the two list closure pointers and store the
     -- initial pointers in it

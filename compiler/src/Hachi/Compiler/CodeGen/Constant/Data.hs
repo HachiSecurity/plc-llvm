@@ -177,7 +177,7 @@ loadDataTag ptr = do
 -- by @ptr@. This function works for all forms of Data value.
 loadDataPtr
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> m ClosurePtr
+    => Operand -> m (ClosurePtr 'DynamicPtr)
 loadDataPtr ptr = do
     addr <- gep ptr dataIndex
     val <- load addr 0
@@ -188,7 +188,7 @@ loadDataPtr ptr = do
 -- a data constructor and no such check is performed.
 loadConstrTag
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> m ClosurePtr
+    => Operand -> m (ClosurePtr 'DynamicPtr)
 loadConstrTag ptr = do
     addr <- gep ptr constrTagIndex
     val <- load addr 0

@@ -43,14 +43,18 @@ listNew x xs = do
 
 -- | `getHead` @listPtr@ generates code which retrieves the head of the list
 -- pointed at by @listPtr@.
-getHead :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m ClosurePtr
+getHead
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> m (ClosurePtr 'DynamicPtr)
 getHead ptr = do
     addr <- gep ptr [ ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 0 ]
     MkClosurePtr <$> load addr 0
 
 -- | `getTail` @listPtr@ generates code which retrieves the tail of the list
 -- pointed at by @listPtr@.
-getTail :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m ClosurePtr
+getTail
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> m (ClosurePtr 'DynamicPtr)
 getTail ptr = do
     addr <- gep ptr [ ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 1 ]
     MkClosurePtr <$> load addr 0

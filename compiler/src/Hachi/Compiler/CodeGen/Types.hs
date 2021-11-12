@@ -1,3 +1,4 @@
+{-# LANGUAGE StandaloneDeriving #-}
 
 -- | This module contains various LLVM `Type` values used in the code
 -- generator.
@@ -40,7 +41,11 @@ module Hachi.Compiler.CodeGen.Types (
     gmpTy,
     gmpTyPtr,
 
-    ClosurePtr(..)
+    -- * Closure pointers
+    PtrKind(..),
+    ClosurePtr(..),
+    closurePtr,
+    toDynamicPtr
 ) where
 
 -------------------------------------------------------------------------------
@@ -187,8 +192,33 @@ gmpTyPtr = ptrOf gmpTy
 
 -------------------------------------------------------------------------------
 
+-- | Enumerates different kinds of pointers we may have:
+--
+-- - `StaticPtr` is guaranteed to represent a pointer to a static global
+-- - `DynamicPtr` _may_ represent a pointer to a dynamically allocated value.
+--
+-- In other words, we use `StaticPtr` when we know what sort of pointer we
+-- have and `DynamicPtr` in other cases.
+data PtrKind = StaticPtr | DynamicPtr
+
 -- | Represents a pointer to a closure.
-newtype ClosurePtr = MkClosurePtr { closurePtr :: Operand }
-    deriving (Eq, Show)
+data ClosurePtr (k :: PtrKind) where
+    MkClosurePtr :: Operand -> ClosurePtr 'DynamicPtr
+    MkStaticClosurePtr :: Constant -> ClosurePtr 'StaticPtr
+
+deriving instance Eq (ClosurePtr k)
+deriving instance Show (ClosurePtr k)
+
+-- | `closurePtr` @closurePtr@ returns @closurePtr@ as an `Operand` value.
+closurePtr :: ClosurePtr k -> Operand
+closurePtr (MkClosurePtr ptr) = ptr
+closurePtr (MkStaticClosurePtr ptr) = ConstantOperand ptr
+
+-- | `toDynamicPtr` @closurePtr@ turns a static closure pointer into a dynamic
+-- closure pointer. This is conceptually a no-op and just allows us to forget
+-- information in case we only need a `DynamicPtr`, but have a `StaticPtr`.
+-- Static pointers are always acceptable where dynamic pointers are expected.
+toDynamicPtr :: ClosurePtr 'StaticPtr -> ClosurePtr 'DynamicPtr
+toDynamicPtr (MkStaticClosurePtr ptr) = MkClosurePtr (ConstantOperand ptr)
 
 -------------------------------------------------------------------------------

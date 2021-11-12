@@ -20,7 +20,7 @@ import Hachi.Compiler.CodeGen.Types
 -- where the first component is @fst@ and the second component is @snd@.
 newPair
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => ClosurePtr -> ClosurePtr -> m Operand
+    => ClosurePtr p -> ClosurePtr q -> m Operand
 newPair x y = do
     -- allocate memory for the new pair
     size <- IR.sizeof 64 pairTy
@@ -37,14 +37,18 @@ newPair x y = do
 
 -- | `getFst` @pairPtr@ generates code which retrieves the first component
 -- from the pair pointed at by @pairPtr@.
-getFst :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m ClosurePtr
+getFst
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> m (ClosurePtr 'DynamicPtr)
 getFst ptr = do
     addr <- gep ptr [ ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 0 ]
     MkClosurePtr <$> load addr 0
 
 -- | `getSnd` @pairPtr@ generates code which retrieves the second component
 -- from the pair pointed at by @pairPtr@.
-getSnd :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m ClosurePtr
+getSnd
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> m (ClosurePtr 'DynamicPtr)
 getSnd ptr = do
     addr <- gep ptr [ ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 1 ]
     MkClosurePtr <$> load addr 0

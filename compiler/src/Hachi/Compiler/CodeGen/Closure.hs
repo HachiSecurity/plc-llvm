@@ -127,15 +127,21 @@ mkClosureName name = mkName $ name <> "_closure"
 -- variable representing a closure for @name@.
 compileClosure
     :: MonadModuleBuilder m
-    => Bool -> String -> Constant -> Constant -> [Constant] -> m ClosurePtr
+    => Bool -> String -> Constant -> Constant -> [Constant]
+    -> m (ClosurePtr 'StaticPtr)
 compileClosure isPoly name codePtr printPtr fvs = do
     let closureName = mkClosureName name
+    let closureType = StructureType False
+            [ clsEntryTy, printFnTy
+            , IntegerType bits
+            , ArrayType (fromIntegral $ length fvs) closureTyPtr
+            ]
 
-    void $ global closureName closureTy $ Struct Nothing False $
+    void $ global closureName closureType $ Struct Nothing False $
         codePtr : printPtr : Int bits (toInteger $ fromEnum isPoly) : fvs
 
-    pure $ MkClosurePtr $ ConstantOperand $
-        GlobalReference (PointerType closureTy $ AddrSpace 0) closureName
+    pure $ MkStaticClosurePtr $
+        GlobalReference (PointerType closureType $ AddrSpace 0) closureName
 
 -- | When we dynamically allocate closures, we need to know how much space to
 -- allocate for the pointers; for this purpose we are currently assuming that
@@ -154,7 +160,7 @@ ptrSize = ConstantOperand $ LLVM.AST.Constant.sizeof bits closureTyPtr
 -- the pointer to the closure is returned.
 allocateClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Bool -> Constant -> Constant -> [Operand] -> m ClosurePtr
+    => Bool -> Constant -> Constant -> [Operand] -> m (ClosurePtr 'DynamicPtr)
 allocateClosure isDelay codePtr printPtr fvs = do
     -- allocate enough space for the closure on the heap:
     -- 2 code pointers + one pointer for each free variable
@@ -190,7 +196,7 @@ compileDynamicClosure
     :: MonadCodeGen m
     => Bool -> String -> S.Set T.Text -> T.Text
     -> (Operand -> Operand -> IRBuilderT m ())
-    -> IRBuilderT m ClosurePtr
+    -> IRBuilderT m (ClosurePtr 'DynamicPtr)
 compileDynamicClosure isDelay name fvs var codeFun = do
     let entryName = mkName $ name <> "_entry"
     let entryTy = mkEntryTy 1
@@ -245,10 +251,10 @@ compileFunPrint name = do
 -- @type@.
 loadFromClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => ClosureComponent -> Type -> ClosurePtr -> m Operand
-loadFromClosure prop ty (MkClosurePtr ptr) = do
+    => ClosureComponent -> Type -> ClosurePtr k -> m Operand
+loadFromClosure prop ty ptr = do
     let ix = indicesForComponent prop
-    ptrt <- bitcast ptr closureTyPtr
+    ptrt <- bitcast (closurePtr ptr) closureTyPtr
     addr <- gep ptrt $ ConstantOperand (Int 32 0) : ix
 
     r <- bitcast addr (ptrOf ty)
@@ -260,9 +266,9 @@ loadFromClosure prop ty (MkClosurePtr ptr) = do
 callClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
     => ClosureComponent
-    -> ClosurePtr
+    -> ClosurePtr k
     -> [Operand]
-    -> m ClosurePtr
+    -> m (ClosurePtr 'DynamicPtr)
 callClosure prop closure argv = do
     entry <- loadFromClosure prop clsEntryTy closure
     fmap MkClosurePtr <$> call entry $
@@ -272,7 +278,7 @@ callClosure prop closure argv = do
 -- provides the arguments given by @args@.
 enterClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => ClosurePtr -> [Operand] -> m ClosurePtr
+    => ClosurePtr k -> [Operand] -> m (ClosurePtr 'DynamicPtr)
 enterClosure = callClosure ClosureCode
 
 -- | `lookupVar` @name type@ generates code which retrieves the variable named
@@ -308,7 +314,7 @@ lookupVar var ty = do
             bitcast (closurePtr ptr) ty
 
 -- | `retClosure` @closurePtr@ returns the pointer represented by @closurePtr@.
-retClosure :: MonadIRBuilder m => ClosurePtr -> m ()
+retClosure :: MonadIRBuilder m => ClosurePtr k -> m ()
 retClosure = ret . closurePtr
 
 -------------------------------------------------------------------------------
