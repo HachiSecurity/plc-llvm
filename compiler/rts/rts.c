@@ -6,7 +6,7 @@
 #include <gmp.h>
 
 int min(int x, int y) {
-    return (x < y? x : y);
+    return x < y ? x : y;
 }
 
 struct bytestring {
@@ -84,5 +84,5 @@ unsigned char* blake2b_256(bytestring* str) {
 
 bool verify_signature(bytestring* pubKey, bytestring* message, bytestring* signature) {
     rts_init();
-    return (crypto_sign_verify_detached((*signature->arr), (*message->arr), message->length, (*pubKey->arr)) == 0);
+    return crypto_sign_verify_detached((*signature->arr), (*message->arr), message->length, (*pubKey->arr)) == 0;
 }
