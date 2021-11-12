@@ -1,4 +1,4 @@
-FROM haskell:8.10.4 AS builder
+FROM ghcr.io/hachisecurity/plutus-stack:main AS builder
 WORKDIR /src
 # First, we install things that are unlikely to change frequently
 RUN apt-get update && \
@@ -13,7 +13,7 @@ COPY ["compiler/package.yaml", "/src/compiler/package.yaml"]
 RUN stack build --system-ghc --only-dependencies
 # then we copy the rest and compile that
 COPY ["compiler/", "/src/compiler/"]
-RUN ls -la /src/compiler/ && stack build --system-ghc && \
+RUN stack build --system-ghc && \
     stack install --system-ghc --local-bin-path=/
 
 FROM debian:buster-slim
@@ -22,6 +22,7 @@ RUN apt-get update && \
     wget https://apt.llvm.org/llvm.sh && \
     chmod +x llvm.sh && \
     ./llvm.sh 12
+COPY compiler/rts/rts.c /rts.c
 COPY --from=builder /plc-llvm /plc-llvm
-ENTRYPOINT [ "/plc-llvm" ]
+ENTRYPOINT [ "/plc-llvm", "--rts", "/rts.c" ]
 CMD []
