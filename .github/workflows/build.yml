@@ -5,6 +5,7 @@ on:
     branches:
       - master
     paths:
+      - '.github/workflows/build.yml'
       - "compiler/**"
       - "stack*.yaml"
   pull_request:
@@ -48,4 +49,13 @@ jobs:
 
       - name: Run tests
         run: |
-          stack --no-terminal build --test --fast --system-ghc
+          stack --no-terminal build --test --fast --system-ghc --test-arguments='--xml=plc-llvm.xml'
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: compiler/plc-llvm.xml
+          check_name: 'tests'
+          comment_title: 'Test results'
+          fail_on: 'test failures'

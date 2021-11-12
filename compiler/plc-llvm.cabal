@@ -135,6 +135,7 @@ test-suite plc-llvm-test
     , prettyprinter
     , some
     , tasty
+    , tasty-ant-xml
     , tasty-discover
     , tasty-hedgehog
     , tasty-hunit
