@@ -54,4 +54,5 @@ tests:
     - tasty-discover
     - tasty-hunit
     - tasty-hedgehog
+    - tasty-ant-xml
     - hedgehog
