@@ -6,6 +6,11 @@ on:
       - master
     tags:
       - 'v*'
+    paths:
+      - '.github/workflows/docker.yml'
+      - 'lts*.yaml'
+      - 'stack*.yaml'
+      - 'compiler/**'
 
 jobs:
   docker:
