@@ -5,6 +5,7 @@ on:
     branches:
       - master
     paths:
+      - '.github/workflows/build.yml'
       - "compiler/**"
       - "stack*.yaml"
   pull_request:
@@ -55,4 +56,6 @@ jobs:
         if: always()
         with:
           files: compiler/plc-llvm.xml
+          check_name: 'tests'
+          comment_title: 'Test results'
           fail_on: 'test failures'
