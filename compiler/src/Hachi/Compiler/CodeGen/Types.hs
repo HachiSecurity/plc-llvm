@@ -97,7 +97,7 @@ asStringPtr ref = LLVM.AST.Constant.BitCast ref $ ptrOf char
 bytestringTyDef :: Type
 bytestringTyDef = StructureType False
     [ i64
-    , ptrOf (ArrayType 0 i8)
+    , ptrOf i8
     ]
 
 -- | `bytestringTy` is a `Type` for bytestrings.

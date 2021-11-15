@@ -229,7 +229,8 @@ bsNewStruct l = do
     ptr <- E.malloc bytestringTyPtr size
 
     -- store the length
-    store ptr 0 l
+    addr <- gep ptr [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 0]
+    store addr 0 l
 
     -- return the pointer to the bytestring structure
     pure ptr
@@ -310,7 +311,7 @@ consByteString =
 
         -- copy data
         addr <- bsDataPtr ptr
-        xt <- bitcast x i8
+        xt <- trunc x i8
         store addr 0 xt
 
         addr1 <- gep addr [ConstantOperand $ Int 64 1]
@@ -386,11 +387,12 @@ indexByteString =
         -- index into the bytestring to retrieve the character at the
         -- given index
         c <- E.indexBytestring str ix
+        val <- zext c i64
 
         -- we only have arbitrary precision integers, so we allocate a new one
         -- as the result to store the character
         int <- newInteger
-        E.mpzInitSetUInt int c
+        E.mpzInitSetUInt int val
         retConstDynamic @Integer int
 
 equalsByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
