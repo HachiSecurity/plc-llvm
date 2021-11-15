@@ -445,6 +445,8 @@ loadConstVal ty = do
 
     -- we then cast it to a pointer of the appropriate type we want and load
     -- the corresponding value
-    bitcast ptr ty
+    if isPtr ty
+    then bitcast ptr ty
+    else ptrtoint ptr ty
 
 -------------------------------------------------------------------------------

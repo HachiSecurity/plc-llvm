@@ -3,6 +3,9 @@
 -- | This module contains various LLVM `Type` values used in the code
 -- generator.
 module Hachi.Compiler.CodeGen.Types (
+    -- * Utility functions
+    isPtr,
+
     -- * Basic LLVM types
     i1,
     i8,
@@ -60,6 +63,13 @@ import LLVM.AST.AddrSpace
 import LLVM.AST.Constant
 
 import Hachi.Compiler.Platform
+
+-------------------------------------------------------------------------------
+
+-- | `isPtr` @type@ determines whether @type@ represents a pointer type.
+isPtr :: Type -> Bool
+isPtr PointerType{} = True
+isPtr _ = False
 
 -------------------------------------------------------------------------------
 
