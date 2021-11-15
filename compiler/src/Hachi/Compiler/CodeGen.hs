@@ -217,13 +217,15 @@ compileProgram cfg (Program _ _ term) = do
 
     -- initialise the compilation context with empty counters
     counter <- liftIO $ newIORef M.empty
+    constPrinters <- liftIO $ newIORef M.empty
 
     let codeGenSt = MkCodeGenSt{
             codeGenCfg = cfg,
             codeGenErrMsg = errorMsg,
             codeGenCounters = counter,
             codeGenEnv = M.empty,
-            codeGenBuiltins = M.empty
+            codeGenBuiltins = M.empty,
+            codeGenConstPrinters = constPrinters
         }
 
     -- compile the program

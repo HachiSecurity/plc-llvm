@@ -18,9 +18,12 @@ module Hachi.Compiler.CodeGen.Constant (
 -------------------------------------------------------------------------------
 
 import Control.Monad
+import Control.Monad.Reader
 
 import qualified Data.ByteString as BS
+import Data.IORef
 import Data.List
+import qualified Data.Map as M
 import Data.Proxy
 import qualified Data.Text as T
 import Data.Text.Encoding (encodeUtf8)
@@ -411,11 +414,11 @@ compileConstStatic name x = do
 
     -- 2. generate print code
     let builder = compilePrintBody @a name
-    print_fun <- compileConstPrint name builder
+    printPtr <- compileConstPrint (constantTypeId @a) builder
 
     -- 3. generate a static closure: this should be sufficient since constants
     -- hopefully do not contain any free variables
-    compileClosure False name codePtr print_fun [ptr]
+    compileClosure False name codePtr printPtr [ptr]
 
 -- | `compileConstDynamic` @value@ generates code which allocates a dynamic
 -- closure for the value given by @value@. Note that this function must be
@@ -433,7 +436,8 @@ compileConstDynamic val = do
     codePtr <- compileConstEntry @a entryName
 
     -- 2. generate print code
-    printPtr <- compileConstPrint name $ compilePrintBody @a name
+    printPtr <- compileConstPrint (constantTypeId @a) $
+        compilePrintBody @a name
 
     -- cast the value to a pointer type, if necessary
     ptr <- castConstantToPtr @a val
@@ -454,19 +458,37 @@ retConstDynamic val = compileConstDynamic @a val >>= retClosure
 -- constant which loads the constant value from the closure using @builder@.
 compileConstPrint
     :: MonadCodeGen m
-    => String -> (ClosurePtr 'DynamicPtr -> IRBuilderT m ()) -> m Constant
-compileConstPrint name bodyBuilder = do
-    let printName = mkName $ name <> "_print"
+    => ConstantTy -> (ClosurePtr 'DynamicPtr -> IRBuilderT m ()) -> m Constant
+compileConstPrint ty bodyBuilder = do
+    let printName = mkName $ show ty <> "_print"
 
-    _ <- IR.function printName [(closureTyPtr, "this")] VoidType $
-        \[this] -> do
-            compileTrace (name <> "_print")
+    -- we need to determine if the pretty-printer for this constant type has
+    -- already been generated and, if so, retrieve the reference to it;
+    -- if it has not been generated, then we should do so now
+    prettyPrintersRef <- asks codeGenConstPrinters
+    prettyPrinters <- liftIO $ readIORef prettyPrintersRef
 
-            bodyBuilder $ MkClosurePtr this
+    case M.lookup ty prettyPrinters of
+        Just ref -> pure ref
+        Nothing -> do
+            -- generate the pretty-printing function
+            _ <- IR.function printName [(closureTyPtr, "this")] VoidType $
+                \[this] -> do
+                    compileTrace (show ty <> "_print")
 
-            retVoid
+                    bodyBuilder $ MkClosurePtr this
 
-    pure $ GlobalReference printFnTy printName
+                    retVoid
+
+            -- construct the reference to the function and store it in the
+            -- global lookup table
+            let ref = GlobalReference printFnTy printName
+
+            liftIO $ writeIORef prettyPrintersRef $
+                M.insert ty ref prettyPrinters
+
+            -- return the reference
+            pure ref
 
 -- | `loadConstVal` @type@ loads the value of the result register (which
 -- constant closures write to when entered) assuming that it is of the
