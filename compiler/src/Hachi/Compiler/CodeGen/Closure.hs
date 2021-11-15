@@ -100,7 +100,7 @@ mkEntryTy arity = ptrOf $ FunctionType closureTyPtr params False
 
 -- | `clsEntryTy` is the `Type` of closure entry functions.
 clsEntryTy :: Type
-clsEntryTy = mkEntryTy 0
+clsEntryTy = mkEntryTy 1
 
 varEntryTy :: Type
 varEntryTy = mkEntryTy 1
@@ -130,7 +130,8 @@ compileClosure isPoly name codePtr printPtr fvs = do
             ]
 
     void $ global closureName closureType $ Struct Nothing False $
-        codePtr : printPtr : Int bits (toInteger $ fromEnum isPoly) : fvs
+        codePtr : printPtr : Int bits (toInteger $ fromEnum isPoly) :
+        [Array closureTyPtr fvs]
 
     pure $ MkStaticClosurePtr $
         GlobalReference (PointerType closureType $ AddrSpace 0) closureName

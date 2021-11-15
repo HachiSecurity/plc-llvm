@@ -342,8 +342,8 @@ compileConstEntry
     => String -> (ClosurePtr 'DynamicPtr -> IRBuilderT m Operand) -> m Constant
 compileConstEntry name loadFn = do
     let llvmName = mkName name
-    void $ IR.function llvmName [(closureTyPtr, "this")] closureTyPtr $
-        \[this] -> do
+    void $ IR.function llvmName [(closureTyPtr, "this"), (closureTyPtr, "unused")] closureTyPtr $
+        \[this, _] -> do
             compileTrace name
 
             v <- loadFn $ MkClosurePtr this
