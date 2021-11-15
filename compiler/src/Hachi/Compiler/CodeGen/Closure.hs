@@ -43,6 +43,7 @@ import Data.Word
 import LLVM.AST
 import LLVM.AST.AddrSpace
 import LLVM.AST.Constant as C
+import LLVM.AST.Typed
 import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.CodeGen.Common
@@ -275,8 +276,19 @@ callClosure
 callClosure prop closure argv = do
     let ty = fnTyForComponent prop
     entry <- loadFromClosure prop ty closure
+
+    ptr <- bitcast (closurePtr closure) closureTyPtr
+
+    -- make sure that the arguments are all closure*
+    castArgs <- forM argv $ \arg -> do
+        argTy <- typeOf arg
+
+        if argTy /= Right closureTyPtr
+        then bitcast arg closureTyPtr
+        else pure arg
+
     fmap MkClosurePtr <$> call entry $
-        (closurePtr closure, []) : [(arg, []) | arg <- argv]
+        (ptr, []) : [(arg, []) | arg <- castArgs]
 
 -- `enterClosure` @ptr args@ enters the closure represented by @ptr@ and
 -- provides the arguments given by @args@.
