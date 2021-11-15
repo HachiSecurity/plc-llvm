@@ -47,6 +47,10 @@ import Hachi.Compiler.Platform
 -------------------------------------------------------------------------------
 
 class CompileConstant a where
+    -- | `constantTypeId` returns a value-level identifier for this type
+    -- of constant.
+    constantTypeId :: ConstantTy
+
     -- | `compileConstant` @name val@ generates code which initialises the
     -- constant given by @val@. In simple cases, this may just return a
     -- constant expression, while in other cases we may generate a global
@@ -96,6 +100,8 @@ compileSubConstant baseName v = do
         MkStaticClosurePtr con -> pure con
 
 instance CompileConstant Integer where
+    constantTypeId = ConstInteger
+
     -- we can just stick the integer value directly into the closure
     compileConstant name val = do
         -- generate a global variable for the arbitrary precision integer
@@ -131,6 +137,8 @@ instance CompileConstant Integer where
         void $ printf strFormatRef [str]
 
 instance CompileConstant BS.ByteString where
+    constantTypeId = ConstByteString
+
     compileConstant name val = do
         let size = BS.length val
         let bytes = BS.unpack val
@@ -153,6 +161,8 @@ instance CompileConstant BS.ByteString where
         void $ printBytestring ptr
 
 instance CompileConstant T.Text where
+    constantTypeId = ConstText
+
     compileConstant name txt = do
         -- Text is strict, packed UTF-16
         -- we convert it to UTF-8 here since that is easier for us to work with
@@ -170,6 +180,8 @@ instance CompileConstant T.Text where
         void $ printf strFormatRef [ptr]
 
 instance CompileConstant () where
+    constantTypeId = ConstUnit
+
     compileConstant _ () =
         pure $ C.IntToPtr (Int 1 1) (ptrOf i8)
 
@@ -181,6 +193,8 @@ instance CompileConstant () where
         void $ printf unitRef []
 
 instance CompileConstant Bool where
+    constantTypeId = ConstBool
+
     -- we can just stick the boolean value directly into the closure
     compileConstant _ val =
         pure $ C.IntToPtr (Int 1 $ toInteger $ fromEnum val) (ptrOf i8)
@@ -220,6 +234,8 @@ compileDataConstant tag fieldName name val extra = do
     dataGlobal (mkName name) tag (ref : maybe [] pure mRef)
 
 instance CompileConstant PLC.Data where
+    constantTypeId = ConstData
+
     compileConstant name (Constr t xs) =
         compileDataConstant DataConstr "constr_list" name xs (Just t)
     compileConstant name (Map xs) =
@@ -259,6 +275,8 @@ instance CompileConstant PLC.Data where
             DataB -> handleCase dataByteStringRef
 
 instance (CompileConstant a, CompileConstant b) => CompileConstant (a,b) where
+    constantTypeId = ConstPair
+
     compileConstant name (x,y) = do
         -- compile the two components to constant closures; the pair is then
         -- just two pointers to those closures; we need them as closures so
@@ -299,6 +317,8 @@ instance (CompileConstant a, CompileConstant b) => CompileConstant (a,b) where
         void $ printf closeParenRef []
 
 instance CompileConstant a => CompileConstant [a] where
+    constantTypeId = ConstList
+
     -- we represent an empty list as a null pointer while a cons cell is
     -- represented as a non-null pointer to a structure containing two
     -- pointers to closures: the head and the tail

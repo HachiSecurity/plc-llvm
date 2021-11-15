@@ -1,7 +1,15 @@
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE ConstraintKinds #-}
 
-module Hachi.Compiler.CodeGen.Monad where
+module Hachi.Compiler.CodeGen.Monad (
+    ConstantTy(..),
+    CodeGenSt(..),
+    CodeGen(..),
+    MonadCodeGen,
+    mkFresh,
+    extendScope,
+    updateEnv
+) where
 
 -------------------------------------------------------------------------------
 
@@ -20,6 +28,22 @@ import qualified UntypedPlutusCore as UPLC
 
 import Hachi.Compiler.Config
 import Hachi.Compiler.CodeGen.Types
+
+-------------------------------------------------------------------------------
+
+-- | Enumerates all supported types of constants. This would technically be a
+-- great candidate for a data family, but we'd then end up with some mutually
+-- recursive modules, unless we shuffle things around a bunch.
+data ConstantTy
+    = ConstInteger
+    | ConstByteString
+    | ConstText
+    | ConstUnit
+    | ConstBool
+    | ConstData
+    | ConstPair
+    | ConstList
+    deriving (Eq, Ord, Show)
 
 -------------------------------------------------------------------------------
 
