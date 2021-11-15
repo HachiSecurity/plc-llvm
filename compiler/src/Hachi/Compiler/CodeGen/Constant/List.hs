@@ -13,6 +13,7 @@ import LLVM.AST.Constant
 import LLVM.AST.IntegerPredicate as LLVM
 import LLVM.IRBuilder as IR
 
+import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
@@ -30,7 +31,10 @@ listNew x xs = do
     ptr <- malloc listTyPtr size
 
     -- store the head pointer
-    store ptr 0 x
+    headAddr <- gep ptr [ ConstantOperand $ Int 32 0
+                        , ConstantOperand $ Int 32 0
+                        ]
+    store headAddr 0 x
 
     -- store the tail pointer
     tailAddr <- gep ptr [ ConstantOperand $ Int 32 0
@@ -48,7 +52,8 @@ getHead
     => Operand -> m (ClosurePtr 'DynamicPtr)
 getHead ptr = do
     addr <- gep ptr [ ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 0 ]
-    MkClosurePtr <$> load addr 0
+    clsPtr <- load addr 0
+    MkClosurePtr <$> bitcast clsPtr closureTyPtr
 
 -- | `getTail` @listPtr@ generates code which retrieves the tail of the list
 -- pointed at by @listPtr@.
@@ -57,7 +62,8 @@ getTail
     => Operand -> m (ClosurePtr 'DynamicPtr)
 getTail ptr = do
     addr <- gep ptr [ ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 1 ]
-    MkClosurePtr <$> load addr 0
+    clsPtr <- load addr 0
+    MkClosurePtr <$> bitcast clsPtr closureTyPtr
 
 -- | `listCase` @listPtr nullBuilder consBuilder@ generates code which tests
 -- if @listPtr@ is a pointer to null or to a cons cell and uses @nullBuilder@
