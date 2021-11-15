@@ -35,6 +35,7 @@ import Control.Monad.Reader
 
 import Data.List
 import qualified Data.Map as M
+import Data.Maybe
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Data.Word
@@ -272,8 +273,9 @@ callClosure prop closure argv = do
 -- provides the arguments given by @args@.
 enterClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => ClosurePtr k -> [Operand] -> m (ClosurePtr 'DynamicPtr)
-enterClosure = callClosure ClosureCode
+    => ClosurePtr k -> Maybe Operand -> m (ClosurePtr 'DynamicPtr)
+enterClosure ptr mArg = callClosure ClosureCode ptr [arg]
+    where arg = fromMaybe (ConstantOperand $ Null closureTyPtr) mArg
 
 -- | `lookupVar` @name type@ generates code which retrieves the variable named
 -- @name@ from the local environment. If the variable is not in scope, we

@@ -38,10 +38,10 @@ eqInteger
     :: (MonadCodeGen m, MonadIRBuilder m)
     => ClosurePtr 'DynamicPtr -> ClosurePtr 'DynamicPtr -> m ()
 eqInteger n m = do
-    _ <- enterClosure n []
+    _ <- enterClosure n Nothing
     x <- loadConstVal gmpTyPtr
 
-    _ <- enterClosure m []
+    _ <- enterClosure m Nothing
     y <- loadConstVal gmpTyPtr
 
     r <- mpzCmp x y
@@ -53,10 +53,10 @@ eqByteString
     :: (MonadCodeGen m, MonadIRBuilder m)
     => ClosurePtr 'DynamicPtr -> ClosurePtr 'DynamicPtr -> m ()
 eqByteString xs ys = do
-    _ <- enterClosure xs []
+    _ <- enterClosure xs Nothing
     s0 <- loadConstVal bytestringTyPtr
 
-    _ <- enterClosure ys []
+    _ <- enterClosure ys Nothing
     s1 <- loadConstVal bytestringTyPtr
 
     equalsByteString s0 s1 >>= ret
@@ -68,10 +68,10 @@ eqPair
     => ClosurePtr 'DynamicPtr -> ClosurePtr 'DynamicPtr -> m Operand
 eqPair x y = do
     -- force the two argument closures
-    _ <- enterClosure x []
+    _ <- enterClosure x Nothing
     p0 <- loadConstVal pairTyPtr
 
-    _ <- enterClosure y []
+    _ <- enterClosure y Nothing
     p1 <- loadConstVal pairTyPtr
 
     -- retrieve the first component from each pair and check that they
@@ -114,11 +114,11 @@ eqList xEq xs ys = do
     -- retrieve the list closure pointers from the stack and retrieve the
     -- actual list pointers from them
     l0Val <- load l0Var 0
-    _ <- enterClosure (MkClosurePtr l0Val) []
+    _ <- enterClosure (MkClosurePtr l0Val) Nothing
     l0 <- loadConstVal listTyPtr
 
     l1Val <- load l1Var 0
-    _ <- enterClosure (MkClosurePtr l1Val) []
+    _ <- enterClosure (MkClosurePtr l1Val) Nothing
     l1 <- loadConstVal listTyPtr
 
     -- we create block names for all the possibilities we might encounter
@@ -182,10 +182,10 @@ eqData :: (MonadCodeGen m, MonadIRBuilder m) => m Operand
 eqData = IR.function "eqData" [(closureTyPtr, "x"), (closureTyPtr, "y")] i8 $ \[x,y] -> do
     -- force both arguments and obtain their values, which should be pointers
     -- to Data objects
-    _ <- enterClosure (MkClosurePtr x) []
+    _ <- enterClosure (MkClosurePtr x) Nothing
     d0 <- loadConstVal dataTyPtr
 
-    _ <- enterClosure (MkClosurePtr y) []
+    _ <- enterClosure (MkClosurePtr y) Nothing
     d1 <- loadConstVal dataTyPtr
 
     -- first of all, we need to see that the two Data values were constructed
@@ -218,11 +218,11 @@ eqData = IR.function "eqData" [(closureTyPtr, "x"), (closureTyPtr, "y")] i8 $ \[
         DataConstr -> do
             -- force both constructor tags and obtain the integer values
             d0ctr <- loadConstrTag d0
-            _ <- enterClosure d0ctr []
+            _ <- enterClosure d0ctr Nothing
             d0ctrTag <- loadConstVal gmpTyPtr
 
             d1ctr <- loadConstrTag d1
-            _ <- enterClosure d1ctr []
+            _ <- enterClosure d1ctr Nothing
             d1ctrTag <- loadConstVal gmpTyPtr
 
             -- check to see if the constructor tags match

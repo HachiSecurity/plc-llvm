@@ -105,7 +105,7 @@ compileBody (Apply _ lhs rhs) = do
 
     -- enter the closure pointed to by l, giving it a pointer to another
     -- closure r as argument
-    enterClosure l [closurePtr r]
+    enterClosure l $ Just (closurePtr r)
 compileBody (Force _ term) = do
     name <- mkFresh "force"
     compileTrace name
@@ -132,7 +132,7 @@ compileBody (Force _ term) = do
     -- Enter the closure that is returned from the body: it corresponds to a
     -- delay term
     emitBlockStart trueBr
-    ptr <- enterClosure r [closurePtr r]
+    ptr <- enterClosure r $ Just (closurePtr r)
     br contBr
 
     -- The closure does not belong to a delay term: this is a runtime error

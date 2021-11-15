@@ -118,7 +118,7 @@ compileCurried name tys builder =
         -- do not enter type variable arguments or bad things may happen
         let nonTyVars = filter (not . snd . snd) $ zip argv tys
         vars <- forM nonTyVars $ \(arg, ty) -> do
-            _ <- enterClosure (MkClosurePtr arg) []
+            _ <- enterClosure (MkClosurePtr arg) Nothing
             loadConstVal $ fst ty
         builder vars
 
@@ -362,7 +362,7 @@ lengthOfByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 lengthOfByteString =
     withCurried "lengthOfByteString" [("str",False)] $ \[str] -> do
     -- enter the constant closure and load the pointer from the result register
-    _ <- enterClosure (MkClosurePtr str) []
+    _ <- enterClosure (MkClosurePtr str) Nothing
     ptr <- loadConstVal bytestringTyPtr
 
     -- the size is stored in the bytestring structure, so we just need to
@@ -536,7 +536,7 @@ ifThenElse =
     -- enter the closure for the condition, this should be some expression
     -- that results in a boolean value, which will then be stored in the
     -- result register
-    _ <- enterClosure (MkClosurePtr cv) []
+    _ <- enterClosure (MkClosurePtr cv) Nothing
     c <- loadConstVal i1
 
     -- compare the resulting value to 0, which represents false, while all
@@ -554,7 +554,7 @@ chooseUnit :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 chooseUnit =
     let ps = mkParams 1 ["v","k"]
     in withCurried "chooseUnit" ps $ \[_,v,k] -> do
-        _ <- enterClosure (MkClosurePtr v) []
+        _ <- enterClosure (MkClosurePtr v) Nothing
         retClosure $ MkClosurePtr k
 
 -------------------------------------------------------------------------------
@@ -590,7 +590,7 @@ chooseList =
     let ps = mkParams 2 ["xs", "a", "b"]
     in withCurried "chooseList" ps $ \[_,_,list,a,b] -> do
         -- enter the closure for the list and get the pointer to it
-        _ <- enterClosure (MkClosurePtr list) []
+        _ <- enterClosure (MkClosurePtr list) Nothing
         xs <- loadConstVal listTyPtr
 
         -- return either a or b depending on whether the list is empty or not,
@@ -646,7 +646,7 @@ chooseData =
     let ps = mkParams 1 ["d","constr","map","list","i","b"]
     in withCurried "chooseData" ps $ \[_,d,kConstr,kMap,kList,kI,kB] -> do
         -- enter the closure for the data value and get the pointer to it
-        _ <- enterClosure (MkClosurePtr d) []
+        _ <- enterClosure (MkClosurePtr d) Nothing
         ptr <- loadConstVal dataTyPtr
 
         withDataTag ptr $ \case
