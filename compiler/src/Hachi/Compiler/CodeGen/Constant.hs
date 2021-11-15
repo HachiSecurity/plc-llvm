@@ -347,7 +347,8 @@ compileConstEntry name loadFn = do
             compileTrace name
 
             v <- loadFn $ MkClosurePtr this
-            store returnRef 0 v
+            ptr <- bitcast v (ptrOf i8)
+            store returnRef 0 ptr
 
             ret this
 
