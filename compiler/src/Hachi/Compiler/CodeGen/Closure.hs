@@ -177,11 +177,12 @@ allocateClosure isDelay codePtr printPtr fvs = do
 
     storeAt (indicesForComponent ClosureCode) $ ConstantOperand codePtr
     storeAt (indicesForComponent ClosurePrint) $ ConstantOperand printPtr
-    storeAt (indicesForComponent ClosureFlags) $
-        ConstantOperand $ Int bits $ toInteger $ fromEnum isDelay
+    storeAt (indicesForComponent ClosureFlags) $ ConstantOperand $
+        Int platformIntSize $ toInteger $ fromEnum isDelay
 
-    forM_ (zip [0..] fvs) $ \(i,v) ->
-        storeAt (indicesForComponent $ ClosureFreeVar i) v
+    forM_ (zip [0..] fvs) $ \(i,v) -> do
+        ptr <- bitcast v (ptrOf i8)
+        storeAt (indicesForComponent $ ClosureFreeVar i) ptr
 
     -- return an Operand representing a pointer to the dynamic closure that we
     -- have just created
