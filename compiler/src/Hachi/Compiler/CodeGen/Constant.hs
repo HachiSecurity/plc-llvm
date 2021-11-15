@@ -374,21 +374,40 @@ instance CompileConstant a => CompileConstant [a] where
 -- be an instance of `CompileConstant`.
 compileConstEntry
     :: forall a m . (MonadCodeGen m, CompileConstant a)
-    => String -> m Constant
-compileConstEntry name = do
-    let llvmName = mkName name
-    void $ IR.function llvmName [(closureTyPtr, "this"), (closureTyPtr, "unused")] closureTyPtr $
-        \[this, _] -> do
-            compileTrace name
+    => m Constant
+compileConstEntry = do
+    let ty = constantTypeId @a
+    let name = show ty <> "_entry"
 
-            v <- compileLoadConstant @a $ MkClosurePtr this
-            vc <- castConstantToPtr @a v
-            ptr <- bitcast vc (ptrOf i8)
-            store returnRef 0 ptr
+    -- we need to determine if the entry code for this constant type has
+    -- already been generated and, if so, retrieve the reference to it;
+    -- if it has not been generated, then we should do so now
+    entryFunctionsRef <- asks codeGenConstEntries
+    entryFunctions <- liftIO $ readIORef entryFunctionsRef
 
-            ret this
+    case M.lookup ty entryFunctions of
+        Just ref -> pure ref
+        Nothing -> do
+            -- generate the entry code
+            let llvmName = mkName name
+            void $ IR.function llvmName [(closureTyPtr, "this"), (closureTyPtr, "unused")] closureTyPtr $
+                \[this, _] -> do
+                    compileTrace name
 
-    pure $ GlobalReference clsEntryTy llvmName
+                    v <- compileLoadConstant @a $ MkClosurePtr this
+                    vc <- castConstantToPtr @a v
+                    ptr <- bitcast vc (ptrOf i8)
+                    store returnRef 0 ptr
+
+                    ret this
+
+            -- construct a reference to the entry code and store it in the
+            -- global lookup table
+            let ref = GlobalReference clsEntryTy llvmName
+            liftIO $ writeIORef entryFunctionsRef $ M.insert ty ref entryFunctions
+
+            -- return the reference
+            pure ref
 
 -- | `compileConst` @value@ generates code for a constant whose @value@ is
 -- provided as the first argument.
@@ -408,9 +427,7 @@ compileConstStatic
 compileConstStatic name x = do
     ptr <- compileConstant name x
 
-    let entryName = name <> "_entry"
-
-    codePtr <- compileConstEntry @a entryName
+    codePtr <- compileConstEntry @a
 
     -- 2. generate print code
     let builder = compilePrintBody @a name
@@ -432,8 +449,7 @@ compileConstDynamic val = do
     name <- mkFresh "con"
 
     -- 1. generate entry code
-    let entryName = name <> "_entry"
-    codePtr <- compileConstEntry @a entryName
+    codePtr <- compileConstEntry @a
 
     -- 2. generate print code
     printPtr <- compileConstPrint (constantTypeId @a) $
