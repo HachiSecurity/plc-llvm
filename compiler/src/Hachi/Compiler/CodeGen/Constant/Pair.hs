@@ -11,6 +11,7 @@ import LLVM.AST
 import LLVM.AST.Constant
 import LLVM.IRBuilder as IR
 
+import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Types
 
@@ -42,7 +43,8 @@ getFst
     => Operand -> m (ClosurePtr 'DynamicPtr)
 getFst ptr = do
     addr <- gep ptr [ ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 0 ]
-    MkClosurePtr <$> load addr 0
+    clsPtr <- load addr 0
+    MkClosurePtr <$> bitcast clsPtr closureTyPtr
 
 -- | `getSnd` @pairPtr@ generates code which retrieves the second component
 -- from the pair pointed at by @pairPtr@.
@@ -51,6 +53,7 @@ getSnd
     => Operand -> m (ClosurePtr 'DynamicPtr)
 getSnd ptr = do
     addr <- gep ptr [ ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 1 ]
-    MkClosurePtr <$> load addr 0
+    clsPtr <- load addr 0
+    MkClosurePtr <$> bitcast clsPtr closureTyPtr
 
 -------------------------------------------------------------------------------
