@@ -51,7 +51,7 @@ library
       KindSignatures
       OverloadedStrings
       StandaloneKindSignatures
-  ghc-options: -Wall
+  ghc-options: -Werror=missing-fields -Werror=missing-methods -Wall
   build-depends:
       base
     , bytestring
@@ -85,7 +85,7 @@ executable plc-llvm
       KindSignatures
       OverloadedStrings
       StandaloneKindSignatures
-  ghc-options: -Wall
+  ghc-options: -Werror=missing-fields -Werror=missing-methods -Wall
   build-depends:
       base
     , bytestring
@@ -126,7 +126,7 @@ test-suite plc-llvm-test
       KindSignatures
       OverloadedStrings
       StandaloneKindSignatures
-  ghc-options: -Wall
+  ghc-options: -Werror=missing-fields -Werror=missing-methods -Wall
   build-depends:
       base
     , bytestring
