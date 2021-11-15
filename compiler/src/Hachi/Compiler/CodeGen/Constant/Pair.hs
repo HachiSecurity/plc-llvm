@@ -28,10 +28,15 @@ newPair x y = do
     ptr <- malloc pairTyPtr size
 
     -- store the two components of the pair
-    store ptr 0 $ closurePtr x
+    fstAddr <- gep ptr [ ConstantOperand $ Int 32 0
+                       , ConstantOperand $ Int 32 0
+                       ]
+    store fstAddr 0 $ closurePtr x
 
-    addr <- gep ptr [ ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 1 ]
-    store addr 0 $ closurePtr y
+    sndAddr <- gep ptr [ ConstantOperand $ Int 32 0
+                       , ConstantOperand $ Int 32 1
+                       ]
+    store sndAddr 0 $ closurePtr y
 
     -- return the pointer to the pair
     pure ptr
