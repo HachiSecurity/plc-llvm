@@ -16,7 +16,6 @@ import Flat
 import PlutusCore
 import qualified UntypedPlutusCore as UPLC
 import qualified UntypedPlutusCore.Parser as UPLC
-import qualified UntypedPlutusCore.Evaluation.Machine.Cek as UPLC
 
 import Hachi.Compiler.Config (Config(..))
 import Hachi.Compiler.CodeGen ( generateCode )
