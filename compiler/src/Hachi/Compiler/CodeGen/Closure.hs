@@ -90,6 +90,13 @@ indicesForComponent ClosureFlags = [ConstantOperand $ Int 32 2]
 indicesForComponent (ClosureFreeVar n) =
     [ConstantOperand $ Int 32 closureSize, ConstantOperand $ Int 32 n]
 
+-- | `fnTyForComponent` @component@ determines the function type for the
+-- closure function identified by @component@.
+fnTyForComponent :: ClosureComponent -> Type
+fnTyForComponent ClosureCode = clsEntryTy
+fnTyForComponent ClosurePrint = printFnTy
+fnTyForComponent _ = error "fnTyForComponent called on non-function component"
+
 -------------------------------------------------------------------------------
 
 -- | `mkEntryTy` @arity@ generates a function signature for a closure
@@ -265,7 +272,8 @@ callClosure
     -> [Operand]
     -> m (ClosurePtr 'DynamicPtr)
 callClosure prop closure argv = do
-    entry <- loadFromClosure prop clsEntryTy closure
+    let ty = fnTyForComponent prop
+    entry <- loadFromClosure prop ty closure
     fmap MkClosurePtr <$> call entry $
         (closurePtr closure, []) : [(arg, []) | arg <- argv]
 
