@@ -59,7 +59,11 @@ eqByteString xs ys = do
     _ <- enterClosure ys Nothing
     s1 <- loadConstVal bytestringTyPtr
 
-    equalsByteString s0 s1 >>= ret
+    -- call equalsByteString which returns a char, but it will always just use
+    -- one bit, so we can safely truncate it
+    r <- equalsByteString s0 s1
+    b <- trunc r i1
+    ret b
 
 -- | `eqPair` @ptr0 ptr1@ forces two closures representing pairs containing
 -- `Data` values and checks that both components of the pair are the same.
@@ -100,8 +104,8 @@ eqList
 eqList xEq xs ys = do
     -- allocate stack space for the two list closure pointers and store the
     -- initial pointers in it
-    l0Var <- alloca (ptrOf closureTyPtr) Nothing 0
-    l1Var <- alloca (ptrOf closureTyPtr) Nothing 0
+    l0Var <- alloca closureTyPtr Nothing 0
+    l1Var <- alloca closureTyPtr Nothing 0
     store l0Var 0 (closurePtr xs)
     store l1Var 0 (closurePtr ys)
 
