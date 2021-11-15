@@ -27,7 +27,7 @@ import Hachi.Compiler.Platform
 type EqFun m = ClosurePtr 'DynamicPtr -> ClosurePtr 'DynamicPtr -> m Operand
 
 eqType :: Type
-eqType = ptrOf $ FunctionType i8 [closureTyPtr, closureTyPtr] False
+eqType = ptrOf $ FunctionType i1 [closureTyPtr, closureTyPtr] False
 
 eqDataRef :: Operand
 eqDataRef = ConstantOperand $ GlobalReference eqType "eqData"
@@ -179,7 +179,7 @@ eqList xEq xs ys = do
 -- | `eqData` is a computation which generates a function for comparing
 -- `Data` values for value equality.
 eqData :: (MonadCodeGen m, MonadIRBuilder m) => m Operand
-eqData = IR.function "eqData" [(closureTyPtr, "x"), (closureTyPtr, "y")] i8 $ \[x,y] -> do
+eqData = IR.function "eqData" [(closureTyPtr, "x"), (closureTyPtr, "y")] i1 $ \[x,y] -> do
     -- force both arguments and obtain their values, which should be pointers
     -- to Data objects
     _ <- enterClosure (MkClosurePtr x) Nothing
