@@ -287,7 +287,7 @@ appendByteString =
         srcAddr <- bsDataPtr s0
         _ <- E.memcpy addr srcAddr l0
 
-        addr1 <- add addr l0
+        addr1 <- gep addr [l0]
         srcAddr1 <- bsDataPtr s1
         _ <- E.memcpy addr1 srcAddr1 l1
 
@@ -313,7 +313,7 @@ consByteString =
         xt <- bitcast x i8
         store addr 0 xt
 
-        addr1 <- add addr (ConstantOperand $ Int 64 1)
+        addr1 <- gep addr [ConstantOperand $ Int 64 1]
         srcAddr1 <- bsDataPtr xs
         _ <- E.memcpy addr1 srcAddr1 l
 
@@ -347,7 +347,7 @@ sliceByteString =
     -- calculate the address we want to use as the data pointer; this is the
     -- data pointer of the existing bytestring + the start offset
     strData <- bsDataPtr str
-    startAddr <- add strData start
+    startAddr <- gep strData [start]
 
     -- store the pointer to the byte array
     dataAddr <- gep ptr [ ConstantOperand $ Int 32 0
@@ -474,7 +474,7 @@ appendString =
         _ <- E.strcpy ptr xs
 
         -- copy the second string
-        addr <- add ptr l0
+        addr <- gep ptr [l0]
         _ <- E.strcpy addr ys
 
         retConstDynamic @T.Text ptr
@@ -521,7 +521,7 @@ decodeUtf8 =
         _ <- E.memcpy ptr addr len
 
         -- add the \0
-        zeroAddr <- add ptr len
+        zeroAddr <- gep ptr [len]
         store zeroAddr 0 $ ConstantOperand (Int 8 0)
 
         -- return a new closure
