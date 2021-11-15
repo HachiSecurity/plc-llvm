@@ -147,7 +147,7 @@ malloc ty size = do
 
 memcpyTy :: Type
 memcpyTy = ptrOf $
-    FunctionType (ptrOf VoidType) [ptrOf VoidType, ptrOf VoidType, i64] False
+    FunctionType (ptrOf i8) [ptrOf i8, ptrOf i8, i64] False
 
 memcpyFun :: Global
 memcpyFun = globalFromType "memcpy" memcpyTy

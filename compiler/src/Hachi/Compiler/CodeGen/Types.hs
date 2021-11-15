@@ -1,7 +1,11 @@
+{-# LANGUAGE StandaloneDeriving #-}
 
 -- | This module contains various LLVM `Type` values used in the code
 -- generator.
 module Hachi.Compiler.CodeGen.Types (
+    -- * Utility functions
+    isPtr,
+
     -- * Basic LLVM types
     i1,
     i8,
@@ -40,7 +44,14 @@ module Hachi.Compiler.CodeGen.Types (
     gmpTy,
     gmpTyPtr,
 
-    ClosurePtr(..)
+    -- * Closures
+    closureTy,
+    closureTyPtr,
+
+    PtrKind(..),
+    ClosurePtr(..),
+    closurePtr,
+    toDynamicPtr
 ) where
 
 -------------------------------------------------------------------------------
@@ -52,6 +63,13 @@ import LLVM.AST.AddrSpace
 import LLVM.AST.Constant
 
 import Hachi.Compiler.Platform
+
+-------------------------------------------------------------------------------
+
+-- | `isPtr` @type@ determines whether @type@ represents a pointer type.
+isPtr :: Type -> Bool
+isPtr PointerType{} = True
+isPtr _ = False
 
 -------------------------------------------------------------------------------
 
@@ -89,7 +107,7 @@ asStringPtr ref = LLVM.AST.Constant.BitCast ref $ ptrOf char
 bytestringTyDef :: Type
 bytestringTyDef = StructureType False
     [ i64
-    , ptrOf (ArrayType 0 i8)
+    , ptrOf i8
     ]
 
 -- | `bytestringTy` is a `Type` for bytestrings.
@@ -105,8 +123,8 @@ bytestringTyPtr = ptrOf bytestringTy
 -- | `pairTyDef` is the type definition for pairs.
 pairTyDef :: Type
 pairTyDef = StructureType False
-    [ ptrOf VoidType
-    , ptrOf VoidType
+    [ closureTyPtr
+    , closureTyPtr
     ]
 
 -- | `pairTy` is a `Type` for pairs.
@@ -122,8 +140,8 @@ pairTyPtr = ptrOf pairTy
 -- | `listTyDef` is the type definition for lists.
 listTyDef :: Type
 listTyDef = StructureType False
-    [ ptrOf VoidType
-    , listTyPtr
+    [ closureTyPtr
+    , closureTyPtr
     ]
 
 -- | `listTy` is a `Type` for lists.
@@ -150,7 +168,7 @@ newtype ListPtr = MkListPtr { listPtr :: Operand }
 dataTyDef :: Type
 dataTyDef = StructureType False
     [ i8
-    , ArrayType 0 (ptrOf VoidType)
+    , ArrayType 0 closureTyPtr
     ]
 
 -- | `dataTy` is a `Type` for data values.
@@ -179,7 +197,7 @@ emptyGmpTy = Array gmpTyDef [
 
 -- | `gmpTy` is equivalent to @mpz_t@ from the gmp library.
 gmpTy :: Type
-gmpTy = ArrayType 1 (NamedTypeReference "mpz_t")
+gmpTy = NamedTypeReference "mpz_t"
 
 -- | `gmpTyPtr` is a pointer to `gmpTy`.
 gmpTyPtr :: Type
@@ -187,8 +205,41 @@ gmpTyPtr = ptrOf gmpTy
 
 -------------------------------------------------------------------------------
 
+-- | `closureTy` is a `Type` for closures.
+closureTy :: Type
+closureTy = NamedTypeReference "closure"
+
+-- | `closureTyPtr` is a `Type` representing a pointer to a closure.
+closureTyPtr :: Type
+closureTyPtr = ptrOf closureTy
+
+-- | Enumerates different kinds of pointers we may have:
+--
+-- - `StaticPtr` is guaranteed to represent a pointer to a static global
+-- - `DynamicPtr` _may_ represent a pointer to a dynamically allocated value.
+--
+-- In other words, we use `StaticPtr` when we know what sort of pointer we
+-- have and `DynamicPtr` in other cases.
+data PtrKind = StaticPtr | DynamicPtr
+
 -- | Represents a pointer to a closure.
-newtype ClosurePtr = MkClosurePtr { closurePtr :: Operand }
-    deriving (Eq, Show)
+data ClosurePtr (k :: PtrKind) where
+    MkClosurePtr :: Operand -> ClosurePtr 'DynamicPtr
+    MkStaticClosurePtr :: Constant -> ClosurePtr 'StaticPtr
+
+deriving instance Eq (ClosurePtr k)
+deriving instance Show (ClosurePtr k)
+
+-- | `closurePtr` @closurePtr@ returns @closurePtr@ as an `Operand` value.
+closurePtr :: ClosurePtr k -> Operand
+closurePtr (MkClosurePtr ptr) = ptr
+closurePtr (MkStaticClosurePtr ptr) = ConstantOperand ptr
+
+-- | `toDynamicPtr` @closurePtr@ turns a static closure pointer into a dynamic
+-- closure pointer. This is conceptually a no-op and just allows us to forget
+-- information in case we only need a `DynamicPtr`, but have a `StaticPtr`.
+-- Static pointers are always acceptable where dynamic pointers are expected.
+toDynamicPtr :: ClosurePtr 'StaticPtr -> ClosurePtr 'DynamicPtr
+toDynamicPtr (MkStaticClosurePtr ptr) = MkClosurePtr (ConstantOperand ptr)
 
 -------------------------------------------------------------------------------

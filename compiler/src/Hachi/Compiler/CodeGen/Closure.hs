@@ -35,13 +35,15 @@ import Control.Monad.Reader
 
 import Data.List
 import qualified Data.Map as M
+import Data.Maybe
 import qualified Data.Set as S
 import qualified Data.Text as T
 import Data.Word
 
 import LLVM.AST
 import LLVM.AST.AddrSpace
-import LLVM.AST.Constant
+import LLVM.AST.Constant as C
+import LLVM.AST.Typed
 import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.CodeGen.Common
@@ -49,6 +51,7 @@ import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
+import Hachi.Compiler.Platform
 
 -------------------------------------------------------------------------------
 
@@ -63,21 +66,13 @@ closureTyDef :: Type
 closureTyDef = StructureType False
     [ clsEntryTy
     , printFnTy
-    , ptrOf VoidType
-    , ArrayType 0 closureTyPtr
+    , iHost
+    , ArrayType 0 (ptrOf i8)
     ]
 
 -- | The minimum size of a closure in words.
 closureSize :: Num a => a
 closureSize = 3
-
--- | `closureTy` is a `Type` for closures.
-closureTy :: Type
-closureTy = NamedTypeReference "closure"
-
--- | `closureTyPtr` is a `Type` representing a pointer to a closure.
-closureTyPtr :: Type
-closureTyPtr = ptrOf closureTy
 
 -- | Enumerates different components of a closure.
 data ClosureComponent
@@ -96,6 +91,13 @@ indicesForComponent ClosureFlags = [ConstantOperand $ Int 32 2]
 indicesForComponent (ClosureFreeVar n) =
     [ConstantOperand $ Int 32 closureSize, ConstantOperand $ Int 32 n]
 
+-- | `fnTyForComponent` @component@ determines the function type for the
+-- closure function identified by @component@.
+fnTyForComponent :: ClosureComponent -> Type
+fnTyForComponent ClosureCode = clsEntryTy
+fnTyForComponent ClosurePrint = printFnTy
+fnTyForComponent _ = error "fnTyForComponent called on non-function component"
+
 -------------------------------------------------------------------------------
 
 -- | `mkEntryTy` @arity@ generates a function signature for a closure
@@ -108,7 +110,7 @@ mkEntryTy arity = ptrOf $ FunctionType closureTyPtr params False
 
 -- | `clsEntryTy` is the `Type` of closure entry functions.
 clsEntryTy :: Type
-clsEntryTy = mkEntryTy 0
+clsEntryTy = mkEntryTy 1
 
 varEntryTy :: Type
 varEntryTy = mkEntryTy 1
@@ -127,15 +129,22 @@ mkClosureName name = mkName $ name <> "_closure"
 -- variable representing a closure for @name@.
 compileClosure
     :: MonadModuleBuilder m
-    => Bool -> String -> Constant -> Constant -> [Constant] -> m ClosurePtr
+    => Bool -> String -> Constant -> Constant -> [Constant]
+    -> m (ClosurePtr 'StaticPtr)
 compileClosure isPoly name codePtr printPtr fvs = do
     let closureName = mkClosureName name
+    let closureType = StructureType False
+            [ clsEntryTy, printFnTy
+            , IntegerType bits
+            , ArrayType (fromIntegral $ length fvs) (ptrOf i8)
+            ]
 
-    void $ global closureName closureTy $ Struct Nothing False $
-        codePtr : printPtr : Int bits (toInteger $ fromEnum isPoly) : fvs
+    void $ global closureName closureType $ Struct Nothing False $
+        codePtr : printPtr : Int bits (toInteger $ fromEnum isPoly) :
+        [Array (ptrOf i8) $ map (`C.BitCast` ptrOf i8) fvs]
 
-    pure $ MkClosurePtr $ ConstantOperand $
-        GlobalReference (PointerType closureTy $ AddrSpace 0) closureName
+    pure $ MkStaticClosurePtr $
+        GlobalReference (PointerType closureType $ AddrSpace 0) closureName
 
 -- | When we dynamically allocate closures, we need to know how much space to
 -- allocate for the pointers; for this purpose we are currently assuming that
@@ -146,7 +155,7 @@ bits = 64
 -- | The size of a pointer as an `Operand`. This should correspond to the
 -- value given by `bits`.
 ptrSize :: Operand
-ptrSize = ConstantOperand $ LLVM.AST.Constant.sizeof bits closureTyPtr
+ptrSize = ConstantOperand $ C.sizeof bits closureTyPtr
 
 -- | `allocateClosure` @isDelay codePtr printPtr freeVars@ allocates a closure
 -- with enough space to store all of @freeVars@ in addition to the code
@@ -154,7 +163,7 @@ ptrSize = ConstantOperand $ LLVM.AST.Constant.sizeof bits closureTyPtr
 -- the pointer to the closure is returned.
 allocateClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Bool -> Constant -> Constant -> [Operand] -> m ClosurePtr
+    => Bool -> Constant -> Constant -> [Operand] -> m (ClosurePtr 'DynamicPtr)
 allocateClosure isDelay codePtr printPtr fvs = do
     -- allocate enough space for the closure on the heap:
     -- 2 code pointers + one pointer for each free variable
@@ -169,11 +178,12 @@ allocateClosure isDelay codePtr printPtr fvs = do
 
     storeAt (indicesForComponent ClosureCode) $ ConstantOperand codePtr
     storeAt (indicesForComponent ClosurePrint) $ ConstantOperand printPtr
-    storeAt (indicesForComponent ClosureFlags) $
-        ConstantOperand $ Int bits $ toInteger $ fromEnum isDelay
+    storeAt (indicesForComponent ClosureFlags) $ ConstantOperand $
+        Int platformIntSize $ toInteger $ fromEnum isDelay
 
-    forM_ (zip [0..] fvs) $ \(i,v) ->
-        storeAt (indicesForComponent $ ClosureFreeVar i) v
+    forM_ (zip [0..] fvs) $ \(i,v) -> do
+        ptr <- bitcast v (ptrOf i8)
+        storeAt (indicesForComponent $ ClosureFreeVar i) ptr
 
     -- return an Operand representing a pointer to the dynamic closure that we
     -- have just created
@@ -190,7 +200,7 @@ compileDynamicClosure
     :: MonadCodeGen m
     => Bool -> String -> S.Set T.Text -> T.Text
     -> (Operand -> Operand -> IRBuilderT m ())
-    -> IRBuilderT m ClosurePtr
+    -> IRBuilderT m (ClosurePtr 'DynamicPtr)
 compileDynamicClosure isDelay name fvs var codeFun = do
     let entryName = mkName $ name <> "_entry"
     let entryTy = mkEntryTy 1
@@ -245,10 +255,10 @@ compileFunPrint name = do
 -- @type@.
 loadFromClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => ClosureComponent -> Type -> ClosurePtr -> m Operand
-loadFromClosure prop ty (MkClosurePtr ptr) = do
+    => ClosureComponent -> Type -> ClosurePtr k -> m Operand
+loadFromClosure prop ty ptr = do
     let ix = indicesForComponent prop
-    ptrt <- bitcast ptr closureTyPtr
+    ptrt <- bitcast (closurePtr ptr) closureTyPtr
     addr <- gep ptrt $ ConstantOperand (Int 32 0) : ix
 
     r <- bitcast addr (ptrOf ty)
@@ -260,20 +270,33 @@ loadFromClosure prop ty (MkClosurePtr ptr) = do
 callClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
     => ClosureComponent
-    -> ClosurePtr
+    -> ClosurePtr k
     -> [Operand]
-    -> m ClosurePtr
+    -> m (ClosurePtr 'DynamicPtr)
 callClosure prop closure argv = do
-    entry <- loadFromClosure prop clsEntryTy closure
+    let ty = fnTyForComponent prop
+    entry <- loadFromClosure prop ty closure
+
+    ptr <- bitcast (closurePtr closure) closureTyPtr
+
+    -- make sure that the arguments are all closure*
+    castArgs <- forM argv $ \arg -> do
+        argTy <- typeOf arg
+
+        if argTy /= Right closureTyPtr
+        then bitcast arg closureTyPtr
+        else pure arg
+
     fmap MkClosurePtr <$> call entry $
-        (closurePtr closure, []) : [(arg, []) | arg <- argv]
+        (ptr, []) : [(arg, []) | arg <- castArgs]
 
 -- `enterClosure` @ptr args@ enters the closure represented by @ptr@ and
 -- provides the arguments given by @args@.
 enterClosure
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => ClosurePtr -> [Operand] -> m ClosurePtr
-enterClosure = callClosure ClosureCode
+    => ClosurePtr k -> Maybe Operand -> m (ClosurePtr 'DynamicPtr)
+enterClosure ptr mArg = callClosure ClosureCode ptr [arg]
+    where arg = fromMaybe (ConstantOperand $ Null closureTyPtr) mArg
 
 -- | `lookupVar` @name type@ generates code which retrieves the variable named
 -- @name@ from the local environment. If the variable is not in scope, we
@@ -308,7 +331,7 @@ lookupVar var ty = do
             bitcast (closurePtr ptr) ty
 
 -- | `retClosure` @closurePtr@ returns the pointer represented by @closurePtr@.
-retClosure :: MonadIRBuilder m => ClosurePtr -> m ()
+retClosure :: MonadIRBuilder m => ClosurePtr k -> m ()
 retClosure = ret . closurePtr
 
 -------------------------------------------------------------------------------

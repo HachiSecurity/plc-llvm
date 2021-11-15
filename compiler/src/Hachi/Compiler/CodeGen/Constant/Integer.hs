@@ -17,6 +17,6 @@ newInteger
     => m Operand
 newInteger = do
     size <- IR.sizeof 64 gmpTyDef
-    E.malloc (ptrOf gmpTyDef) size
+    E.malloc gmpTyPtr size
 
 -------------------------------------------------------------------------------

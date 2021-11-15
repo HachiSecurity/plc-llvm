@@ -148,6 +148,12 @@ withDataTag ptr k = do
 
 -------------------------------------------------------------------------------
 
+tagIndex :: [Operand]
+tagIndex =
+    [ ConstantOperand $ Int 32 0
+    , ConstantOperand $ Int 32 0
+    ]
+
 dataIndex :: [Operand]
 dataIndex =
     [ ConstantOperand $ Int 32 0
@@ -162,8 +168,8 @@ constrTagIndex =
     , ConstantOperand $ Int 32 1
     ]
 
-tagAddr :: MonadIRBuilder m => Operand -> m Operand
-tagAddr ptr = bitcast ptr (ptrOf i8)
+tagAddr :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
+tagAddr ptr = gep ptr tagIndex >>= \addr -> bitcast addr (ptrOf i8)
 
 -- | `loadDataTag` @ptr@ retrieves the data tag from @ptr@.
 loadDataTag
@@ -177,7 +183,7 @@ loadDataTag ptr = do
 -- by @ptr@. This function works for all forms of Data value.
 loadDataPtr
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> m ClosurePtr
+    => Operand -> m (ClosurePtr 'DynamicPtr)
 loadDataPtr ptr = do
     addr <- gep ptr dataIndex
     val <- load addr 0
@@ -188,7 +194,7 @@ loadDataPtr ptr = do
 -- a data constructor and no such check is performed.
 loadConstrTag
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> m ClosurePtr
+    => Operand -> m (ClosurePtr 'DynamicPtr)
 loadConstrTag ptr = do
     addr <- gep ptr constrTagIndex
     val <- load addr 0

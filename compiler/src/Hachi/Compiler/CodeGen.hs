@@ -49,7 +49,7 @@ compileBody
        , MonadIO m
        )
     => Term UPLC.Name DefaultUni DefaultFun ()
-    -> IRBuilderT m ClosurePtr
+    -> IRBuilderT m (ClosurePtr 'DynamicPtr)
 -- (error): as soon as execution reaches this term, print a message indicating
 -- that an error condition has been reached and terminate execution
 compileBody (Error _) = do
@@ -105,7 +105,7 @@ compileBody (Apply _ lhs rhs) = do
 
     -- enter the closure pointed to by l, giving it a pointer to another
     -- closure r as argument
-    enterClosure l [closurePtr r]
+    enterClosure l $ Just (closurePtr r)
 compileBody (Force _ term) = do
     name <- mkFresh "force"
     compileTrace name
@@ -132,7 +132,7 @@ compileBody (Force _ term) = do
     -- Enter the closure that is returned from the body: it corresponds to a
     -- delay term
     emitBlockStart trueBr
-    ptr <- enterClosure r [closurePtr r]
+    ptr <- enterClosure r $ Just (closurePtr r)
     br contBr
 
     -- The closure does not belong to a delay term: this is a runtime error
@@ -160,12 +160,12 @@ compileBody (Delay _ term) = do
     -- in the future, we might want to print a different message
     compileDynamicClosure True name fvs "_delayArg" $
         \_ _ -> compileBody term >>= retClosure
-compileBody (Constant _ val) = compileConst val
+compileBody (Constant _ val) = toDynamicPtr <$> compileConst val
 compileBody (Builtin _ f) = do
     builtins <- asks codeGenBuiltins
     case M.lookup f builtins of
         Nothing -> error $ "No such builtin: " <> show f
-        Just ref -> pure ref
+        Just ref -> pure $ toDynamicPtr ref
 
 -- | `generateEntry` @term@ generates code for @term@ surrounded by a small
 -- wrapper which calls the print function of the closure that results from

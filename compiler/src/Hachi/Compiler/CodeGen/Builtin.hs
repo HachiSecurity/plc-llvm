@@ -59,7 +59,7 @@ withCurried
     => String
     -> [(T.Text,Bool)]
     -> ([Operand] -> IRBuilderT m ())
-    -> m ClosurePtr
+    -> m (ClosurePtr 'StaticPtr)
 withCurried _ [] _ = error "withCurried needs at least one argument"
 withCurried name ps@((sn,isTyVar):dyn) builder = do
     let entryName = name <> "_static"
@@ -111,14 +111,14 @@ compileCurried
     => String
     -> [(Type,Bool)]
     -> ([Operand] -> IRBuilderT m ())
-    -> m ClosurePtr
+    -> m (ClosurePtr 'StaticPtr)
 compileCurried name tys builder =
     let params = [ (T.pack $ 'v' : show i, v) | ((_,v),i) <- zip tys [0..]]
     in withCurried name params $ \argv -> do
         -- do not enter type variable arguments or bad things may happen
         let nonTyVars = filter (not . snd . snd) $ zip argv tys
         vars <- forM nonTyVars $ \(arg, ty) -> do
-            _ <- enterClosure (MkClosurePtr arg) []
+            _ <- enterClosure (MkClosurePtr arg) Nothing
             loadConstVal $ fst ty
         builder vars
 
@@ -134,7 +134,7 @@ compileBinary
     -> Type
     -> Type
     -> (Operand -> Operand -> IRBuilderT m ())
-    -> m ClosurePtr
+    -> m (ClosurePtr 'StaticPtr)
 compileBinary name lTy rTy builder =
     compileCurried name [(lTy, False), (rTy, False)] $ \[x,y] -> builder x y
 
@@ -157,7 +157,7 @@ compileMin x y = do
 compileBinaryInteger
     :: forall a m. (MonadCodeGen m, CompileConstant a)
     => String -> (Operand -> Operand -> IRBuilderT m Operand)
-    -> m ClosurePtr
+    -> m (ClosurePtr 'StaticPtr)
 compileBinaryInteger name builder =
     compileBinary name gmpTyPtr gmpTyPtr $ \x y ->
     builder x y >>= retConstDynamic @a
@@ -168,48 +168,48 @@ compileBinaryInteger name builder =
 compileBinaryNewInteger
     :: forall a m. (MonadCodeGen m, CompileConstant a)
     => String -> (Operand -> Operand -> Operand -> IRBuilderT m ())
-    -> m ClosurePtr
+    -> m (ClosurePtr 'StaticPtr)
 compileBinaryNewInteger name builder =
     compileBinaryInteger @a name $ \x y -> do
     ptr <- newInteger
     builder ptr x y
     pure ptr
 
-addInteger :: MonadCodeGen m => m ClosurePtr
+addInteger :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 addInteger = compileBinaryNewInteger @Integer "addInteger" E.mpzAdd
 
-subtractInteger :: MonadCodeGen m => m ClosurePtr
+subtractInteger :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 subtractInteger = compileBinaryNewInteger @Integer "subtractInteger" E.mpzSub
 
-multiplyInteger :: MonadCodeGen m => m ClosurePtr
+multiplyInteger :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 multiplyInteger = compileBinaryNewInteger @Integer "multiplyInteger" E.mpzMul
 
-divideInteger :: MonadCodeGen m => m ClosurePtr
+divideInteger :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 divideInteger = compileBinaryNewInteger @Integer "divideInteger" E.mpzFDivQ
 
-quotientInteger :: MonadCodeGen m => m ClosurePtr
+quotientInteger :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 quotientInteger = compileBinaryNewInteger @Integer "quotientInteger" E.mpzTDivQ
 
-remainderInteger :: MonadCodeGen m => m ClosurePtr
+remainderInteger :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 remainderInteger =
     compileBinaryNewInteger @Integer "remainderInteger" E.mpzTDivR
 
-modInteger :: MonadCodeGen m => m ClosurePtr
+modInteger :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 modInteger = compileBinaryNewInteger @Integer "modInteger" E.mpzFDivR
 
-equalsInteger :: MonadCodeGen m => m ClosurePtr
+equalsInteger :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 equalsInteger =
     compileBinaryInteger @Bool "equalsInteger" $ \x y -> do
     r <- E.mpzCmp x y
     icmp LLVM.EQ r $ ConstantOperand $ Int platformIntSize 0
 
-lessThanInteger :: MonadCodeGen m => m ClosurePtr
+lessThanInteger :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 lessThanInteger =
     compileBinaryInteger @Bool "lessThanInteger" $ \x y -> do
     r <- E.mpzCmp x y
     icmp LLVM.SLT r $ ConstantOperand $ Int platformIntSize 0
 
-lessThanEqualsInteger :: MonadCodeGen m => m ClosurePtr
+lessThanEqualsInteger :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 lessThanEqualsInteger =
     compileBinaryInteger @Bool "lessThanEqualsInteger" $ \x y -> do
     r <- E.mpzCmp x y
@@ -229,7 +229,8 @@ bsNewStruct l = do
     ptr <- E.malloc bytestringTyPtr size
 
     -- store the length
-    store ptr 0 l
+    addr <- gep ptr [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 0]
+    store addr 0 l
 
     -- return the pointer to the bytestring structure
     pure ptr
@@ -270,7 +271,7 @@ bsDataPtr str = do
     addr <- gep str [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 1]
     load addr 0
 
-appendByteString :: MonadCodeGen m => m ClosurePtr
+appendByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 appendByteString =
     compileBinary "appendByteString" bytestringTyPtr bytestringTyPtr $
     \s0 s1 -> do
@@ -287,14 +288,14 @@ appendByteString =
         srcAddr <- bsDataPtr s0
         _ <- E.memcpy addr srcAddr l0
 
-        addr1 <- add addr l0
+        addr1 <- gep addr [l0]
         srcAddr1 <- bsDataPtr s1
         _ <- E.memcpy addr1 srcAddr1 l1
 
         -- allocate a new closure
         retConstDynamic @BS.ByteString ptr
 
-consByteString :: MonadCodeGen m => m ClosurePtr
+consByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 consByteString =
     compileBinary "consByteString" gmpTyPtr bytestringTyPtr $
     \xp xs -> do
@@ -310,17 +311,17 @@ consByteString =
 
         -- copy data
         addr <- bsDataPtr ptr
-        xt <- bitcast x i8
+        xt <- trunc x i8
         store addr 0 xt
 
-        addr1 <- add addr (ConstantOperand $ Int 64 1)
+        addr1 <- gep addr [ConstantOperand $ Int 64 1]
         srcAddr1 <- bsDataPtr xs
         _ <- E.memcpy addr1 srcAddr1 l
 
         -- allocate a new closure
         retConstDynamic @BS.ByteString ptr
 
-sliceByteString :: MonadCodeGen m => m ClosurePtr
+sliceByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 sliceByteString =
     let ps = mkParams 0 [gmpTyPtr,gmpTyPtr,bytestringTyPtr]
     in compileCurried "sliceByteString" ps $ \[sp,np,str] -> do
@@ -347,7 +348,7 @@ sliceByteString =
     -- calculate the address we want to use as the data pointer; this is the
     -- data pointer of the existing bytestring + the start offset
     strData <- bsDataPtr str
-    startAddr <- add strData start
+    startAddr <- gep strData [start]
 
     -- store the pointer to the byte array
     dataAddr <- gep ptr [ ConstantOperand $ Int 32 0
@@ -358,11 +359,11 @@ sliceByteString =
     -- allocate a new closure
     retConstDynamic @BS.ByteString ptr
 
-lengthOfByteString :: MonadCodeGen m => m ClosurePtr
+lengthOfByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 lengthOfByteString =
     withCurried "lengthOfByteString" [("str",False)] $ \[str] -> do
     -- enter the constant closure and load the pointer from the result register
-    _ <- enterClosure (MkClosurePtr str) []
+    _ <- enterClosure (MkClosurePtr str) Nothing
     ptr <- loadConstVal bytestringTyPtr
 
     -- the size is stored in the bytestring structure, so we just need to
@@ -376,7 +377,7 @@ lengthOfByteString =
     -- allocate a new closure for the size value
     retConstDynamic @Integer int
 
-indexByteString :: MonadCodeGen m => m ClosurePtr
+indexByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 indexByteString =
     compileBinary "indexByteString" bytestringTyPtr gmpTyPtr $
     \str n -> do
@@ -386,31 +387,32 @@ indexByteString =
         -- index into the bytestring to retrieve the character at the
         -- given index
         c <- E.indexBytestring str ix
+        val <- zext c i64
 
         -- we only have arbitrary precision integers, so we allocate a new one
         -- as the result to store the character
         int <- newInteger
-        E.mpzInitSetUInt int c
+        E.mpzInitSetUInt int val
         retConstDynamic @Integer int
 
-equalsByteString :: MonadCodeGen m => m ClosurePtr
+equalsByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 equalsByteString =
     compileBinary "equalsByteString" bytestringTyPtr bytestringTyPtr $
     \s0 s1 -> E.equalsByteString s0 s1 >>= retConstDynamic @Bool
 
-lessThanByteString :: MonadCodeGen m => m ClosurePtr
+lessThanByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 lessThanByteString =
     compileBinary "lessThanByteString" bytestringTyPtr bytestringTyPtr $
     \s0 s1 -> E.lessThanByteString s0 s1 >>= retConstDynamic @Bool
 
-lessThanEqualsByteString :: MonadCodeGen m => m ClosurePtr
+lessThanEqualsByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 lessThanEqualsByteString =
     compileBinary "lessThanEqualsByteString" bytestringTyPtr bytestringTyPtr $
     \s0 s1 -> E.lessThanEqualsByteString s0 s1 >>= retConstDynamic @Bool
 
 -------------------------------------------------------------------------------
 
-sha256 :: MonadCodeGen m => m ClosurePtr
+sha256 :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 sha256 =
     compileCurried "sha2_256" [(bytestringTyPtr, False)] $ \[str] -> do
     -- calculate the SHA256 hash of the bytestring
@@ -428,7 +430,7 @@ sha256 =
     -- create a new dynamic closure for the new bytestring
     retConstDynamic @BS.ByteString ptr
 
-blake2b :: MonadCodeGen m => m ClosurePtr
+blake2b :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 blake2b =
     compileCurried "blake2b_256" [(bytestringTyPtr, False)] $ \[str] -> do
     -- calculate the blake2b-256 hash of the bytestring
@@ -446,7 +448,7 @@ blake2b =
     -- create a new dynamic closure for the new bytestring
     retConstDynamic @BS.ByteString ptr
 
-verifySignature :: MonadCodeGen m => m ClosurePtr
+verifySignature :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 verifySignature =
     let pty = (bytestringTyPtr, False)
     in compileCurried "verifySignature" [pty,pty,pty] $
@@ -457,7 +459,7 @@ verifySignature =
 
 -------------------------------------------------------------------------------
 
-appendString :: MonadCodeGen m => m ClosurePtr
+appendString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 appendString =
     let ps = mkParams 0 [ptrOf i8, ptrOf i8]
     in compileCurried "appendString" ps $ \[xs, ys] -> do
@@ -474,12 +476,12 @@ appendString =
         _ <- E.strcpy ptr xs
 
         -- copy the second string
-        addr <- add ptr l0
+        addr <- gep ptr [l0]
         _ <- E.strcpy addr ys
 
         retConstDynamic @T.Text ptr
 
-equalsString :: MonadCodeGen m => m ClosurePtr
+equalsString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 equalsString =
     let ps = mkParams 0 [ptrOf i8, ptrOf i8]
     in compileCurried "equalsString" ps $ \[xs, ys] -> do
@@ -487,7 +489,7 @@ equalsString =
         b <- icmp LLVM.EQ r (ConstantOperand $ Int 32 0)
         retConstDynamic @Bool b
 
-encodeUtf8 :: MonadCodeGen m => m ClosurePtr
+encodeUtf8 :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 encodeUtf8 =
     let ps = mkParams 0 [ptrOf i8]
     in compileCurried "encodeUtf8" ps $ \[str] -> do
@@ -504,7 +506,7 @@ encodeUtf8 =
 
         retConstDynamic @BS.ByteString ptr
 
-decodeUtf8 :: MonadCodeGen m => m ClosurePtr
+decodeUtf8 :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 decodeUtf8 =
     let ps = mkParams 0 [bytestringTyPtr]
     in compileCurried "decodeUtf8" ps $ \[bs] -> do
@@ -521,7 +523,7 @@ decodeUtf8 =
         _ <- E.memcpy ptr addr len
 
         -- add the \0
-        zeroAddr <- add ptr len
+        zeroAddr <- gep ptr [len]
         store zeroAddr 0 $ ConstantOperand (Int 8 0)
 
         -- return a new closure
@@ -529,14 +531,14 @@ decodeUtf8 =
 
 -------------------------------------------------------------------------------
 
-ifThenElse :: MonadCodeGen m => m ClosurePtr
+ifThenElse :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 ifThenElse =
     let ps = [("s",True),("c",False),("t",False),("f",False)]
     in withCurried "ifThenElse" ps $ \[_,cv,tv,fv] -> do
     -- enter the closure for the condition, this should be some expression
     -- that results in a boolean value, which will then be stored in the
     -- result register
-    _ <- enterClosure (MkClosurePtr cv) []
+    _ <- enterClosure (MkClosurePtr cv) Nothing
     c <- loadConstVal i1
 
     -- compare the resulting value to 0, which represents false, while all
@@ -550,16 +552,16 @@ ifThenElse =
 
 -------------------------------------------------------------------------------
 
-chooseUnit :: MonadCodeGen m => m ClosurePtr
+chooseUnit :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 chooseUnit =
     let ps = mkParams 1 ["v","k"]
     in withCurried "chooseUnit" ps $ \[_,v,k] -> do
-        _ <- enterClosure (MkClosurePtr v) []
+        _ <- enterClosure (MkClosurePtr v) Nothing
         retClosure $ MkClosurePtr k
 
 -------------------------------------------------------------------------------
 
-trace :: MonadCodeGen m => m ClosurePtr
+trace :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 trace =
     let ps = mkParams 1 ["text","a"]
     in withCurried "trace" ps $ \[_,txt,a] -> do
@@ -573,24 +575,24 @@ trace =
 
 -------------------------------------------------------------------------------
 
-fstPair :: MonadCodeGen m => m ClosurePtr
+fstPair :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 fstPair =
     let ps = mkParams 2 [pairTyPtr]
     in compileCurried "fstPair" ps $ \[ptr] -> getFst ptr >>= retClosure
 
-sndPair :: MonadCodeGen m => m ClosurePtr
+sndPair :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 sndPair =
     let ps = mkParams 2 [pairTyPtr]
     in compileCurried "sndPair" ps $ \[ptr] -> getSnd ptr >>= retClosure
 
 -------------------------------------------------------------------------------
 
-chooseList :: MonadCodeGen m => m ClosurePtr
+chooseList :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 chooseList =
     let ps = mkParams 2 ["xs", "a", "b"]
     in withCurried "chooseList" ps $ \[_,_,list,a,b] -> do
         -- enter the closure for the list and get the pointer to it
-        _ <- enterClosure (MkClosurePtr list) []
+        _ <- enterClosure (MkClosurePtr list) Nothing
         xs <- loadConstVal listTyPtr
 
         -- return either a or b depending on whether the list is empty or not,
@@ -599,7 +601,7 @@ chooseList =
         ptr <- select r a b
         retClosure $ MkClosurePtr ptr
 
-mkCons :: MonadCodeGen m => m ClosurePtr
+mkCons :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 mkCons =
     let ps = mkParams 1 ["x", "xs"]
     in withCurried "mkCons" ps $ \[_,x,xs] -> do
@@ -610,7 +612,7 @@ mkCons =
         -- actual element type
         retConstDynamic @[()] ptr
 
-headList :: MonadCodeGen m => m ClosurePtr
+headList :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 headList =
     let ps = mkParams 1 [listTyPtr]
     in compileCurried "headList" ps $ \[xs] -> do
@@ -621,7 +623,7 @@ headList =
 
         listCase xs nullCode $ getHead xs >>= retClosure
 
-tailList :: MonadCodeGen m => m ClosurePtr
+tailList :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 tailList =
     let ps = mkParams 1 [listTyPtr]
     in compileCurried "tailList" ps $ \[xs] -> do
@@ -632,7 +634,7 @@ tailList =
 
         listCase xs nullCode $ getTail xs >>= retClosure
 
-nullList :: MonadCodeGen m => m ClosurePtr
+nullList :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 nullList =
     let ps = mkParams 1 [listTyPtr]
     in compileCurried "nullList" ps $ \[xs] -> do
@@ -641,12 +643,12 @@ nullList =
 
 -------------------------------------------------------------------------------
 
-chooseData :: MonadCodeGen m => m ClosurePtr
+chooseData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 chooseData =
     let ps = mkParams 1 ["d","constr","map","list","i","b"]
     in withCurried "chooseData" ps $ \[_,d,kConstr,kMap,kList,kI,kB] -> do
         -- enter the closure for the data value and get the pointer to it
-        _ <- enterClosure (MkClosurePtr d) []
+        _ <- enterClosure (MkClosurePtr d) Nothing
         ptr <- loadConstVal dataTyPtr
 
         withDataTag ptr $ \case
@@ -656,7 +658,7 @@ chooseData =
             DataI -> ret kI
             DataB -> ret kB
 
-constrData :: MonadCodeGen m => m ClosurePtr
+constrData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 constrData =
     let ps = mkParams 0 ["ix", "xs"]
     in withCurried "constrData" ps $ \[ix,xs] ->
@@ -664,32 +666,32 @@ constrData =
         -- closure for it
         newData DataConstr xs (Just ix) >>= retConstDynamic @Data
 
-mapData :: MonadCodeGen m => m ClosurePtr
+mapData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 mapData =
     let ps = mkParams 0 ["xs"]
     in withCurried "mapData" ps $ \[xs] -> do
         newData DataMap xs Nothing >>= retConstDynamic @Data
 
 
-listData :: MonadCodeGen m => m ClosurePtr
+listData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 listData =
     let ps = mkParams 0 ["xs"]
     in withCurried "listData" ps $ \[xs] -> do
         newData DataList xs Nothing >>= retConstDynamic @Data
 
-iData :: MonadCodeGen m => m ClosurePtr
+iData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 iData =
     let ps = mkParams 0 ["i"]
     in withCurried "iData" ps $ \[i] -> do
         newData DataI i Nothing >>= retConstDynamic @Data
 
-bData :: MonadCodeGen m => m ClosurePtr
+bData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 bData =
     let ps = mkParams 0 ["xs"]
     in withCurried "bData" ps $ \[xs] -> do
         newData DataB xs Nothing >>= retConstDynamic @Data
 
-unConstrData :: MonadCodeGen m => m ClosurePtr
+unConstrData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 unConstrData =
     let ps = mkParams 0 [dataTyPtr]
     in compileCurried "unConstrData" ps $ \[d] ->
@@ -706,7 +708,7 @@ unConstrData =
             retConstDynamic @((),()) pair
         _ -> fatal unConstrDataErrRef []
 
-unMapData :: MonadCodeGen m => m ClosurePtr
+unMapData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 unMapData =
     let ps = mkParams 0 [dataTyPtr]
     in compileCurried "unMapData" ps $ \[d] ->
@@ -714,7 +716,7 @@ unMapData =
         DataMap -> loadDataPtr d >>= retClosure
         _ -> fatal unMapDataErrRef []
 
-unListData :: MonadCodeGen m => m ClosurePtr
+unListData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 unListData =
     let ps = mkParams 0 [dataTyPtr]
     in compileCurried "unListData" ps $ \[d] ->
@@ -722,7 +724,7 @@ unListData =
         DataList -> loadDataPtr d >>= retClosure
         _ -> fatal unListDataErrRef []
 
-unIData :: MonadCodeGen m => m ClosurePtr
+unIData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 unIData =
     let ps = mkParams 0 [dataTyPtr]
     in compileCurried "unIData" ps $ \[d] ->
@@ -730,7 +732,7 @@ unIData =
         DataI -> loadDataPtr d >>= retClosure
         _ -> fatal unIDataErrRef []
 
-unBData :: MonadCodeGen m => m ClosurePtr
+unBData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 unBData =
     let ps = mkParams 0 [dataTyPtr]
     in compileCurried "unBData" ps $ \[d] ->
@@ -738,7 +740,7 @@ unBData =
         DataB -> loadDataPtr d >>= retClosure
         _ -> fatal unBDataErrRef []
 
-equalsData :: MonadCodeGen m => m ClosurePtr
+equalsData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 equalsData =
     let ps = mkParams 0 ["x","y"]
     in withCurried "equalsData" ps $ \[x,y] -> do
@@ -749,20 +751,20 @@ equalsData =
         r <- call cmpFun [(x, []), (y, [])]
         retConstDynamic @Bool r
 
-mkPairData :: MonadCodeGen m => m ClosurePtr
+mkPairData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 mkPairData =
     let ps = mkParams 0 ["x","y"]
     in withCurried "mkPairData" ps $ \[x,y] ->
         newPair (MkClosurePtr x) (MkClosurePtr y) >>=
         retConstDynamic @(Data, Data)
 
-mkNilData :: MonadCodeGen m => m ClosurePtr
+mkNilData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 mkNilData =
     let ps = mkParams 0 [i8]
     in compileCurried "mkNilData" ps $ \[_] ->
         retConstDynamic @[Data] $ ConstantOperand $ Null listTyPtr
 
-mkNilPairData :: MonadCodeGen m => m ClosurePtr
+mkNilPairData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 mkNilPairData =
     let ps = mkParams 0 [i8]
     in compileCurried "mkNilPairData" ps $ \[_] ->
@@ -773,7 +775,7 @@ mkNilPairData =
 -- | `builtins` is a mapping from built-in function tags to code generators
 -- for them. These are used by `compileBuiltins` to generate the code for each
 -- supported built-in function.
-builtins :: MonadCodeGen m => [(DefaultFun, m ClosurePtr)]
+builtins :: MonadCodeGen m => [(DefaultFun, m (ClosurePtr 'StaticPtr))]
 builtins =
     [ (AddInteger, addInteger)
     , (SubtractInteger, subtractInteger)
@@ -840,7 +842,9 @@ builtins =
 -- | `compileBuiltins` is a computation which generates code for all the
 -- built-in functions and returns a mapping from their tags to the
 -- corresponding function pointers.
-compileBuiltins :: MonadCodeGen m => m (M.Map DefaultFun ClosurePtr)
+compileBuiltins
+    :: MonadCodeGen m
+    => m (M.Map DefaultFun (ClosurePtr 'StaticPtr))
 compileBuiltins = fmap M.fromList $ forM builtins $ \(f, compile) -> do
     ref <- compile
     pure (f, ref)

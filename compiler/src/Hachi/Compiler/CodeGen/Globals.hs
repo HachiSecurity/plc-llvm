@@ -22,7 +22,7 @@ import Hachi.Compiler.CodeGen.Constant.String
 -- related to constants.
 generateConstantGlobals :: MonadCodeGen m => m ()
 generateConstantGlobals = void $ do
-    void $ global "returnRegister" (ptrOf VoidType) $ Null (ptrOf VoidType)
+    void $ global "returnRegister" (ptrOf i8) $ Null (ptrOf i8)
 
     runIRBuilderT emptyIRBuilder $ forM_ globalStrs $ \(name, val) ->
         globalStringPtr val $ mkName name
@@ -31,6 +31,6 @@ $(mkGlobalStrRefs globalStrs)
 
 returnRef :: Operand
 returnRef = ConstantOperand
-          $ GlobalReference (ptrOf $ ptrOf VoidType) "returnRegister"
+          $ GlobalReference (ptrOf $ ptrOf i8) "returnRegister"
 
 -------------------------------------------------------------------------------

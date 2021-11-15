@@ -24,7 +24,10 @@ dependencies:
 - typed-process
 
 default-extensions:
+- DataKinds
 - FlexibleContexts
+- GADTs
+- KindSignatures
 - OverloadedStrings
 - StandaloneKindSignatures
 
@@ -54,4 +57,5 @@ tests:
     - tasty-discover
     - tasty-hunit
     - tasty-hedgehog
+    - tasty-ant-xml
     - hedgehog

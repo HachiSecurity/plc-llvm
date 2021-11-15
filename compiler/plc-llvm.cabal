@@ -45,7 +45,10 @@ library
   hs-source-dirs:
       src
   default-extensions:
+      DataKinds
       FlexibleContexts
+      GADTs
+      KindSignatures
       OverloadedStrings
       StandaloneKindSignatures
   ghc-options: -Wall
@@ -76,7 +79,10 @@ executable plc-llvm
   hs-source-dirs:
       app
   default-extensions:
+      DataKinds
       FlexibleContexts
+      GADTs
+      KindSignatures
       OverloadedStrings
       StandaloneKindSignatures
   ghc-options: -Wall
@@ -114,7 +120,10 @@ test-suite plc-llvm-test
   hs-source-dirs:
       test
   default-extensions:
+      DataKinds
       FlexibleContexts
+      GADTs
+      KindSignatures
       OverloadedStrings
       StandaloneKindSignatures
   ghc-options: -Wall
@@ -135,6 +144,7 @@ test-suite plc-llvm-test
     , prettyprinter
     , some
     , tasty
+    , tasty-ant-xml
     , tasty-discover
     , tasty-hedgehog
     , tasty-hunit
