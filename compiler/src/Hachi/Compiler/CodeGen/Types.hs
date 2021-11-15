@@ -197,7 +197,7 @@ emptyGmpTy = Array gmpTyDef [
 
 -- | `gmpTy` is equivalent to @mpz_t@ from the gmp library.
 gmpTy :: Type
-gmpTy = ArrayType 1 (NamedTypeReference "mpz_t")
+gmpTy = NamedTypeReference "mpz_t"
 
 -- | `gmpTyPtr` is a pointer to `gmpTy`.
 gmpTyPtr :: Type

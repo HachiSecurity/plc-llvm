@@ -43,7 +43,7 @@ import Hachi.Compiler.Platform
 -------------------------------------------------------------------------------
 
 mpzInitSetStrTy :: Type
-mpzInitSetStrTy = ptrOf $ FunctionType VoidType [gmpTy, ptrOf i8, iHost] False
+mpzInitSetStrTy = ptrOf $ FunctionType VoidType [gmpTyPtr, ptrOf i8, iHost] False
 
 $(mkExternal "mpzInitSetStr" "__gmpz_init_set_str" 'mpzInitSetStrTy)
 
@@ -59,7 +59,7 @@ mpzInitSetStr name ptr str = do
         ]
 
 mpzInitSetUIntTy :: Type
-mpzInitSetUIntTy = ptrOf $ FunctionType VoidType [gmpTy, iUnsignedLongInt] False
+mpzInitSetUIntTy = ptrOf $ FunctionType VoidType [gmpTyPtr, iUnsignedLongInt] False
 
 $(mkExternal "mpzInitSetUInt" "__gmpz_init_set_ui" 'mpzInitSetUIntTy)
 
@@ -70,7 +70,7 @@ mpzInitSetUInt ptr val = void $
     call (ConstantOperand mpzInitSetUIntRef) [(ptr, []), (val, [])]
 
 mpzGetStrTy :: Type
-mpzGetStrTy = ptrOf $ FunctionType (ptrOf i8) [ptrOf i8, iHost, gmpTy] False
+mpzGetStrTy = ptrOf $ FunctionType (ptrOf i8) [ptrOf i8, iHost, gmpTyPtr] False
 
 $(mkExternal "mpzGetStr" "__gmpz_get_str" 'mpzGetStrTy)
 
@@ -81,7 +81,7 @@ mpzGetStr strPtr base ptr = call (ConstantOperand mpzGetStrRef)
     [(strPtr, []), (base, []), (ptr, [])]
 
 mpzGetUIntTy :: Type
-mpzGetUIntTy = ptrOf $ FunctionType iUnsignedLongInt [gmpTy] False
+mpzGetUIntTy = ptrOf $ FunctionType iUnsignedLongInt [gmpTyPtr] False
 
 $(mkExternal "mpzGetUInt" "__gmpz_get_ui" 'mpzGetUIntTy)
 
@@ -91,7 +91,7 @@ mpzGetUInt
 mpzGetUInt ptr = call (ConstantOperand mpzGetUIntRef) [(ptr, [])]
 
 mpzBinTy :: Type
-mpzBinTy = ptrOf $ FunctionType VoidType [gmpTy, gmpTy, gmpTy] False
+mpzBinTy = ptrOf $ FunctionType VoidType [gmpTyPtr, gmpTyPtr, gmpTyPtr] False
 
 mpzBin
     :: (MonadModuleBuilder m, MonadIRBuilder m)
@@ -149,7 +149,7 @@ mpzTDivR
 mpzTDivR = mpzBin mpzTDivRRef
 
 mpzCmpTy :: Type
-mpzCmpTy = ptrOf $ FunctionType iHost [gmpTy, gmpTy] False
+mpzCmpTy = ptrOf $ FunctionType iHost [gmpTyPtr, gmpTyPtr] False
 
 $(mkExternal "mpzCmp" "__gmpz_cmp" 'mpzCmpTy)
 
