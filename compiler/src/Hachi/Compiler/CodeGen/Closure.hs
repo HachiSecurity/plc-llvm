@@ -71,14 +71,6 @@ closureTyDef = StructureType False
 closureSize :: Num a => a
 closureSize = 3
 
--- | `closureTy` is a `Type` for closures.
-closureTy :: Type
-closureTy = NamedTypeReference "closure"
-
--- | `closureTyPtr` is a `Type` representing a pointer to a closure.
-closureTyPtr :: Type
-closureTyPtr = ptrOf closureTy
-
 -- | Enumerates different components of a closure.
 data ClosureComponent
     = ClosureCode

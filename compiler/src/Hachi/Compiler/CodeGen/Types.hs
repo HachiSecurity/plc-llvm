@@ -41,7 +41,10 @@ module Hachi.Compiler.CodeGen.Types (
     gmpTy,
     gmpTyPtr,
 
-    -- * Closure pointers
+    -- * Closures
+    closureTy,
+    closureTyPtr,
+
     PtrKind(..),
     ClosurePtr(..),
     closurePtr,
@@ -191,6 +194,14 @@ gmpTyPtr :: Type
 gmpTyPtr = ptrOf gmpTy
 
 -------------------------------------------------------------------------------
+
+-- | `closureTy` is a `Type` for closures.
+closureTy :: Type
+closureTy = NamedTypeReference "closure"
+
+-- | `closureTyPtr` is a `Type` representing a pointer to a closure.
+closureTyPtr :: Type
+closureTyPtr = ptrOf closureTy
 
 -- | Enumerates different kinds of pointers we may have:
 --
