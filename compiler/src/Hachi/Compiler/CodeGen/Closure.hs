@@ -41,7 +41,7 @@ import Data.Word
 
 import LLVM.AST
 import LLVM.AST.AddrSpace
-import LLVM.AST.Constant
+import LLVM.AST.Constant as C
 import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.CodeGen.Common
@@ -49,6 +49,7 @@ import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
+import Hachi.Compiler.Platform
 
 -------------------------------------------------------------------------------
 
@@ -63,8 +64,8 @@ closureTyDef :: Type
 closureTyDef = StructureType False
     [ clsEntryTy
     , printFnTy
-    , ptrOf i8
-    , ArrayType 0 closureTyPtr
+    , iHost
+    , ArrayType 0 (ptrOf i8)
     ]
 
 -- | The minimum size of a closure in words.
@@ -126,12 +127,12 @@ compileClosure isPoly name codePtr printPtr fvs = do
     let closureType = StructureType False
             [ clsEntryTy, printFnTy
             , IntegerType bits
-            , ArrayType (fromIntegral $ length fvs) closureTyPtr
+            , ArrayType (fromIntegral $ length fvs) (ptrOf i8)
             ]
 
     void $ global closureName closureType $ Struct Nothing False $
         codePtr : printPtr : Int bits (toInteger $ fromEnum isPoly) :
-        [Array closureTyPtr fvs]
+        [Array (ptrOf i8) $ map (`C.BitCast` ptrOf i8) fvs]
 
     pure $ MkStaticClosurePtr $
         GlobalReference (PointerType closureType $ AddrSpace 0) closureName
@@ -145,7 +146,7 @@ bits = 64
 -- | The size of a pointer as an `Operand`. This should correspond to the
 -- value given by `bits`.
 ptrSize :: Operand
-ptrSize = ConstantOperand $ LLVM.AST.Constant.sizeof bits closureTyPtr
+ptrSize = ConstantOperand $ C.sizeof bits closureTyPtr
 
 -- | `allocateClosure` @isDelay codePtr printPtr freeVars@ allocates a closure
 -- with enough space to store all of @freeVars@ in addition to the code
