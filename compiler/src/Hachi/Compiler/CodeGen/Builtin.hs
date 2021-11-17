@@ -96,7 +96,7 @@ withCurried name ps@((sn,isTyVar):dyn) builder = do
 
     let codePtr = GlobalReference (mkEntryTy 1) (mkName entryName)
 
-    printPtr <- compileFunPrint name
+    printPtr <- compileFunPrint
 
     compileClosure isTyVar name codePtr printPtr []
 

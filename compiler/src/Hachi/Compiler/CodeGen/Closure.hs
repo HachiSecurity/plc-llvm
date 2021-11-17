@@ -33,6 +33,7 @@ module Hachi.Compiler.CodeGen.Closure (
 import Control.Monad
 import Control.Monad.Reader
 
+import Data.IORef
 import Data.List
 import qualified Data.Map as M
 import Data.Maybe
@@ -224,7 +225,7 @@ compileDynamicClosure isDelay name fvs var codeFun = do
 
     let code_fun = GlobalReference entryTy entryName
 
-    print_fun <- compileFunPrint name
+    printPtr <- compileFunPrint
 
     env <- asks codeGenEnv
 
@@ -233,20 +234,35 @@ compileDynamicClosure isDelay name fvs var codeFun = do
         Nothing -> error "Can't find variable"
         Just val -> pure val
 
-    allocateClosure isDelay code_fun print_fun (map closurePtr vals)
+    allocateClosure isDelay code_fun printPtr (map closurePtr vals)
 
-compileFunPrint
-    :: (MonadReader CodeGenSt m, MonadIO m, MonadModuleBuilder m)
-    => String -> m Constant
-compileFunPrint name = do
-    let printName = mkName $ name <> "_print"
+-- | `compileFunPrint` is a computation which generates the shared
+-- pretty-printing code for all function closures and returns a
+-- reference to it.
+compileFunPrint :: MonadCodeGen m => m Constant
+compileFunPrint = do
+    -- we need to check whether the code has already been generated or not:
+    -- for that we try to retrieve it from the environment
+    ioRef <- asks codeGenFunPrinter
+    mRef <- liftIO $ readIORef ioRef
 
-    _ <- IR.function printName [(closureTyPtr, "this")] VoidType $ \[_] -> do
-        compileTrace (name <> "_print")
-        void $ call (ConstantOperand printfRef) [(funErrRef, [])]
-        retVoid
+    case mRef of
+        -- it exists: just return the reference
+        Just ref -> pure ref
+        -- it doesn't: generate the code, store the reference in the
+        -- environment, and then return it
+        Nothing -> do
+            let printName = mkName "Function_print"
 
-    pure $ GlobalReference printFnTy printName
+            _ <- IR.function printName [(closureTyPtr, "this")] VoidType $ \[_] -> do
+                compileTrace "Function_print"
+                void $ call (ConstantOperand printfRef) [(funErrRef, [])]
+                retVoid
+
+            let ref = GlobalReference printFnTy printName
+            liftIO $ writeIORef ioRef $ Just ref
+
+            pure ref
 
 -------------------------------------------------------------------------------
 

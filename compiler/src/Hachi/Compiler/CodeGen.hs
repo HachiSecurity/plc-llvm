@@ -219,6 +219,7 @@ compileProgram cfg (Program _ _ term) = do
     counter <- liftIO $ newIORef M.empty
     constEntries <- liftIO $ newIORef M.empty
     constPrinters <- liftIO $ newIORef M.empty
+    funPrinter <- liftIO $ newIORef Nothing
 
     let codeGenSt = MkCodeGenSt{
             codeGenCfg = cfg,
@@ -227,7 +228,8 @@ compileProgram cfg (Program _ _ term) = do
             codeGenEnv = M.empty,
             codeGenBuiltins = M.empty,
             codeGenConstEntries = constEntries,
-            codeGenConstPrinters = constPrinters
+            codeGenConstPrinters = constPrinters,
+            codeGenFunPrinter = funPrinter
         }
 
     -- compile the program

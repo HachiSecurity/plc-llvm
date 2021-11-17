@@ -56,7 +56,8 @@ data CodeGenSt = MkCodeGenSt {
     codeGenEnv :: M.Map T.Text (ClosurePtr 'DynamicPtr),
     codeGenBuiltins :: M.Map UPLC.DefaultFun (ClosurePtr 'StaticPtr),
     codeGenConstEntries :: IORef (M.Map ConstantTy Constant),
-    codeGenConstPrinters :: IORef (M.Map ConstantTy Constant)
+    codeGenConstPrinters :: IORef (M.Map ConstantTy Constant),
+    codeGenFunPrinter :: IORef (Maybe Constant)
 }
 
 -- | The code generator monad.
