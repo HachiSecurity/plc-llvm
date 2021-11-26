@@ -43,9 +43,16 @@ jobs:
         run: |
           stack --no-terminal build --only-dependencies --test --fast --system-ghc
 
-      - name: Build
+      - name: Build and install
         run: |
-          stack --no-terminal build --test --fast --system-ghc --no-run-tests
+          stack --no-terminal build --test --fast --system-ghc --no-run-tests --copy-bins --local-bin-path=.
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: plc-llvm
+          path: './plc-llvm'
+          if-no-files-found: error
 
       - name: Run tests
         run: |
@@ -59,3 +66,13 @@ jobs:
           check_name: 'tests'
           comment_title: 'Test results'
           fail_on: 'test failures'
+
+      - name: Upload release
+        if: ${{ github.ref == 'refs/heads/master' }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: './plc-llvm'
+          asset_name: 'plc-llvm'
+          tag: 'latest-plc-llvm'
+          overwrite: true
