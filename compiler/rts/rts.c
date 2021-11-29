@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <gmp.h>
 
+#include "tiny_sha3/sha3.h"
+
 int min(int x, int y) {
     return x < y ? x : y;
 }
@@ -69,6 +71,13 @@ bool less_than_equals_bytestring(bytestring* s0, bytestring* s1) {
 unsigned char* sha2_256(bytestring* str) {
     unsigned char* result = (unsigned char*)malloc(crypto_hash_sha256_BYTES);
     crypto_hash_sha256(result, (unsigned char*)(*str->arr), str->length);
+
+    return result;
+}
+
+unsigned char* sha3_256(bytestring* str) {
+    unsigned char* result = (unsigned char*)malloc(32U);
+    sha3((unsigned char*)(*str->arr), str->length, result, 32);
 
     return result;
 }

@@ -39,7 +39,8 @@ module Hachi.Compiler.CodeGen.Externals (
     lessThanEqualsByteString,
 
     -- * Cryptography
-    sha256,
+    sha2_256,
+    sha3_256,
     blake2b,
     verifySig,
 
@@ -285,14 +286,23 @@ lessThanEqualsByteString p0 p1 =
 hashTy :: Type
 hashTy = ptrOf $ FunctionType (ptrOf i8) [bytestringTyPtr] False
 
-sha256Fun :: Global
-sha256Fun = globalFromType "sha2_256" hashTy
+sha2_256Fun :: Global
+sha2_256Fun = globalFromType "sha2_256" hashTy
 
-sha256Ref :: Constant
-sha256Ref = GlobalReference hashTy $ mkName "sha2_256"
+sha2_256Ref :: Constant
+sha2_256Ref = GlobalReference hashTy $ mkName "sha2_256"
 
-sha256 :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
-sha256 ptr = call (ConstantOperand sha256Ref) [(ptr, [])]
+sha2_256 :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
+sha2_256 ptr = call (ConstantOperand sha2_256Ref) [(ptr, [])]
+
+sha3_256Fun :: Global
+sha3_256Fun = globalFromType "sha3_256" hashTy
+
+sha3_256Ref :: Constant
+sha3_256Ref = GlobalReference hashTy $ mkName "sha3_256"
+
+sha3_256 :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
+sha3_256 ptr = call (ConstantOperand sha3_256Ref) [(ptr, [])]
 
 blake2bFun :: Global
 blake2bFun = globalFromType "blake2b_256" hashTy
@@ -336,7 +346,8 @@ externalDefinitions = map GlobalDefinition
     , equalsByteStringFun
     , lessThanByteStringFun
     , lessThanEqualsByteStringFun
-    , sha256Fun
+    , sha2_256Fun
+    , sha3_256Fun
     , blake2bFun
     , verifySigFun
     , mpzInitSetStrFun

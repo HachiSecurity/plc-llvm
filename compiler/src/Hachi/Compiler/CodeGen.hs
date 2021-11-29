@@ -293,10 +293,12 @@ generateCode cfg@MkConfig{..} p =
                 gmpOpts <- runPkgConfig "gmp"
 
                 let rtsFile = fromMaybe "./rts/rts.c" cfgRTS
+                let sha3File = takeDirectory rtsFile
+                           </> "tiny_sha3" </> "sha3" <.> "c"
                 let exeFile = dropExtension outputName
                 let pcfg = proc "clang" $
-                            [rtsFile, objectFile, "-o", exeFile] ++
-                            sodiumOpts ++ gmpOpts
+                            [rtsFile, sha3File, objectFile, "-o", exeFile] <>
+                            sodiumOpts <> gmpOpts
 
                 ec <- runProcess pcfg
 

@@ -412,11 +412,14 @@ lessThanEqualsByteString =
 
 -------------------------------------------------------------------------------
 
-sha256 :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
-sha256 =
-    compileCurried "sha2_256" [(bytestringTyPtr, False)] $ \[str] -> do
-    -- calculate the SHA256 hash of the bytestring
-    r <- E.sha256 str
+-- | `hashFun` @function string@ generates a wrapper around @function@ which is
+-- expected to compute a hash for @string@.
+hashFun
+    :: (MonadCodeGen m, MonadIRBuilder m)
+    => (Operand -> m Operand) -> Operand -> m ()
+hashFun fn str = do
+    -- calculate the hash of the bytestring
+    r <- fn str
 
     -- allocate a new bytestring with space for 256 bits
     ptr <- bsNew (ConstantOperand $ Int 64 32)
@@ -429,24 +432,21 @@ sha256 =
 
     -- create a new dynamic closure for the new bytestring
     retConstDynamic @BS.ByteString ptr
+
+sha2_256 :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
+sha2_256 =
+    compileCurried "sha2_256" [(bytestringTyPtr, False)] $ \[str] ->
+    hashFun E.sha2_256 str
+
+sha3_256 :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
+sha3_256 =
+    compileCurried "sha3_256" [(bytestringTyPtr, False)] $ \[str] ->
+    hashFun E.sha3_256 str
 
 blake2b :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 blake2b =
-    compileCurried "blake2b_256" [(bytestringTyPtr, False)] $ \[str] -> do
-    -- calculate the blake2b-256 hash of the bytestring
-    r <- E.blake2b str
-
-    -- allocate a new bytestring with space for 256 bits
-    ptr <- bsNew (ConstantOperand $ Int 64 32)
-
-    -- store the pointer to the byte array
-    dataAddr <- gep ptr [ ConstantOperand $ Int 32 0
-                        , ConstantOperand $ Int 32 1
-                        ]
-    store dataAddr 0 r
-
-    -- create a new dynamic closure for the new bytestring
-    retConstDynamic @BS.ByteString ptr
+    compileCurried "blake2b_256" [(bytestringTyPtr, False)] $ \[str] ->
+    hashFun E.blake2b str
 
 verifySignature :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 verifySignature =
@@ -797,7 +797,8 @@ builtins =
     , (LessThanByteString, lessThanByteString)
     , (LessThanEqualsByteString, lessThanEqualsByteString)
     -- Cryptography and hashes
-    , (Sha2_256, sha256)
+    , (Sha2_256, sha2_256)
+    , (Sha3_256, sha3_256)
     , (Blake2b_256, blake2b)
     , (VerifySignature, verifySignature)
     -- Strings
