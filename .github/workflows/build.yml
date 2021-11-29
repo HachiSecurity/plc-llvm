@@ -45,13 +45,15 @@ jobs:
 
       - name: Build and install
         run: |
-          stack --no-terminal build --test --fast --system-ghc --no-run-tests --copy-bins --local-bin-path=.
+          mkdir -p ./bin
+          cp ./compiler/rts/rts.c ./bin/rts.c
+          stack --no-terminal build --test --fast --system-ghc --no-run-tests --copy-bins --local-bin-path=./bin/
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v2
         with:
           name: plc-llvm
-          path: './plc-llvm'
+          path: './bin/plc-llvm'
           if-no-files-found: error
 
       - name: Run tests
@@ -72,7 +74,8 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: './plc-llvm'
-          asset_name: 'plc-llvm'
+          file_glob: true
+          file: './bin/**'
+          asset_name: 'plc-llvm.zip'
           tag: 'latest-plc-llvm'
           overwrite: true
