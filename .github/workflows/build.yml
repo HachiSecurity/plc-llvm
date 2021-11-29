@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v2
+        with:
+          submodules: 'true'
 
       - name: Install Haskell
         uses: haskell/actions/setup@v1
@@ -47,13 +49,16 @@ jobs:
         run: |
           mkdir -p ./bin
           cp ./compiler/rts/rts.c ./bin/rts.c
+          mkdir -p ./bin/tiny_sha3
+          cp -r ./compiler/rts/tiny_sha3/ ./bin/
           stack --no-terminal build --test --fast --system-ghc --no-run-tests --copy-bins --local-bin-path=./bin/
+          tar acvf plc-llvm.tar.gz -C bin .
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v2
         with:
-          name: plc-llvm
-          path: './bin/plc-llvm'
+          name: plc-llvm.tar.gz
+          path: './plc-llvm.tar.gz'
           if-no-files-found: error
 
       - name: Run tests
@@ -75,7 +80,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file_glob: true
-          file: './bin/**'
-          asset_name: 'plc-llvm.zip'
+          file: 'plc-llvm.tar.gz'
+          asset_name: 'plc-llvm.tar.gz'
           tag: 'latest-plc-llvm'
           overwrite: true
