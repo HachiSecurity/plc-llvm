@@ -1,0 +1,3 @@
+[submodule "compiler/rts/tiny_sha3"]
+	path = compiler/rts/tiny_sha3
+	url = git@github.com:mjosaarinen/tiny_sha3
