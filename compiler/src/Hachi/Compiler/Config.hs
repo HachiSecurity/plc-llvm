@@ -28,7 +28,9 @@ data Config = MkConfig {
     -- | Should the compiler generate an executable?
     cfgNoLink :: Bool,
     -- | Should the LLVM IR be in plain-text?
-    cfgNoSerialise :: Bool
+    cfgNoSerialise :: Bool,
+    -- | Should we produce a library?
+    cfgLibrary :: Bool
 } deriving (Eq, Show)
 
 -- | `mkDefaultConfig` @input@ constructs a `Config` with reasonable defaults
@@ -44,7 +46,8 @@ mkDefaultConfig fp = MkConfig{
     cfgVerbose = False,
     cfgNoAssemble = False,
     cfgNoLink = False,
-    cfgNoSerialise = False
+    cfgNoSerialise = False,
+    cfgLibrary = False
 }
 
 cfgInputP :: Parser FilePath
@@ -100,6 +103,11 @@ cfgNoSerialiseP = switch $
     long "emit-llvm" <>
     help "Generate plain-text LLVM IR instead of bitcode"
 
+cfgLibraryP :: Parser Bool
+cfgLibraryP = switch $
+    long "library" <>
+    help "Generate a library instead of an executable"
+
 cmdArgsP :: Parser Config
 cmdArgsP = MkConfig
     <$> cfgInputP
@@ -112,6 +120,7 @@ cmdArgsP = MkConfig
     <*> cfgNoAssembleP
     <*> cfgNoLinkP
     <*> cfgNoSerialiseP
+    <*> cfgLibraryP
 
 -- | `parseCmdLineArgs` parses command-line arguments into a `Config` value.
 -- If parsing fails, the program is terminated and a help message is shown.

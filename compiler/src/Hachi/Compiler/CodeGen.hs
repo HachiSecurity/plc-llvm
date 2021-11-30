@@ -167,13 +167,13 @@ compileBody (Builtin _ f) = do
         Nothing -> error $ "No such builtin: " <> show f
         Just ref -> pure $ toDynamicPtr ref
 
--- | `generateEntry` @term@ generates code for @term@ surrounded by a small
--- wrapper which calls the print function of the closure that results from
--- executing the program generated from @term@.
-generateEntry
+-- | `commonEntry` @term@ generates common entry code that is the same for
+-- both executables and libraries.
+commonEntry
     :: MonadCodeGen m
-    => Term UPLC.Name DefaultUni DefaultFun () -> m ()
-generateEntry body = void $ IR.function "main" [] VoidType $ \_ -> do
+    => Term UPLC.Name DefaultUni DefaultFun ()
+    -> IRBuilderT m (ClosurePtr 'DynamicPtr)
+commonEntry body = do
     generateConstantGlobals
 
     -- initialise the runtime system
@@ -187,15 +187,32 @@ generateEntry body = void $ IR.function "main" [] VoidType $ \_ -> do
 
     -- compile the program; the resulting Operand represent a pointer to some
     -- kind of closure (function or constant)
-    ptr <- local (\st -> st{codeGenBuiltins = builtins}) $ compileBody body
+    local (\st -> st{codeGenBuiltins = builtins}) $ compileBody body
 
-    -- call the print code of the resulting closure
-    printFun <- loadFromClosure ClosurePrint printFnTy ptr
-    void $ call printFun [(closurePtr ptr, [])]
+-- | `generateEntry` @term@ generates code for @term@ surrounded by a small
+-- wrapper which calls the print function of the closure that results from
+-- executing the program generated from @term@.
+generateEntry
+    :: MonadCodeGen m
+    => Term UPLC.Name DefaultUni DefaultFun () -> m ()
+generateEntry body = do
+    MkConfig{..} <- asks codeGenCfg
 
-    void $ printf nlRef []
+    if cfgLibrary
+    then void $ IR.function "plc_entry" [] closureTyPtr $ \_ -> do
+        ptr <- commonEntry body
 
-    retVoid
+        ret $ closurePtr ptr
+    else void $ IR.function "main" [] VoidType $ \_ -> do
+        ptr <- commonEntry body
+
+        -- call the print code of the resulting closure
+        printFun <- loadFromClosure ClosurePrint printFnTy ptr
+        void $ call printFun [(closurePtr ptr, [])]
+
+        void $ printf nlRef []
+
+        retVoid
 
 compileProgram
     :: Config
@@ -278,6 +295,13 @@ generateCode cfg@MkConfig{..} p =
             let bcName = replaceExtension outputName "bc"
             writeBitcodeToFile (File bcName) m
 
+        when cfgLibrary $ do
+            let headerFile = replaceExtension outputName "h"
+
+            writeFile headerFile $
+                "#include \"rts.h\"\n\n" <>
+                "extern void* plc_entry();\n"
+
         -- unless we have been instructed not to assemble the LLVM IR into
         -- an object file, produce an object file
         unless cfgNoAssemble $ do
@@ -287,7 +311,7 @@ generateCode cfg@MkConfig{..} p =
             -- unless we have been instructed not to link together an
             -- executable, run Clang to produce an executable from the
             -- object file
-            unless cfgNoLink $ do
+            unless (cfgNoLink || cfgLibrary) $ do
                 -- run pkg-config for libsodium
                 sodiumOpts <- runPkgConfig "libsodium"
                 gmpOpts <- runPkgConfig "gmp"
