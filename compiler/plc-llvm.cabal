@@ -24,6 +24,7 @@ library
       Hachi.Compiler.CodeGen.Closure
       Hachi.Compiler.CodeGen.Common
       Hachi.Compiler.CodeGen.Constant
+      Hachi.Compiler.CodeGen.Constant.ByteString
       Hachi.Compiler.CodeGen.Constant.Data
       Hachi.Compiler.CodeGen.Constant.Integer
       Hachi.Compiler.CodeGen.Constant.List
