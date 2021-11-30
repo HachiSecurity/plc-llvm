@@ -24,18 +24,29 @@ listDirectories root =
     listDirectory root >>=
     filterM (doesDirectoryExist . (root </>))
 
-test_samples :: IO [TestTree]
-test_samples = do
-    let root = "./test-data/untyped"
+-- | `runDirectoryTests` @mkConfig root@ loads programs from all directories in
+-- the path given by @root@ using the configuration produced by applying
+-- @mkConfig@ to a given source file's path.
+runDirectoryTests :: (FilePath -> Config) -> FilePath -> IO [TestTree]
+runDirectoryTests mkCfg root = do
     ds <- listDirectories root
 
     forM (sort ds) $ \dir ->
         pure $ testCase dir $ do
             -- compile the code
             let fp = root </> dir </> dir <.> "plc"
-            compile (mkDefaultConfig fp)
+            compile (mkCfg fp)
 
             -- run the resulting program
             runAndVerify fp
+
+test_untyped_samples :: IO [TestTree]
+test_untyped_samples = runDirectoryTests mkDefaultConfig "./test-data/untyped"
+
+mkTypedConfig :: FilePath -> Config
+mkTypedConfig fp = (mkDefaultConfig fp){ cfgTyped = True }
+
+test_typed_samples :: IO [TestTree]
+test_typed_samples = runDirectoryTests mkTypedConfig "./test-data/typed"
 
 -------------------------------------------------------------------------------
