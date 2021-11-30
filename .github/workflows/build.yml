@@ -43,6 +43,7 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
           brew install libsodium gmp llvm@12
+          echo "/usr/local/opt/llvm@12/bin" >> $GITHUB_PATH
 
       - name: Cache .stack
         uses: actions/cache@v2
