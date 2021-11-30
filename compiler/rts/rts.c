@@ -1,20 +1,8 @@
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sodium.h>
-#include <stdbool.h>
-#include <gmp.h>
-
-#include "tiny_sha3/sha3.h"
+#include "rts.h"
 
 int min(int x, int y) {
     return x < y ? x : y;
 }
-
-struct bytestring {
-    size_t length;
-    unsigned char* arr[];
-} typedef bytestring;
 
 void rts_init() {
     if(sodium_init() < 0) {
