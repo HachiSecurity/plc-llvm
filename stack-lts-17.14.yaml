@@ -4,3 +4,8 @@ packages:
 - ./compiler
 
 allow-newer: true
+
+ghc-options:
+  # llvm-12 requires c++17 to compile successfully, which requires us to pass
+  # some extra flags to clang on macOS, which defaults to an older version
+  llvm-hs: '-optcxx -std=c++17 -optcxx -lstdc++'
