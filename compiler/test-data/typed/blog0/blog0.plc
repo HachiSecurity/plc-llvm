@@ -1,0 +1,3 @@
+(program 1.0.0
+    [(lam f (all B (type) (fun B B)) [{f (con integer)} (con integer 5)]) (abs A (type) (lam x A x))]
+)

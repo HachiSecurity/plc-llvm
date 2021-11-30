@@ -1,0 +1,13 @@
+(program 1.0.0
+    [
+        (lam n (con integer)
+            [
+                {(builtin ifThenElse) (con integer)}
+                [(builtin lessThanInteger) n (con integer 0)]
+                [(builtin subtractInteger) (con integer 0) n]
+                n
+            ]
+        )
+        (con integer -42)
+    ]
+)
