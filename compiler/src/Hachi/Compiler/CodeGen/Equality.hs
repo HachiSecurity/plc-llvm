@@ -14,6 +14,7 @@ import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Constant
+import Hachi.Compiler.CodeGen.Constant.ByteString
 import Hachi.Compiler.CodeGen.Constant.Data
 import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Monad
@@ -61,9 +62,8 @@ eqByteString xs ys = do
 
     -- call equalsByteString which returns a char, but it will always just use
     -- one bit, so we can safely truncate it
-    r <- equalsByteString s0 s1
-    b <- trunc r i1
-    ret b
+    r <- bsEquals s0 s1
+    ret r
 
 -- | `eqPair` @ptr0 ptr1@ forces two closures representing pairs containing
 -- `Data` values and checks that both components of the pair are the same.

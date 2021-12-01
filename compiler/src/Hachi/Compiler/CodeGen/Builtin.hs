@@ -345,7 +345,7 @@ indexByteString =
 equalsByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 equalsByteString =
     compileBinary "equalsByteString" bytestringTyPtr bytestringTyPtr $
-    \s0 s1 -> E.equalsByteString s0 s1 >>= retConstDynamic @Bool
+    \s0 s1 -> bsEquals s0 s1 >>= retConstDynamic @Bool
 
 lessThanByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 lessThanByteString =

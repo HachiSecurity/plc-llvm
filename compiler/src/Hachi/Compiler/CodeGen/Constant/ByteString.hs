@@ -2,14 +2,17 @@ module Hachi.Compiler.CodeGen.Constant.ByteString (
     bsNewStruct,
     bsNew,
     bsLen,
-    bsDataPtr
+    bsDataPtr,
+
+    bsEquals
 ) where
 
 -------------------------------------------------------------------------------
 
-import LLVM.AST.Constant
 import LLVM.IRBuilder as IR
 import LLVM.AST
+import LLVM.AST.Constant
+import qualified LLVM.AST.IntegerPredicate as LLVM
 
 import Hachi.Compiler.CodeGen.Externals as E
 import Hachi.Compiler.CodeGen.Monad
@@ -71,5 +74,81 @@ bsDataPtr :: (MonadCodeGen m, MonadIRBuilder m) => Operand -> m Operand
 bsDataPtr str = do
     addr <- gep str [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 1]
     load addr 0
+
+-------------------------------------------------------------------------------
+
+-- | `bsEquals` @s0 s1@ determines whether the two bytestrings pointed at by
+-- @s0@ and @s1@ are equal or not.
+bsEquals
+    :: (MonadCodeGen m, MonadIRBuilder m)
+    => Operand -> Operand -> m Operand
+bsEquals s0 s1 = do
+    trueBr <- freshName "bsEquals.true"
+    falseBr <- freshName "bsEquals.false"
+    loopStartBr <- freshName "bsEquals.loop.start"
+    loopBr <- freshName "bsEquals.loop"
+    endBr <- freshName "bsEquals.end"
+
+    d0 <- bsDataPtr s0
+    d1 <- bsDataPtr s1
+
+    -- allocate a local variable for the loop counter
+    i <- alloca i64 Nothing 0
+    store i 0 (ConstantOperand $ Int 64 0)
+
+    -- `if(s0->length != s1->length) return false;`
+    --
+    -- since we already have the lengths of the strings, we can decide that
+    -- they are trivially not the same if their lengths do not match
+    l0 <- bsLen s0
+    l1 <- bsLen s1
+
+    leq <- icmp LLVM.NE l0 l1
+    condBr leq falseBr loopStartBr
+
+    -- `for(size_t i=0; i<s0->length; i++) {`
+    --
+    -- check that our counter is less than the length of one of the strings
+    -- (we know that they are the same length at this point, so we can just
+    -- arbitrarily pick one of them)
+    emitBlockStart loopStartBr
+    iv <- load i 0
+    lc <- icmp LLVM.ULT iv l0
+    condBr lc loopBr trueBr
+
+    -- `if((*s0->arr)[i] != (*s1->arr)[i]) return false;`
+    --
+    -- the index is less than the length of the strings: retrieve the bytes
+    -- at the current index and compare them
+    emitBlockStart loopBr
+    addr0 <- gep d0 [iv]
+    addr1 <- gep d1 [iv]
+
+    c0 <- load addr0 0
+    c1 <- load addr1 0
+
+    -- we pre-emptively increment the index to avoid a branch
+    ni <- add iv (ConstantOperand $ Int 64 1)
+    store i 0 ni
+
+    -- actually compare the two characters: if they are not the same, then
+    -- we can fail fast and do not need to check the rest of the string
+    cc <- icmp LLVM.NE c0 c1
+    condBr cc falseBr loopStartBr
+
+    -- `}`
+
+    -- destination blocks for true and false; we use a phi to actually
+    -- pick the value
+    emitBlockStart falseBr
+    br endBr
+
+    emitBlockStart trueBr
+    br endBr
+
+    emitBlockStart endBr
+    phi [ (ConstantOperand $ Int 1 0, falseBr)
+        , (ConstantOperand $ Int 1 1, trueBr)
+        ]
 
 -------------------------------------------------------------------------------

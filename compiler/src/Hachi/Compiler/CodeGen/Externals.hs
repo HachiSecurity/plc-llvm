@@ -28,10 +28,6 @@ module Hachi.Compiler.CodeGen.Externals (
 
     indexBytestring,
 
-    equalsByteStringTy,
-    equalsByteStringRef,
-    equalsByteString,
-
     lessThanByteStringTy,
     lessThanByteStringRef,
     lessThanByteString,
@@ -232,23 +228,6 @@ indexBytestring
 indexBytestring ptr n =
     call (ConstantOperand indexBytestringRef) [(ptr, []), (n, [])]
 
-equalsByteStringTy :: Type
-equalsByteStringTy = ptrOf $
-    FunctionType i8 [bytestringTyPtr, bytestringTyPtr] False
-
-equalsByteStringFun :: Global
-equalsByteStringFun = globalFromType "equals_bytestring" equalsByteStringTy
-
-equalsByteStringRef :: Constant
-equalsByteStringRef =
-    GlobalReference equalsByteStringTy $ mkName "equals_bytestring"
-
-equalsByteString
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> Operand -> m Operand
-equalsByteString p0 p1 =
-    call (ConstantOperand equalsByteStringRef) [(p0, []), (p1, [])]
-
 lessThanByteStringTy :: Type
 lessThanByteStringTy = ptrOf $
     FunctionType i8 [bytestringTyPtr, bytestringTyPtr] False
@@ -343,7 +322,6 @@ externalDefinitions = map GlobalDefinition
     , strcmpFun
     , printBytestringFun
     , indexBytestringFun
-    , equalsByteStringFun
     , lessThanByteStringFun
     , lessThanEqualsByteStringFun
     , sha2_256Fun
