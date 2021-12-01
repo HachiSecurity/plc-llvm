@@ -30,6 +30,7 @@ import Hachi.Compiler.CodeGen.Constant.Data
 import Hachi.Compiler.CodeGen.Constant.Integer
 import Hachi.Compiler.CodeGen.Constant.List
 import Hachi.Compiler.CodeGen.Constant.Pair
+import Hachi.Compiler.CodeGen.Constant.Text
 import Hachi.Compiler.CodeGen.Equality
 import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
@@ -411,8 +412,8 @@ appendString =
     let ps = mkParams 0 [ptrOf i8, ptrOf i8]
     in compileCurried "appendString" ps $ \[xs, ys] -> do
         -- determine the lengths of the two strings
-        l0 <- E.strlen xs
-        l1 <- E.strlen ys
+        l0 <- strlen xs
+        l1 <- strlen ys
 
         -- allocate memory for the new string
         lb <- add l0 l1
@@ -442,7 +443,7 @@ encodeUtf8 =
     in compileCurried "encodeUtf8" ps $ \[str] -> do
         -- our strings are already UTF-8 so we just need to construct a
         -- bytestring for it
-        l <- E.strlen str
+        l <- strlen str
         ptr <- bsNew l
 
         -- store the pointer to the byte array

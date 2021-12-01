@@ -18,7 +18,6 @@ module Hachi.Compiler.CodeGen.Externals (
     memcpyRef,
     memcpy,
     memcmp,
-    strlen,
     strcpy,
     strcmp,
 
@@ -162,18 +161,6 @@ memcmp
 memcmp p0 p1 len =
     call (ConstantOperand memcmpRef) [(p0, []), (p1, []), (len, [])]
 
-strlenTy :: Type
-strlenTy = ptrOf $ FunctionType i64 [ptrOf i8] False
-
-strlenFun :: Global
-strlenFun = globalFromType "strlen" strlenTy
-
-strlenRef :: Constant
-strlenRef = GlobalReference strlenTy $ mkName "strlen"
-
-strlen :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
-strlen str = call (ConstantOperand strlenRef) [(str, [])]
-
 strcpyTy :: Type
 strcpyTy = ptrOf $ FunctionType (ptrOf i8) [ptrOf i8, ptrOf i8] False
 
@@ -260,7 +247,6 @@ externalDefinitions = map GlobalDefinition
     , mallocFun
     , memcpyFun
     , memcmpFun
-    , strlenFun
     , strcpyFun
     , strcmpFun
     , sha2_256Fun
