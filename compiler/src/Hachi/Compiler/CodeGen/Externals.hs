@@ -18,7 +18,6 @@ module Hachi.Compiler.CodeGen.Externals (
     memcpyRef,
     memcpy,
     memcmp,
-    strcmp,
 
     -- * Cryptography
     sha2_256,
@@ -160,20 +159,6 @@ memcmp
 memcmp p0 p1 len =
     call (ConstantOperand memcmpRef) [(p0, []), (p1, []), (len, [])]
 
-strcmpTy :: Type
-strcmpTy = ptrOf $ FunctionType i32 [ptrOf i8, ptrOf i8] False
-
-strcmpFun :: Global
-strcmpFun = globalFromType "strcmp" strcmpTy
-
-strcmpRef :: Constant
-strcmpRef = GlobalReference strcmpTy "strcmp"
-
-strcmp
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> Operand -> m Operand
-strcmp xs ys = call (ConstantOperand strcmpRef) [(xs, []), (ys, [])]
-
 -------------------------------------------------------------------------------
 
 hashTy :: Type
@@ -232,7 +217,6 @@ externalDefinitions = map GlobalDefinition
     , mallocFun
     , memcpyFun
     , memcmpFun
-    , strcmpFun
     , sha2_256Fun
     , sha3_256Fun
     , blake2bFun

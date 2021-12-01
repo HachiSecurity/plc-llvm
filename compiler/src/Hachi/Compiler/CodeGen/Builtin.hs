@@ -433,9 +433,7 @@ equalsString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 equalsString =
     let ps = mkParams 0 [ptrOf i8, ptrOf i8]
     in compileCurried "equalsString" ps $ \[xs, ys] -> do
-        r <- E.strcmp xs ys
-        b <- icmp LLVM.EQ r (ConstantOperand $ Int 32 0)
-        retConstDynamic @Bool b
+        streq xs ys >>= retConstDynamic @Bool
 
 encodeUtf8 :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 encodeUtf8 =
