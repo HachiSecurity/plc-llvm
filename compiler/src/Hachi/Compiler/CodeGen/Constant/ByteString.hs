@@ -8,7 +8,9 @@ module Hachi.Compiler.CodeGen.Constant.ByteString (
 
     bsPrint,
     bsIndex,
-    bsEquals
+    bsEquals,
+    bsLessThan,
+    bsLessThanEquals
 ) where
 
 -------------------------------------------------------------------------------
@@ -22,6 +24,17 @@ import Hachi.Compiler.CodeGen.Externals as E
 import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
+
+-------------------------------------------------------------------------------
+
+-- | `genMin` @x y@ generates code which returns the smaller of @x@ and @y@,
+-- assuming that both are unsigned integers.
+genMin
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> Operand -> m Operand
+genMin x y = do
+    r <- icmp LLVM.ULT x y
+    select r x y
 
 -------------------------------------------------------------------------------
 
@@ -237,5 +250,60 @@ bsEquals s0 s1 = do
     phi [ (ConstantOperand $ Int 1 0, falseBr)
         , (ConstantOperand $ Int 1 1, trueBr)
         ]
+
+-- | `bsCompare` @pred s0 s1@ compares @s0@ and @s1@ by:
+-- 1. The first @n@ bytes of @s0@ and @s1@ are compared, where @n@ is the
+--    smaller of the lengths of @s0@ and @s1@. Unless the first @n@ bytes
+--    are equal, the result of this is returned.
+-- 2. If the first @n@ bytes are different, we compare the lengths of @s0@
+--    and @s1@ according to @pred@.
+bsCompare
+    :: (MonadCodeGen m, MonadIRBuilder m)
+    => LLVM.IntegerPredicate -> Operand -> Operand -> m Operand
+bsCompare p s0 s1 = do
+    d0 <- bsDataPtr s0
+    d1 <- bsDataPtr s1
+    l0 <- bsLen s0
+    l1 <- bsLen s1
+
+    -- determine the shortest of the two lengths
+    lm <- genMin l0 l1
+
+    -- `int r = memcmp((*s0->arr), (*s1->arr), min(s0->length, s1->length));`
+    r <- E.memcmp d0 d1 lm
+
+    eqLengthBr <- freshName "bsCompare.eqLength"
+    neqLengthBr <- freshName "bsCompare.neqLength"
+    endBr <- freshName "bsCompare.end"
+
+    c <- icmp LLVM.EQ r (ConstantOperand $ Int 32 0)
+    condBr c eqLengthBr neqLengthBr
+
+    -- if(r == 0) {
+    --     return s0->length < s1->length;
+    -- }
+    emitBlockStart eqLengthBr
+    eqR <- icmp p l0 l1
+    br endBr
+
+    -- return r < 0;
+    emitBlockStart neqLengthBr
+    neqR <- icmp LLVM.SLT r (ConstantOperand $ Int 32 0)
+    br endBr
+
+    emitBlockStart endBr
+    phi [ (eqR, eqLengthBr)
+        , (neqR, neqLengthBr)
+        ]
+
+bsLessThan
+    :: (MonadCodeGen m, MonadIRBuilder m)
+    => Operand -> Operand -> m Operand
+bsLessThan = bsCompare LLVM.ULT
+
+bsLessThanEquals
+    :: (MonadCodeGen m, MonadIRBuilder m)
+    => Operand -> Operand -> m Operand
+bsLessThanEquals = bsCompare LLVM.ULE
 
 -------------------------------------------------------------------------------

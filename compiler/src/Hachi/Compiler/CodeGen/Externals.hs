@@ -17,16 +17,10 @@ module Hachi.Compiler.CodeGen.Externals (
     memcpyTy,
     memcpyRef,
     memcpy,
+    memcmp,
     strlen,
     strcpy,
     strcmp,
-
-    -- * Bytestrings
-    lessThanByteStringTy,
-    lessThanByteStringRef,
-    lessThanByteString,
-
-    lessThanEqualsByteString,
 
     -- * Cryptography
     sha2_256,
@@ -152,6 +146,22 @@ memcpy
 memcpy dst src n =
     call (ConstantOperand memcpyRef) [(dst, []), (src, []), (n, [])]
 
+memcmpTy :: Type
+memcmpTy = ptrOf $
+    FunctionType i32 [ptrOf i8, ptrOf i8, i64] False
+
+memcmpFun :: Global
+memcmpFun = globalFromType "memcmp" memcmpTy
+
+memcmpRef :: Constant
+memcmpRef = GlobalReference memcmpTy $ mkName "memcmp"
+
+memcmp
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> Operand -> Operand -> m Operand
+memcmp p0 p1 len =
+    call (ConstantOperand memcmpRef) [(p0, []), (p1, []), (len, [])]
+
 strlenTy :: Type
 strlenTy = ptrOf $ FunctionType i64 [ptrOf i8] False
 
@@ -191,40 +201,6 @@ strcmp
     :: (MonadModuleBuilder m, MonadIRBuilder m)
     => Operand -> Operand -> m Operand
 strcmp xs ys = call (ConstantOperand strcmpRef) [(xs, []), (ys, [])]
-
--------------------------------------------------------------------------------
-
-lessThanByteStringTy :: Type
-lessThanByteStringTy = ptrOf $
-    FunctionType i8 [bytestringTyPtr, bytestringTyPtr] False
-
-lessThanByteStringFun :: Global
-lessThanByteStringFun =
-    globalFromType "less_than_bytestring" lessThanByteStringTy
-
-lessThanByteStringRef :: Constant
-lessThanByteStringRef =
-    GlobalReference lessThanByteStringTy $ mkName "less_than_bytestring"
-
-lessThanByteString
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> Operand -> m Operand
-lessThanByteString p0 p1 =
-    call (ConstantOperand lessThanByteStringRef) [(p0, []), (p1, [])]
-
-lessThanEqualsByteStringFun :: Global
-lessThanEqualsByteStringFun =
-    globalFromType "less_than_equals_bytestring" lessThanByteStringTy
-
-lessThanEqualsByteStringRef :: Constant
-lessThanEqualsByteStringRef =
-    GlobalReference lessThanByteStringTy $ mkName "less_than_equals_bytestring"
-
-lessThanEqualsByteString
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> Operand -> m Operand
-lessThanEqualsByteString p0 p1 =
-    call (ConstantOperand lessThanEqualsByteStringRef) [(p0, []), (p1, [])]
 
 -------------------------------------------------------------------------------
 
@@ -283,11 +259,10 @@ externalDefinitions = map GlobalDefinition
     , exitFun
     , mallocFun
     , memcpyFun
+    , memcmpFun
     , strlenFun
     , strcpyFun
     , strcmpFun
-    , lessThanByteStringFun
-    , lessThanEqualsByteStringFun
     , sha2_256Fun
     , sha3_256Fun
     , blake2bFun

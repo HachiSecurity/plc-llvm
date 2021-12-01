@@ -350,12 +350,12 @@ equalsByteString =
 lessThanByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 lessThanByteString =
     compileBinary "lessThanByteString" bytestringTyPtr bytestringTyPtr $
-    \s0 s1 -> E.lessThanByteString s0 s1 >>= retConstDynamic @Bool
+    \s0 s1 -> bsLessThan s0 s1 >>= retConstDynamic @Bool
 
 lessThanEqualsByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 lessThanEqualsByteString =
     compileBinary "lessThanEqualsByteString" bytestringTyPtr bytestringTyPtr $
-    \s0 s1 -> E.lessThanEqualsByteString s0 s1 >>= retConstDynamic @Bool
+    \s0 s1 -> bsLessThanEquals s0 s1 >>= retConstDynamic @Bool
 
 -------------------------------------------------------------------------------
 
