@@ -22,8 +22,6 @@ module Hachi.Compiler.CodeGen.Externals (
     strcmp,
 
     -- * Bytestrings
-    indexBytestring,
-
     lessThanByteStringTy,
     lessThanByteStringRef,
     lessThanByteString,
@@ -196,22 +194,6 @@ strcmp xs ys = call (ConstantOperand strcmpRef) [(xs, []), (ys, [])]
 
 -------------------------------------------------------------------------------
 
-indexBytestringTy :: Type
-indexBytestringTy = ptrOf $ FunctionType i8 [bytestringTyPtr, i64] False
-
-indexBytestringFun :: Global
-indexBytestringFun = globalFromType "index_bytestring" indexBytestringTy
-
-indexBytestringRef :: Constant
-indexBytestringRef =
-    GlobalReference indexBytestringTy $ mkName "index_bytestring"
-
-indexBytestring
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> Operand -> m Operand
-indexBytestring ptr n =
-    call (ConstantOperand indexBytestringRef) [(ptr, []), (n, [])]
-
 lessThanByteStringTy :: Type
 lessThanByteStringTy = ptrOf $
     FunctionType i8 [bytestringTyPtr, bytestringTyPtr] False
@@ -304,7 +286,6 @@ externalDefinitions = map GlobalDefinition
     , strlenFun
     , strcpyFun
     , strcmpFun
-    , indexBytestringFun
     , lessThanByteStringFun
     , lessThanEqualsByteStringFun
     , sha2_256Fun

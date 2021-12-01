@@ -11,15 +11,6 @@ void rts_init() {
     }
 }
 
-char index_bytestring(bytestring* str, size_t n) {
-    if(n < 0 || n > str->length) {
-        printf("Trying to access element at index %zu of bytestring with length %zu!\n", n, str->length);
-        exit(-1);
-    }
-
-    return (*str->arr)[n];
-}
-
 bool less_than_bytestring(bytestring* s0, bytestring* s1) {
     int r = memcmp((*s0->arr), (*s1->arr), min(s0->length, s1->length));
 

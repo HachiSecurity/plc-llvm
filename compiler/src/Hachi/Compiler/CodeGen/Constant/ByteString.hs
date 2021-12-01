@@ -7,6 +7,7 @@ module Hachi.Compiler.CodeGen.Constant.ByteString (
     bsDataPtr,
 
     bsPrint,
+    bsIndex,
     bsEquals
 ) where
 
@@ -133,6 +134,35 @@ bsPrint str = mdo
 
     -- `}`
     emitBlockStart endBr
+
+-- | `bsIndex` @str ix@ checks that @ix@ is a valid index for the bytestring
+-- pointed at by @str@ and, if so, retrieves the character at the given index.
+bsIndex
+    :: (MonadCodeGen m, MonadIRBuilder m)
+    => Operand -> Operand -> m Operand
+bsIndex str ix = do
+    failBr <- freshName "bsIndex.fail"
+    bodyBr <- freshName "bsIndex.body"
+
+    d <- bsDataPtr str
+    l <- bsLen str
+
+    -- if(n < 0 || n > str->length) {
+    gtc <- icmp LLVM.UGT ix l
+    condBr gtc failBr bodyBr
+
+    -- print an error and terminate the program
+    emitBlockStart failBr
+    _ <- E.printf bsIndexErrRef [ix, l]
+    _ <- E.exit (-1)
+    unreachable
+
+    -- `}`
+
+    -- `(*str->arr)[ix];`
+    emitBlockStart bodyBr
+    addr <- gep d [ix]
+    load addr 0
 
 -- | `bsEquals` @s0 s1@ determines whether the two bytestrings pointed at by
 -- @s0@ and @s1@ are equal or not.

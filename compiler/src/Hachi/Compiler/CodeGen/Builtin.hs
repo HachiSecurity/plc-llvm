@@ -333,7 +333,7 @@ indexByteString =
 
         -- index into the bytestring to retrieve the character at the
         -- given index
-        c <- E.indexBytestring str ix
+        c <- bsIndex str ix
         val <- zext c i64
 
         -- we only have arbitrary precision integers, so we allocate a new one

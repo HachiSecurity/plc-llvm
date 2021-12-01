@@ -27,6 +27,7 @@ globalStrs =
     , ("unListDataErrStr", "Pattern-match failure in unListData\n")
     , ("unIDataErrStr", "Pattern-match failure in unIData\n")
     , ("unBDataErrStr", "Pattern-match failure in unBData\n")
+    , ("bsIndexErrStr", "Trying to access element at index %zu of bytestring with length %zu!\n")
     , ("spaceStr", " ")
     , ("openParenStr", "(")
     , ("closeParenStr", ")")
