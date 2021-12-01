@@ -90,7 +90,6 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file_glob: true
           file: 'plc-llvm.tar.gz'
           asset_name: 'plc-llvm-${{ runner.os }}.tar.gz'
           tag: 'latest-plc-llvm'
