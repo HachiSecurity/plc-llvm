@@ -1,9 +1,12 @@
+{-# LANGUAGE RecursiveDo #-}
+
 module Hachi.Compiler.CodeGen.Constant.ByteString (
     bsNewStruct,
     bsNew,
     bsLen,
     bsDataPtr,
 
+    bsPrint,
     bsEquals
 ) where
 
@@ -15,6 +18,7 @@ import LLVM.AST.Constant
 import qualified LLVM.AST.IntegerPredicate as LLVM
 
 import Hachi.Compiler.CodeGen.Externals as E
+import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 
@@ -76,6 +80,59 @@ bsDataPtr str = do
     load addr 0
 
 -------------------------------------------------------------------------------
+
+-- | `bsPrint` @str@ generates code which prints the bytestring pointed at by
+-- @str@ as a hexadecimal string to the standard output.
+bsPrint
+    :: (MonadCodeGen m, MonadIRBuilder m)
+    => Operand -> m ()
+bsPrint str = mdo
+    -- generate the entry block and jump to it; we mainly just use this as an
+    -- origin for the phi node in the loop body, but we also retrieve the
+    -- bytestring's length and data pointer here
+    entryBr <- freshName "bsPrint.entry"
+    br entryBr
+
+    emitBlockStart entryBr
+
+    d <- bsDataPtr str
+    l <- bsLen str
+
+    -- jump to the loop start and initialise some labels
+    loopStartBr <- freshName "bsPrint.loop.start"
+    br loopStartBr
+
+    loopBr <- freshName "bsPrint.loop"
+    endBr <- freshName "bsPrint.end"
+
+    -- `for(size_t i=0; i<str->length; i++) {`
+    --
+    -- if we have just entered the loop, initialise the index to 0;
+    -- otherwise take the existing value
+    emitBlockStart loopStartBr
+    i <- phi [ (ConstantOperand $ Int 64 0, entryBr)
+             , (i', loopBr)
+             ]
+
+    -- check that the index is less than the length of the bytestring
+    lc <- icmp LLVM.ULT i l
+    condBr lc loopBr endBr
+
+    -- `printf("%02X", (*str->arr)[i]);`
+    --
+    -- index into the byte array and pretty-print the byte
+    emitBlockStart loopBr
+
+    addr <- gep d [i]
+    byte <- load addr 0
+    _ <- E.printf hexFormatRef [byte]
+
+    -- increment the index and jump back to the start of the loop
+    i' <- add i (ConstantOperand $ Int 64 1)
+    br loopStartBr
+
+    -- `}`
+    emitBlockStart endBr
 
 -- | `bsEquals` @s0 s1@ determines whether the two bytestrings pointed at by
 -- @s0@ and @s1@ are equal or not.

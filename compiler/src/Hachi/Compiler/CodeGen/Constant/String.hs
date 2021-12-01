@@ -8,6 +8,7 @@ globalStrs =
     [ ("nlStr", "\n")
     , ("i64FormatStr", "%d")
     , ("strFormatStr", "%s")
+    , ("hexFormatStr", "%02X")
     , ("trueStr", "True")
     , ("falseStr", "False")
     , ("unitStr", "()")

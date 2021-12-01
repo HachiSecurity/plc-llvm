@@ -11,12 +11,6 @@ void rts_init() {
     }
 }
 
-void print_bytestring(bytestring* str) {
-    for(size_t i=0; i<str->length; i++) {
-        printf("%02X", (*str->arr)[i]);
-    }
-}
-
 char index_bytestring(bytestring* str, size_t n) {
     if(n < 0 || n > str->length) {
         printf("Trying to access element at index %zu of bytestring with length %zu!\n", n, str->length);

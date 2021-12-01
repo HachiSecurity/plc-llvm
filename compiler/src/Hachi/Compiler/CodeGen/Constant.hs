@@ -42,6 +42,7 @@ import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 import Hachi.Compiler.CodeGen.Externals
+import Hachi.Compiler.CodeGen.Constant.ByteString
 import Hachi.Compiler.CodeGen.Constant.Data
 import Hachi.Compiler.CodeGen.Constant.Pair
 import Hachi.Compiler.CodeGen.Constant.List
@@ -161,7 +162,7 @@ instance CompileConstant BS.ByteString where
 
     compilePrintBody _ this = do
         ptr <- compileLoadConstant @BS.ByteString this
-        void $ printBytestring ptr
+        bsPrint ptr
 
 instance CompileConstant T.Text where
     constantTypeId = ConstText
