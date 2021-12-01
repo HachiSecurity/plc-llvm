@@ -61,7 +61,7 @@ jobs:
           mkdir -p ./bin
           cp ./compiler/rts/rts.c ./bin/rts.c
           mkdir -p ./bin/tiny_sha3
-          cp -r ./compiler/rts/tiny_sha3/ ./bin/
+          cp -r ./compiler/rts/tiny_sha3 ./bin/
           stack --no-terminal build --test --fast --system-ghc --no-run-tests --copy-bins --local-bin-path=./bin/
           tar acvf plc-llvm.tar.gz -C bin .
 
