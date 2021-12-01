@@ -62,7 +62,7 @@ data CodeGenSt = MkCodeGenSt {
 
 -- | The code generator monad.
 newtype CodeGen m a = MkCodeGen { runCodeGen :: ReaderT CodeGenSt m a }
-    deriving ( Functor, Applicative, Monad, MonadIO
+    deriving ( Functor, Applicative, Monad, MonadIO, MonadFix
              , MonadReader CodeGenSt
              , MonadModuleBuilder, MonadIRBuilder
              )
@@ -71,7 +71,7 @@ newtype CodeGen m a = MkCodeGen { runCodeGen :: ReaderT CodeGenSt m a }
 -- code generation monad to satisfy.
 type MonadCodeGen :: (* -> *) -> Constraint
 type MonadCodeGen m =
-    (MonadIO m, MonadModuleBuilder m, MonadReader CodeGenSt m)
+    (MonadIO m, MonadModuleBuilder m, MonadReader CodeGenSt m, MonadFix m)
 
 -- | `mkFresh` @prefix@ generates a fresh name starting with @prefix@.
 mkFresh :: (MonadReader CodeGenSt m, MonadIO m) => String -> m String
