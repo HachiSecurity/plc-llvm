@@ -1,7 +1,8 @@
 {-# LANGUAGE RecursiveDo #-}
 
 module Hachi.Compiler.CodeGen.Constant.Text (
-    strlen
+    strlen,
+    strcpy
 ) where
 
 -------------------------------------------------------------------------------
@@ -55,5 +56,47 @@ strlen ptr = mdo
     emitBlockStart endBr
     pure ix
 
+-- | `strcpy` @dest src@ copies the string from @src@ to @dest.
+strcpy :: (MonadCodeGen m, MonadIRBuilder m) => Operand -> Operand -> m Operand
+strcpy dst src = mdo
+    -- get the name of the current block and generate fresh names for two
+    -- new blocks
+    startBr <- currentBlock
+    loopBr <- freshName "strcpy.loop"
+    endBr <- freshName "strcpy.end"
+
+    -- we are essentially implementing a do-while loop, so we immediately
+    -- jump to the start of the loop
+    br loopBr
+
+    -- if we are entering the loop from the previous block, we initialise our
+    -- index/result variable to 0, otherwise we take the incremented index
+    -- from the previous iteration
+    emitBlockStart loopBr
+
+    ix <- phi [ (ConstantOperand $ Int 64 0, startBr)
+              , (ix', loopBr)
+              ]
+
+    -- compute the addresses for the source and destination arrays
+    srcAddr <- gep src [ix]
+    destAddr <- gep dst [ix]
+
+    -- load the byte from the source array and write it to the destination
+    byte <- load srcAddr 0
+    store destAddr 0 byte
+
+    -- increment the index for the next iteration, if there is one
+    ix' <- add ix (ConstantOperand $ Int 64 1)
+
+    -- check whether the byte is \0: if so, we exit the loop; otherwise,
+    -- we perform another iteration
+    r <- icmp LLVM.EQ byte (ConstantOperand $ Int 8 0)
+    condBr r endBr loopBr
+
+    -- return the destination address, which is something the C function does
+    -- for some reason
+    emitBlockStart endBr
+    pure dst
 
 -------------------------------------------------------------------------------

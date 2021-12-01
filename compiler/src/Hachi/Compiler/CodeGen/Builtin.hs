@@ -421,11 +421,11 @@ appendString =
         ptr <- E.malloc (ptrOf i8) ln
 
         -- copy the first string
-        _ <- E.strcpy ptr xs
+        _ <- strcpy ptr xs
 
         -- copy the second string
         addr <- gep ptr [l0]
-        _ <- E.strcpy addr ys
+        _ <- strcpy addr ys
 
         retConstDynamic @T.Text ptr
 
