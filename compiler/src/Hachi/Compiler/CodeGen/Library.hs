@@ -12,6 +12,7 @@ import Control.Monad
 
 import Data.ByteString (ByteString)
 import Data.List
+import Data.Text (Text)
 
 import LLVM.AST
 import LLVM.AST.Constant
@@ -82,6 +83,14 @@ plcNewByteString = do
 
         retConstDynamic @ByteString addr
 
+plcNewText :: MonadCodeGen m => m ()
+plcNewText = do
+    let name = "plc_new_text"
+    let params = [(ptrOf i8, "ptr")]
+
+    void $ IR.function name params closureTyPtr $ \[ptr] ->
+        retConstDynamic @Text ptr
+
 -------------------------------------------------------------------------------
 
 libraryApi :: MonadCodeGen m => [(m (), String)]
@@ -90,6 +99,7 @@ libraryApi =
     , (plcPrintClosure, "extern void plc_print_closure(closure *ptr);")
     , (plcNewInteger, "extern closure *plc_new_integer(const char *str);")
     , (plcNewByteString, "extern closure *plc_new_bytestring(size_t len, const char *ptr);")
+    , (plcNewText, "extern closure *plc_new_text(const char* ptr);")
     ]
 
 -- | `emitLibraryApi` is a computation which generates all functions that
