@@ -10,6 +10,7 @@ module Hachi.Compiler.CodeGen.Library (
 
 import Control.Monad
 
+import Data.ByteString (ByteString)
 import Data.List
 
 import LLVM.AST
@@ -18,6 +19,7 @@ import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Constant
+import Hachi.Compiler.CodeGen.Constant.ByteString
 import Hachi.Compiler.CodeGen.Constant.Integer
 import Hachi.Compiler.CodeGen.Externals.GMP
 import Hachi.Compiler.CodeGen.Monad
@@ -65,6 +67,21 @@ plcNewInteger = do
 
         retConstDynamic @Integer int
 
+plcNewByteString :: MonadCodeGen m => m ()
+plcNewByteString = do
+    let name = "plc_new_bytestring"
+    let params = [(i64, "size"), (ptrOf i8, "ptr")]
+
+    void $ IR.function name params closureTyPtr $ \[size, ptr] -> do
+        addr <- bsNewStruct size
+
+        dataAddr <- gep addr [ ConstantOperand $ Int 32 0
+                             , ConstantOperand $ Int 32 1
+                             ]
+        store dataAddr 0 ptr
+
+        retConstDynamic @ByteString addr
+
 -------------------------------------------------------------------------------
 
 libraryApi :: MonadCodeGen m => [(m (), String)]
@@ -72,6 +89,7 @@ libraryApi =
     [ (plcApply, "extern closure *plc_apply(closure *f, closure *x);")
     , (plcPrintClosure, "extern void plc_print_closure(closure *ptr);")
     , (plcNewInteger, "extern closure *plc_new_integer(const char *str);")
+    , (plcNewByteString, "extern closure *plc_new_bytestring(size_t len, const char *ptr);")
     ]
 
 -- | `emitLibraryApi` is a computation which generates all functions that
