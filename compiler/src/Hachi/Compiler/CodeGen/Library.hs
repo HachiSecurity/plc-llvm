@@ -14,6 +14,8 @@ import Data.ByteString (ByteString)
 import Data.List
 import Data.Text (Text)
 
+import PlutusCore.Data (Data)
+
 import LLVM.AST
 import LLVM.AST.Constant as C
 import LLVM.IRBuilder as IR
@@ -21,6 +23,7 @@ import LLVM.IRBuilder as IR
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Constant
 import Hachi.Compiler.CodeGen.Constant.ByteString
+import Hachi.Compiler.CodeGen.Constant.Data
 import Hachi.Compiler.CodeGen.Constant.Integer
 import Hachi.Compiler.CodeGen.Constant.List
 import Hachi.Compiler.CodeGen.Constant.Pair
@@ -134,6 +137,46 @@ plcNewList = do
     void $ IR.function name params closureTyPtr $ \[x, y] -> do
         listNew x y >>= retConstDynamic @[()]
 
+plcNewDataConstr :: MonadCodeGen m => m ()
+plcNewDataConstr = do
+    let name = "plc_new_data_constr"
+    let params = [(closureTyPtr, "tag"), (closureTyPtr, "list")]
+
+    void $ IR.function name params closureTyPtr $ \[tag, xs] -> do
+        newData DataConstr xs (Just tag) >>= retConstDynamic @Data
+
+plcNewDataMap :: MonadCodeGen m => m ()
+plcNewDataMap = do
+    let name = "plc_new_data_map"
+    let params = [(closureTyPtr, "list")]
+
+    void $ IR.function name params closureTyPtr $ \[xs] -> do
+        newData DataMap xs Nothing >>= retConstDynamic @Data
+
+plcNewDataList :: MonadCodeGen m => m ()
+plcNewDataList = do
+    let name = "plc_new_data_list"
+    let params = [(closureTyPtr, "list")]
+
+    void $ IR.function name params closureTyPtr $ \[xs] -> do
+        newData DataList xs Nothing >>= retConstDynamic @Data
+
+plcNewDataInteger :: MonadCodeGen m => m ()
+plcNewDataInteger = do
+    let name = "plc_new_data_integer"
+    let params = [(closureTyPtr, "n")]
+
+    void $ IR.function name params closureTyPtr $ \[n] -> do
+        newData DataI n Nothing >>= retConstDynamic @Data
+
+plcNewDataByteString :: MonadCodeGen m => m ()
+plcNewDataByteString = do
+    let name = "plc_new_data_bytestring"
+    let params = [(closureTyPtr, "str")]
+
+    void $ IR.function name params closureTyPtr $ \[str] -> do
+        newData DataB str Nothing >>= retConstDynamic @Data
+
 -------------------------------------------------------------------------------
 
 libraryApi :: MonadCodeGen m => [(m (), String)]
@@ -148,6 +191,11 @@ libraryApi =
     , (plcNewPair, "extern closure *plc_new_pair(closure *fst, closure *snd);")
     , (plcEmptyList, "extern closure *plc_empty_list();")
     , (plcNewList, "extern closure *plc_new_list(closure *head, closure *tail);")
+    , (plcNewDataConstr, "extern closure *plc_new_data_constr(closure *tag, closure *args);")
+    , (plcNewDataMap, "extern closure *plc_new_data_map(closure *list);")
+    , (plcNewDataList, "extern closure *plc_new_data_list(closure *list);")
+    , (plcNewDataInteger, "extern closure *plc_new_data_integer(closure *n);")
+    , (plcNewDataByteString, "extern closure *plc_new_data_bytestring(closure *str);")
     ]
 
 -- | `emitLibraryApi` is a computation which generates all functions that
