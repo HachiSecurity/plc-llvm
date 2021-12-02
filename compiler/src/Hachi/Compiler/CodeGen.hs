@@ -7,7 +7,6 @@ module Hachi.Compiler.CodeGen ( generateCode ) where
 import Control.Monad.IO.Class
 import Control.Monad.Reader
 
-import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.ByteString.Char8 as BS
 import Data.IORef
 import qualified Data.Map as M
@@ -15,9 +14,7 @@ import Data.Maybe (fromMaybe)
 import qualified Data.Set as S
 import Data.String (fromString)
 
-import System.Exit
 import System.FilePath
-import System.Process.Typed
 
 import UntypedPlutusCore as UPLC
 
@@ -38,6 +35,7 @@ import Hachi.Compiler.CodeGen.Constant
 import Hachi.Compiler.CodeGen.Driver
 import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Globals
+import Hachi.Compiler.CodeGen.Library
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 
@@ -103,7 +101,7 @@ compileBody (Apply _ lhs rhs) = do
 
     -- enter the closure pointed to by l, giving it a pointer to another
     -- closure r as argument
-    enterClosure l $ Just (closurePtr r)
+    compileApply l r
 compileBody (Force _ term) = do
     name <- mkFresh "force"
     compileTrace name
@@ -192,15 +190,25 @@ commonEntry body = do
 -- executing the program generated from @term@.
 generateEntry
     :: MonadCodeGen m
-    => Term UPLC.Name DefaultUni DefaultFun () -> m ()
-generateEntry body = do
+    => FilePath
+    -> Term UPLC.Name DefaultUni DefaultFun () -> m ()
+generateEntry outPath body = do
     MkConfig{..} <- asks codeGenCfg
 
     if cfgLibrary
-    then void $ IR.function "plc_entry" [] closureTyPtr $ \_ -> do
-        ptr <- commonEntry body
+    then do
+        void $ IR.function "plc_entry" [] closureTyPtr $ \_ -> do
+            ptr <- commonEntry body
 
-        ret $ closurePtr ptr
+            ret $ closurePtr ptr
+
+        api <- emitLibraryApi
+
+        let headerFile = replaceExtension outPath "h"
+        liftIO $ writeFile headerFile $
+            "#include \"rts.h\"\n\n" <>
+            "extern closure *plc_entry();\n\n" <>
+            api <> "\n"
     else void $ IR.function "main" [] VoidType $ \_ -> do
         ptr <- commonEntry body
 
@@ -214,9 +222,10 @@ generateEntry body = do
 
 compileProgram
     :: Config
+    -> FilePath
     -> Program UPLC.Name DefaultUni DefaultFun ()
     -> ModuleBuilderT IO ()
-compileProgram cfg (Program _ _ term) = do
+compileProgram cfg outPath (Program _ _ term) = do
     -- global definitions
     forM_ externalDefinitions emitDefn
 
@@ -248,7 +257,7 @@ compileProgram cfg (Program _ _ term) = do
         }
 
     -- compile the program
-    void $ runReaderT (runCodeGen (generateEntry term)) codeGenSt
+    void $ runReaderT (runCodeGen (generateEntry outPath term)) codeGenSt
 
 -------------------------------------------------------------------------------
 
@@ -259,14 +268,16 @@ generateCode
     -> Program UPLC.Name DefaultUni DefaultFun ()
     -> IO ()
 generateCode cfg@MkConfig{..} p =
-    withContext $ \ctx ->
+    let outputName = fromMaybe cfgInput cfgOutput
+        compiler = compileProgram cfg outputName p
+    in withContext $ \ctx ->
     -- withModuleFromLLVMAssembly ctx (File "wrapper.ll") $ \m -> moduleAST m >>= print
 
     withHostTargetMachineDefault $ \tm ->
-    buildModuleT (fromString $ takeBaseName cfgInput) (compileProgram cfg p) >>= \compiled ->
-    withModuleFromAST ctx compiled{ moduleSourceFileName = fromString cfgInput } $ \m -> do
-        let outputName = fromMaybe cfgInput cfgOutput
-
+    buildModuleT (fromString $ takeBaseName cfgInput) compiler >>= \compiled ->
+    withModuleFromAST ctx compiled{
+        moduleSourceFileName = fromString cfgInput
+    } $ \m -> do
         -- by default, we generate LLVM bitcode (the binary representation),
         -- but if the user has requested plain-text LLVM IR, we generate
         -- that instead
@@ -278,13 +289,6 @@ generateCode cfg@MkConfig{..} p =
         else do
             let bcName = replaceExtension outputName "bc"
             writeBitcodeToFile (File bcName) m
-
-        when cfgLibrary $ do
-            let headerFile = replaceExtension outputName "h"
-
-            writeFile headerFile $
-                "#include \"rts.h\"\n\n" <>
-                "extern void* plc_entry();\n"
 
         -- unless we have been instructed not to assemble the LLVM IR into
         -- an object file, produce an object file

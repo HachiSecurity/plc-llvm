@@ -1,7 +1,8 @@
 # ignore all files in this directory by default
 *
 
-# except .plc and .out files, even in subdirectories
+# except .plc, .out, and .c files, even in subdirectories
 !*.plc
 !*.out
+!*.c
 !*/
