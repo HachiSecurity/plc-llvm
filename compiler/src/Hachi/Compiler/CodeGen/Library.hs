@@ -22,6 +22,7 @@ import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Constant
 import Hachi.Compiler.CodeGen.Constant.ByteString
 import Hachi.Compiler.CodeGen.Constant.Integer
+import Hachi.Compiler.CodeGen.Constant.List
 import Hachi.Compiler.CodeGen.Constant.Pair
 import Hachi.Compiler.CodeGen.Externals.GMP
 import Hachi.Compiler.CodeGen.Monad
@@ -116,6 +117,23 @@ plcNewPair = do
     void $ IR.function name params closureTyPtr $ \[x, y] -> do
         newPair (MkClosurePtr x) (MkClosurePtr y) >>= retConstDynamic @((),())
 
+plcEmptyList :: MonadCodeGen m => m ()
+plcEmptyList = do
+    let name = "plc_empty_list"
+    let params = []
+
+    void $ IR.function name params closureTyPtr $ \[] -> do
+        retConstDynamic @[()] $ ConstantOperand $ Null listTyPtr
+
+
+plcNewList :: MonadCodeGen m => m ()
+plcNewList = do
+    let name = "plc_new_list"
+    let params = [(closureTyPtr, "hd"), (closureTyPtr, "tl")]
+
+    void $ IR.function name params closureTyPtr $ \[x, y] -> do
+        listNew x y >>= retConstDynamic @[()]
+
 -------------------------------------------------------------------------------
 
 libraryApi :: MonadCodeGen m => [(m (), String)]
@@ -128,6 +146,8 @@ libraryApi =
     , (plcNewUnit, "extern closure *plc_new_unit();")
     , (plcNewBool, "extern closure *plc_new_bool(unsigned char val);")
     , (plcNewPair, "extern closure *plc_new_pair(closure *fst, closure *snd);")
+    , (plcEmptyList, "extern closure *plc_empty_list();")
+    , (plcNewList, "extern closure *plc_new_list(closure *head, closure *tail);")
     ]
 
 -- | `emitLibraryApi` is a computation which generates all functions that
