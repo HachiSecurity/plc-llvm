@@ -15,7 +15,7 @@ import Data.List
 import Data.Text (Text)
 
 import LLVM.AST
-import LLVM.AST.Constant
+import LLVM.AST.Constant as C
 import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.CodeGen.Closure
@@ -91,6 +91,14 @@ plcNewText = do
     void $ IR.function name params closureTyPtr $ \[ptr] ->
         retConstDynamic @Text ptr
 
+plcNewUnit :: MonadCodeGen m => m ()
+plcNewUnit = do
+    let name = "plc_new_unit"
+    let params = []
+
+    void $ IR.function name params closureTyPtr $ \[] ->
+        retConstDynamic @() $ ConstantOperand $ C.IntToPtr (Int 1 1) (ptrOf i8)
+
 -------------------------------------------------------------------------------
 
 libraryApi :: MonadCodeGen m => [(m (), String)]
@@ -100,6 +108,7 @@ libraryApi =
     , (plcNewInteger, "extern closure *plc_new_integer(const char *str);")
     , (plcNewByteString, "extern closure *plc_new_bytestring(size_t len, const char *ptr);")
     , (plcNewText, "extern closure *plc_new_text(const char* ptr);")
+    , (plcNewUnit, "extern closure *plc_new_unit();")
     ]
 
 -- | `emitLibraryApi` is a computation which generates all functions that
