@@ -17,26 +17,7 @@ module Hachi.Compiler.CodeGen.Externals (
     memcpyTy,
     memcpyRef,
     memcpy,
-    strlen,
-    strcpy,
-    strcmp,
-
-    -- * Bytestrings
-    printBytestringTy,
-    printBytestringRef,
-    printBytestring,
-
-    indexBytestring,
-
-    equalsByteStringTy,
-    equalsByteStringRef,
-    equalsByteString,
-
-    lessThanByteStringTy,
-    lessThanByteStringRef,
-    lessThanByteString,
-
-    lessThanEqualsByteString,
+    memcmp,
 
     -- * Cryptography
     sha2_256,
@@ -162,124 +143,21 @@ memcpy
 memcpy dst src n =
     call (ConstantOperand memcpyRef) [(dst, []), (src, []), (n, [])]
 
-strlenTy :: Type
-strlenTy = ptrOf $ FunctionType i64 [ptrOf i8] False
+memcmpTy :: Type
+memcmpTy = ptrOf $
+    FunctionType i32 [ptrOf i8, ptrOf i8, i64] False
 
-strlenFun :: Global
-strlenFun = globalFromType "strlen" strlenTy
+memcmpFun :: Global
+memcmpFun = globalFromType "memcmp" memcmpTy
 
-strlenRef :: Constant
-strlenRef = GlobalReference strlenTy $ mkName "strlen"
+memcmpRef :: Constant
+memcmpRef = GlobalReference memcmpTy $ mkName "memcmp"
 
-strlen :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
-strlen str = call (ConstantOperand strlenRef) [(str, [])]
-
-strcpyTy :: Type
-strcpyTy = ptrOf $ FunctionType (ptrOf i8) [ptrOf i8, ptrOf i8] False
-
-strcpyFun :: Global
-strcpyFun = globalFromType "strcpy" strcpyTy
-
-strcpyRef :: Constant
-strcpyRef = GlobalReference strcpyTy $ mkName "strcpy"
-
-strcpy
+memcmp
     :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> Operand -> m Operand
-strcpy dst src = call (ConstantOperand strcpyRef) [(dst, []), (src, [])]
-
-strcmpTy :: Type
-strcmpTy = ptrOf $ FunctionType i32 [ptrOf i8, ptrOf i8] False
-
-strcmpFun :: Global
-strcmpFun = globalFromType "strcmp" strcmpTy
-
-strcmpRef :: Constant
-strcmpRef = GlobalReference strcmpTy "strcmp"
-
-strcmp
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> Operand -> m Operand
-strcmp xs ys = call (ConstantOperand strcmpRef) [(xs, []), (ys, [])]
-
--------------------------------------------------------------------------------
-
-printBytestringTy :: Type
-printBytestringTy = ptrOf $ FunctionType VoidType [bytestringTyPtr] False
-
-printBytestringFun :: Global
-printBytestringFun = globalFromType "print_bytestring" printBytestringTy
-
-printBytestringRef :: Constant
-printBytestringRef = GlobalReference printBytestringTy $ mkName "print_bytestring"
-
-printBytestring :: (MonadModuleBuilder m, MonadIRBuilder m) => Operand -> m Operand
-printBytestring ptr = call (ConstantOperand printBytestringRef) [(ptr, [])]
-
-indexBytestringTy :: Type
-indexBytestringTy = ptrOf $ FunctionType i8 [bytestringTyPtr, i64] False
-
-indexBytestringFun :: Global
-indexBytestringFun = globalFromType "index_bytestring" indexBytestringTy
-
-indexBytestringRef :: Constant
-indexBytestringRef =
-    GlobalReference indexBytestringTy $ mkName "index_bytestring"
-
-indexBytestring
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> Operand -> m Operand
-indexBytestring ptr n =
-    call (ConstantOperand indexBytestringRef) [(ptr, []), (n, [])]
-
-equalsByteStringTy :: Type
-equalsByteStringTy = ptrOf $
-    FunctionType i8 [bytestringTyPtr, bytestringTyPtr] False
-
-equalsByteStringFun :: Global
-equalsByteStringFun = globalFromType "equals_bytestring" equalsByteStringTy
-
-equalsByteStringRef :: Constant
-equalsByteStringRef =
-    GlobalReference equalsByteStringTy $ mkName "equals_bytestring"
-
-equalsByteString
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> Operand -> m Operand
-equalsByteString p0 p1 =
-    call (ConstantOperand equalsByteStringRef) [(p0, []), (p1, [])]
-
-lessThanByteStringTy :: Type
-lessThanByteStringTy = ptrOf $
-    FunctionType i8 [bytestringTyPtr, bytestringTyPtr] False
-
-lessThanByteStringFun :: Global
-lessThanByteStringFun =
-    globalFromType "less_than_bytestring" lessThanByteStringTy
-
-lessThanByteStringRef :: Constant
-lessThanByteStringRef =
-    GlobalReference lessThanByteStringTy $ mkName "less_than_bytestring"
-
-lessThanByteString
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> Operand -> m Operand
-lessThanByteString p0 p1 =
-    call (ConstantOperand lessThanByteStringRef) [(p0, []), (p1, [])]
-
-lessThanEqualsByteStringFun :: Global
-lessThanEqualsByteStringFun =
-    globalFromType "less_than_equals_bytestring" lessThanByteStringTy
-
-lessThanEqualsByteStringRef :: Constant
-lessThanEqualsByteStringRef =
-    GlobalReference lessThanByteStringTy $ mkName "less_than_equals_bytestring"
-
-lessThanEqualsByteString
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
-    => Operand -> Operand -> m Operand
-lessThanEqualsByteString p0 p1 =
-    call (ConstantOperand lessThanEqualsByteStringRef) [(p0, []), (p1, [])]
+    => Operand -> Operand -> Operand -> m Operand
+memcmp p0 p1 len =
+    call (ConstantOperand memcmpRef) [(p0, []), (p1, []), (len, [])]
 
 -------------------------------------------------------------------------------
 
@@ -338,14 +216,7 @@ externalDefinitions = map GlobalDefinition
     , exitFun
     , mallocFun
     , memcpyFun
-    , strlenFun
-    , strcpyFun
-    , strcmpFun
-    , printBytestringFun
-    , indexBytestringFun
-    , equalsByteStringFun
-    , lessThanByteStringFun
-    , lessThanEqualsByteStringFun
+    , memcmpFun
     , sha2_256Fun
     , sha3_256Fun
     , blake2bFun

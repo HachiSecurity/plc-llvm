@@ -25,10 +25,12 @@ import LLVM.IRBuilder as IR
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Constant
+import Hachi.Compiler.CodeGen.Constant.ByteString
 import Hachi.Compiler.CodeGen.Constant.Data
 import Hachi.Compiler.CodeGen.Constant.Integer
 import Hachi.Compiler.CodeGen.Constant.List
 import Hachi.Compiler.CodeGen.Constant.Pair
+import Hachi.Compiler.CodeGen.Constant.Text
 import Hachi.Compiler.CodeGen.Equality
 import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
@@ -217,60 +219,6 @@ lessThanEqualsInteger =
 
 -------------------------------------------------------------------------------
 
--- | `bsNewStruct` @size@ generates code which allocates enough space for a new
--- bytestring structure and stores @size@ in it. The pointer to the new
--- structure is returned. The data pointer of the bytestring is not set
--- and no memory is allocated for the data.
-bsNewStruct :: (MonadCodeGen m, MonadIRBuilder m) => Operand -> m Operand
-bsNewStruct l = do
-    -- calculate the size of the bytestring structure and allocate memory
-    -- for it
-    size <- IR.sizeof 64 bytestringTy
-    ptr <- E.malloc bytestringTyPtr size
-
-    -- store the length
-    addr <- gep ptr [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 0]
-    store addr 0 l
-
-    -- return the pointer to the bytestring structure
-    pure ptr
-
--- | `bsNew` @size@ generates code which allocates enough space for a new
--- bytestring with @size@-many elements. The actual memory allocated is
--- greater than @size@, since we need to store the size in the bytestring
--- as well. This function performs the latter task as well before returning
--- the pointer to the new bytestring.
-bsNew :: (MonadCodeGen m, MonadIRBuilder m) => Operand -> m Operand
-bsNew l = do
-    -- allocate the byte array that will store the actual data
-    arrPtr <- E.malloc (ptrOf i8) l
-
-    -- create the new bytestring structure
-    tptr <- bsNewStruct l
-
-    -- store the pointer to the byte array
-    dataAddr <- gep tptr [ ConstantOperand $ Int 32 0
-                         , ConstantOperand $ Int 32 1
-                         ]
-    store dataAddr 0 arrPtr
-
-    -- return the pointer to the bytestring structure
-    pure tptr
-
--- | `bsLen` @ptr@ generates code which loads the length of a bytestring
--- which is represented by @ptr@.
-bsLen :: (MonadCodeGen m, MonadIRBuilder m) => Operand -> m Operand
-bsLen str = do
-    addr <- gep str [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 0]
-    load addr 0
-
--- | `bsDataPtr` @ptr@ generates code which calculates the address of the
--- data component of a bytestring represented by @ptr@.
-bsDataPtr :: (MonadCodeGen m, MonadIRBuilder m) => Operand -> m Operand
-bsDataPtr str = do
-    addr <- gep str [ConstantOperand $ Int 32 0, ConstantOperand $ Int 32 1]
-    load addr 0
-
 appendByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 appendByteString =
     compileBinary "appendByteString" bytestringTyPtr bytestringTyPtr $
@@ -386,7 +334,7 @@ indexByteString =
 
         -- index into the bytestring to retrieve the character at the
         -- given index
-        c <- E.indexBytestring str ix
+        c <- bsIndex str ix
         val <- zext c i64
 
         -- we only have arbitrary precision integers, so we allocate a new one
@@ -398,17 +346,17 @@ indexByteString =
 equalsByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 equalsByteString =
     compileBinary "equalsByteString" bytestringTyPtr bytestringTyPtr $
-    \s0 s1 -> E.equalsByteString s0 s1 >>= retConstDynamic @Bool
+    \s0 s1 -> bsEquals s0 s1 >>= retConstDynamic @Bool
 
 lessThanByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 lessThanByteString =
     compileBinary "lessThanByteString" bytestringTyPtr bytestringTyPtr $
-    \s0 s1 -> E.lessThanByteString s0 s1 >>= retConstDynamic @Bool
+    \s0 s1 -> bsLessThan s0 s1 >>= retConstDynamic @Bool
 
 lessThanEqualsByteString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 lessThanEqualsByteString =
     compileBinary "lessThanEqualsByteString" bytestringTyPtr bytestringTyPtr $
-    \s0 s1 -> E.lessThanEqualsByteString s0 s1 >>= retConstDynamic @Bool
+    \s0 s1 -> bsLessThanEquals s0 s1 >>= retConstDynamic @Bool
 
 -------------------------------------------------------------------------------
 
@@ -464,8 +412,8 @@ appendString =
     let ps = mkParams 0 [ptrOf i8, ptrOf i8]
     in compileCurried "appendString" ps $ \[xs, ys] -> do
         -- determine the lengths of the two strings
-        l0 <- E.strlen xs
-        l1 <- E.strlen ys
+        l0 <- strlen xs
+        l1 <- strlen ys
 
         -- allocate memory for the new string
         lb <- add l0 l1
@@ -473,11 +421,11 @@ appendString =
         ptr <- E.malloc (ptrOf i8) ln
 
         -- copy the first string
-        _ <- E.strcpy ptr xs
+        _ <- strcpy ptr xs
 
         -- copy the second string
         addr <- gep ptr [l0]
-        _ <- E.strcpy addr ys
+        _ <- strcpy addr ys
 
         retConstDynamic @T.Text ptr
 
@@ -485,9 +433,7 @@ equalsString :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 equalsString =
     let ps = mkParams 0 [ptrOf i8, ptrOf i8]
     in compileCurried "equalsString" ps $ \[xs, ys] -> do
-        r <- E.strcmp xs ys
-        b <- icmp LLVM.EQ r (ConstantOperand $ Int 32 0)
-        retConstDynamic @Bool b
+        streq xs ys >>= retConstDynamic @Bool
 
 encodeUtf8 :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 encodeUtf8 =
@@ -495,7 +441,7 @@ encodeUtf8 =
     in compileCurried "encodeUtf8" ps $ \[str] -> do
         -- our strings are already UTF-8 so we just need to construct a
         -- bytestring for it
-        l <- E.strlen str
+        l <- strlen str
         ptr <- bsNew l
 
         -- store the pointer to the byte array

@@ -44,10 +44,7 @@ import Hachi.Compiler.CodeGen.Types
 
 -- | `compileBody` @term@ compiles @term@ to LLVM.
 compileBody
-    :: ( MonadReader CodeGenSt m
-       , MonadModuleBuilder m
-       , MonadIO m
-       )
+    :: MonadCodeGen m
     => Term UPLC.Name DefaultUni DefaultFun ()
     -> IRBuilderT m (ClosurePtr 'DynamicPtr)
 -- (error): as soon as execution reaches this term, print a message indicating
