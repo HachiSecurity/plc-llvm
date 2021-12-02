@@ -99,6 +99,14 @@ plcNewUnit = do
     void $ IR.function name params closureTyPtr $ \[] ->
         retConstDynamic @() $ ConstantOperand $ C.IntToPtr (Int 1 1) (ptrOf i8)
 
+plcNewBool :: MonadCodeGen m => m ()
+plcNewBool = do
+    let name = "plc_new_bool"
+    let params = [(i8, "val")]
+
+    void $ IR.function name params closureTyPtr $ \[val] ->
+        trunc val i1 >>= retConstDynamic @Bool
+
 -------------------------------------------------------------------------------
 
 libraryApi :: MonadCodeGen m => [(m (), String)]
@@ -109,6 +117,7 @@ libraryApi =
     , (plcNewByteString, "extern closure *plc_new_bytestring(size_t len, const char *ptr);")
     , (plcNewText, "extern closure *plc_new_text(const char* ptr);")
     , (plcNewUnit, "extern closure *plc_new_unit();")
+    , (plcNewBool, "extern closure *plc_new_bool(unsigned char val);")
     ]
 
 -- | `emitLibraryApi` is a computation which generates all functions that
