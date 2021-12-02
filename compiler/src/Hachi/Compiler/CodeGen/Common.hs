@@ -13,7 +13,6 @@ import Data.String ( fromString )
 import qualified Data.Text as T
 
 import LLVM.AST
-import LLVM.AST.Constant
 import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.CodeGen.Externals
