@@ -35,6 +35,7 @@ import Hachi.Compiler.CodeGen.Builtin
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Constant
+import Hachi.Compiler.CodeGen.Driver
 import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Globals
 import Hachi.Compiler.CodeGen.Monad
@@ -251,20 +252,6 @@ compileProgram cfg (Program _ _ term) = do
 
 -------------------------------------------------------------------------------
 
--- | `runPkgConfig` @packageName@ runs `pkg-config` for @packageName@ to get
--- suitable configuration options for the C compiler.
-runPkgConfig :: String -> IO [String]
-runPkgConfig pkg = do
-    let pkgcfg = proc "pkg-config" ["--libs", "--cflags", pkg]
-    (ec, stdout, _) <- readProcess pkgcfg
-
-    case ec of
-        ExitSuccess -> pure $
-            map BS.unpack $ BS.split ' ' $ BS.strip $ LBS.toStrict stdout
-        ExitFailure _ -> do
-            putStrLn $ "pkg-config failed for " ++ show pkgcfg
-            exitWith ec
-
 -- | `generateCode` @config path program@ generates code for @program@
 -- using the configuration given by @config@.
 generateCode
@@ -308,23 +295,7 @@ generateCode cfg@MkConfig{..} p =
             -- unless we have been instructed not to link together an
             -- executable, run Clang to produce an executable from the
             -- object file
-            unless (cfgNoLink || cfgLibrary) $ do
-                -- run pkg-config for libsodium
-                sodiumOpts <- runPkgConfig "libsodium"
-                gmpOpts <- runPkgConfig "gmp"
-
-                let rtsFile = fromMaybe "./rts/rts.c" cfgRTS
-                let sha3File = takeDirectory rtsFile
-                           </> "tiny_sha3" </> "sha3" <.> "c"
-                let exeFile = dropExtension outputName
-                let pcfg = proc "clang" $
-                            [rtsFile, sha3File, objectFile, "-o", exeFile] <>
-                            sodiumOpts <> gmpOpts
-
-                ec <- runProcess pcfg
-
-                when cfgVerbose $ do
-                    putStr "Ran clang and got: "
-                    print ec
+            unless (cfgNoLink || cfgLibrary) $
+                linkExecutable cfg outputName [objectFile]
 
 -------------------------------------------------------------------------------
