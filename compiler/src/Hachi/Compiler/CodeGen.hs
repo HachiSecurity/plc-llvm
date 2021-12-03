@@ -10,7 +10,7 @@ import Control.Monad.Reader
 import qualified Data.ByteString.Char8 as BS
 import Data.IORef
 import qualified Data.Map as M
-import Data.Maybe (fromMaybe)
+import Data.Maybe
 import qualified Data.Set as S
 import Data.String (fromString)
 
@@ -301,5 +301,19 @@ generateCode cfg@MkConfig{..} p =
             -- object file
             unless (cfgNoLink || cfgLibrary) $
                 linkExecutable cfg outputName [objectFile]
+
+            -- if we are compiling a library and the --entry-point option is
+            -- specified, we also compile the C program and link it together
+            -- with our PLC object file; this has the advantage that we know
+            -- what options to pass to the C compiler already, so that a
+            -- user doesn't have to figure this out by hand
+            when cfgLibrary $ case cfgEntryPoint of
+                Nothing -> pure ()
+                Just cFile -> do
+                    -- compile the wrapper program to an object file
+                    programObj <- buildObjectFile cfg cFile
+
+                    -- link everything together
+                    linkExecutable cfg outputName [programObj, objectFile]
 
 -------------------------------------------------------------------------------
