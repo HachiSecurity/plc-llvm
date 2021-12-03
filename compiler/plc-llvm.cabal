@@ -31,11 +31,13 @@ library
       Hachi.Compiler.CodeGen.Constant.Pair
       Hachi.Compiler.CodeGen.Constant.String
       Hachi.Compiler.CodeGen.Constant.Text
+      Hachi.Compiler.CodeGen.Driver
       Hachi.Compiler.CodeGen.Equality
       Hachi.Compiler.CodeGen.Externals
       Hachi.Compiler.CodeGen.Externals.GMP
       Hachi.Compiler.CodeGen.Externals.Utility
       Hachi.Compiler.CodeGen.Globals
+      Hachi.Compiler.CodeGen.Library
       Hachi.Compiler.CodeGen.Monad
       Hachi.Compiler.CodeGen.Types
       Hachi.Compiler.Config
@@ -115,6 +117,7 @@ test-suite plc-llvm-test
   other-modules:
       Hachi.CompilerSpec
       Hachi.DataSpec
+      Hachi.LibrarySpec
       Hachi.ListSpec
       Hachi.PairSpec
       Hachi.TestCommon

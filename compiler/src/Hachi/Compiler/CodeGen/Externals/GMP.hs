@@ -2,6 +2,7 @@
 
 module Hachi.Compiler.CodeGen.Externals.GMP (
     mpzInitSetStrFun,
+    mpzInitSetStrRef,
     mpzInitSetStr,
     mpzInitSetUIntFun,
     mpzInitSetUInt,

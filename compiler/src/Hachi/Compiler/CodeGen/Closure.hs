@@ -22,6 +22,7 @@ module Hachi.Compiler.CodeGen.Closure (
     loadFromClosure,
     callClosure,
     enterClosure,
+    compileApply,
     lookupVar,
 
     -- * Misc
@@ -313,6 +314,17 @@ enterClosure
     => ClosurePtr k -> Maybe Operand -> m (ClosurePtr 'DynamicPtr)
 enterClosure ptr mArg = callClosure ClosureCode ptr [arg]
     where arg = fromMaybe (ConstantOperand $ Null closureTyPtr) mArg
+
+-- | `compileApply` @funClosure argClosure@ generates code which causes the
+-- program to enter the closure represented by @funClosure@ with the argument
+-- given by @argClosure@.
+compileApply
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => ClosurePtr f -> ClosurePtr x -> m (ClosurePtr 'DynamicPtr)
+compileApply f x =
+    -- enter the closure pointed to by f, giving it a pointer to another
+    -- closure x as argument
+    enterClosure f $ Just (closurePtr x)
 
 -- | `lookupVar` @name type@ generates code which retrieves the variable named
 -- @name@ from the local environment. If the variable is not in scope, we

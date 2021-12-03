@@ -7,17 +7,14 @@ module Hachi.Compiler.CodeGen ( generateCode ) where
 import Control.Monad.IO.Class
 import Control.Monad.Reader
 
-import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.ByteString.Char8 as BS
 import Data.IORef
 import qualified Data.Map as M
-import Data.Maybe (fromMaybe)
+import Data.Maybe
 import qualified Data.Set as S
 import Data.String (fromString)
 
-import System.Exit
 import System.FilePath
-import System.Process.Typed
 
 import UntypedPlutusCore as UPLC
 
@@ -35,8 +32,10 @@ import Hachi.Compiler.CodeGen.Builtin
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Constant
+import Hachi.Compiler.CodeGen.Driver
 import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Globals
+import Hachi.Compiler.CodeGen.Library
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 
@@ -102,7 +101,7 @@ compileBody (Apply _ lhs rhs) = do
 
     -- enter the closure pointed to by l, giving it a pointer to another
     -- closure r as argument
-    enterClosure l $ Just (closurePtr r)
+    compileApply l r
 compileBody (Force _ term) = do
     name <- mkFresh "force"
     compileTrace name
@@ -191,15 +190,25 @@ commonEntry body = do
 -- executing the program generated from @term@.
 generateEntry
     :: MonadCodeGen m
-    => Term UPLC.Name DefaultUni DefaultFun () -> m ()
-generateEntry body = do
+    => FilePath
+    -> Term UPLC.Name DefaultUni DefaultFun () -> m ()
+generateEntry outPath body = do
     MkConfig{..} <- asks codeGenCfg
 
     if cfgLibrary
-    then void $ IR.function "plc_entry" [] closureTyPtr $ \_ -> do
-        ptr <- commonEntry body
+    then do
+        void $ IR.function "plc_entry" [] closureTyPtr $ \_ -> do
+            ptr <- commonEntry body
 
-        ret $ closurePtr ptr
+            ret $ closurePtr ptr
+
+        api <- emitLibraryApi
+
+        let headerFile = replaceExtension outPath "h"
+        liftIO $ writeFile headerFile $
+            "#include \"rts.h\"\n\n" <>
+            "extern closure *plc_entry();\n\n" <>
+            api <> "\n"
     else void $ IR.function "main" [] VoidType $ \_ -> do
         ptr <- commonEntry body
 
@@ -213,9 +222,10 @@ generateEntry body = do
 
 compileProgram
     :: Config
+    -> FilePath
     -> Program UPLC.Name DefaultUni DefaultFun ()
     -> ModuleBuilderT IO ()
-compileProgram cfg (Program _ _ term) = do
+compileProgram cfg outPath (Program _ _ term) = do
     -- global definitions
     forM_ externalDefinitions emitDefn
 
@@ -247,23 +257,9 @@ compileProgram cfg (Program _ _ term) = do
         }
 
     -- compile the program
-    void $ runReaderT (runCodeGen (generateEntry term)) codeGenSt
+    void $ runReaderT (runCodeGen (generateEntry outPath term)) codeGenSt
 
 -------------------------------------------------------------------------------
-
--- | `runPkgConfig` @packageName@ runs `pkg-config` for @packageName@ to get
--- suitable configuration options for the C compiler.
-runPkgConfig :: String -> IO [String]
-runPkgConfig pkg = do
-    let pkgcfg = proc "pkg-config" ["--libs", "--cflags", pkg]
-    (ec, stdout, _) <- readProcess pkgcfg
-
-    case ec of
-        ExitSuccess -> pure $
-            map BS.unpack $ BS.split ' ' $ BS.strip $ LBS.toStrict stdout
-        ExitFailure _ -> do
-            putStrLn $ "pkg-config failed for " ++ show pkgcfg
-            exitWith ec
 
 -- | `generateCode` @config path program@ generates code for @program@
 -- using the configuration given by @config@.
@@ -272,14 +268,16 @@ generateCode
     -> Program UPLC.Name DefaultUni DefaultFun ()
     -> IO ()
 generateCode cfg@MkConfig{..} p =
-    withContext $ \ctx ->
+    let outputName = fromMaybe cfgInput cfgOutput
+        compiler = compileProgram cfg outputName p
+    in withContext $ \ctx ->
     -- withModuleFromLLVMAssembly ctx (File "wrapper.ll") $ \m -> moduleAST m >>= print
 
     withHostTargetMachineDefault $ \tm ->
-    buildModuleT (fromString $ takeBaseName cfgInput) (compileProgram cfg p) >>= \compiled ->
-    withModuleFromAST ctx compiled{ moduleSourceFileName = fromString cfgInput } $ \m -> do
-        let outputName = fromMaybe cfgInput cfgOutput
-
+    buildModuleT (fromString $ takeBaseName cfgInput) compiler >>= \compiled ->
+    withModuleFromAST ctx compiled{
+        moduleSourceFileName = fromString cfgInput
+    } $ \m -> do
         -- by default, we generate LLVM bitcode (the binary representation),
         -- but if the user has requested plain-text LLVM IR, we generate
         -- that instead
@@ -292,13 +290,6 @@ generateCode cfg@MkConfig{..} p =
             let bcName = replaceExtension outputName "bc"
             writeBitcodeToFile (File bcName) m
 
-        when cfgLibrary $ do
-            let headerFile = replaceExtension outputName "h"
-
-            writeFile headerFile $
-                "#include \"rts.h\"\n\n" <>
-                "extern void* plc_entry();\n"
-
         -- unless we have been instructed not to assemble the LLVM IR into
         -- an object file, produce an object file
         unless cfgNoAssemble $ do
@@ -308,23 +299,21 @@ generateCode cfg@MkConfig{..} p =
             -- unless we have been instructed not to link together an
             -- executable, run Clang to produce an executable from the
             -- object file
-            unless (cfgNoLink || cfgLibrary) $ do
-                -- run pkg-config for libsodium
-                sodiumOpts <- runPkgConfig "libsodium"
-                gmpOpts <- runPkgConfig "gmp"
+            unless (cfgNoLink || cfgLibrary) $
+                linkExecutable cfg outputName [objectFile]
 
-                let rtsFile = fromMaybe "./rts/rts.c" cfgRTS
-                let sha3File = takeDirectory rtsFile
-                           </> "tiny_sha3" </> "sha3" <.> "c"
-                let exeFile = dropExtension outputName
-                let pcfg = proc "clang" $
-                            [rtsFile, sha3File, objectFile, "-o", exeFile] <>
-                            sodiumOpts <> gmpOpts
+            -- if we are compiling a library and the --entry-point option is
+            -- specified, we also compile the C program and link it together
+            -- with our PLC object file; this has the advantage that we know
+            -- what options to pass to the C compiler already, so that a
+            -- user doesn't have to figure this out by hand
+            when cfgLibrary $ case cfgEntryPoint of
+                Nothing -> pure ()
+                Just cFile -> do
+                    -- compile the wrapper program to an object file
+                    programObj <- buildObjectFile cfg cFile
 
-                ec <- runProcess pcfg
-
-                when cfgVerbose $ do
-                    putStr "Ran clang and got: "
-                    print ec
+                    -- link everything together
+                    linkExecutable cfg outputName [programObj, objectFile]
 
 -------------------------------------------------------------------------------

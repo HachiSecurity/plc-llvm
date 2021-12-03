@@ -8,10 +8,13 @@ module Hachi.TestCommon where
 
 -------------------------------------------------------------------------------
 
+import Control.Monad
+
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as LBS
 import Data.Some
 
+import Test.Tasty
 import Test.Tasty.HUnit
 
 import System.Directory
@@ -24,6 +27,17 @@ import UntypedPlutusCore as UPLC
 
 import Hachi.Compiler.Config
 import Hachi.Compiler.CodeGen
+import Data.List
+
+-------------------------------------------------------------------------------
+
+-- | `listDirectories` @path@ lists all directories in the directory at
+-- @path@. Note that no checks are performed to see whether @path@ actually
+-- refers to a directory.
+listDirectories :: FilePath -> IO [FilePath]
+listDirectories root =
+    listDirectory root >>=
+    filterM (doesDirectoryExist . (root </>))
 
 -------------------------------------------------------------------------------
 
@@ -165,5 +179,16 @@ runAndVerify fp = do
     -- expected output
     assertEqual "Expected output does not match actual output"
         exStdout stdout
+
+-- | `runDirectoryTests` @root compiler@ tests programs from all
+-- directories in the path given by @root@ using the compilation action
+-- given by @compiler@.
+runDirectoryTests
+    :: FilePath -> (FilePath -> IO ()) -> IO [TestTree]
+runDirectoryTests root compiler = do
+    ds <- listDirectories root
+
+    forM (sort ds) $ \dir ->
+        pure $ testCase dir $ compiler $ root </> dir </> dir <.> "plc"
 
 -------------------------------------------------------------------------------

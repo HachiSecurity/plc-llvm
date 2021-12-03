@@ -30,7 +30,10 @@ data Config = MkConfig {
     -- | Should the LLVM IR be in plain-text?
     cfgNoSerialise :: Bool,
     -- | Should we produce a library?
-    cfgLibrary :: Bool
+    cfgLibrary :: Bool,
+    -- | If --library is specified, an optional path to a .c source file which
+    -- contains the entry point for the program.
+    cfgEntryPoint :: Maybe FilePath
 } deriving (Eq, Show)
 
 -- | `mkDefaultConfig` @input@ constructs a `Config` with reasonable defaults
@@ -47,7 +50,8 @@ mkDefaultConfig fp = MkConfig{
     cfgNoAssemble = False,
     cfgNoLink = False,
     cfgNoSerialise = False,
-    cfgLibrary = False
+    cfgLibrary = False,
+    cfgEntryPoint = Nothing
 }
 
 cfgInputP :: Parser FilePath
@@ -108,6 +112,11 @@ cfgLibraryP = switch $
     long "library" <>
     help "Generate a library instead of an executable"
 
+cfgEntryPointP :: Parser (Maybe FilePath)
+cfgEntryPointP = optional $ strOption $
+    long "entry-point" <>
+    help "The path to a C source file which contains the entry point"
+
 cmdArgsP :: Parser Config
 cmdArgsP = MkConfig
     <$> cfgInputP
@@ -121,6 +130,7 @@ cmdArgsP = MkConfig
     <*> cfgNoLinkP
     <*> cfgNoSerialiseP
     <*> cfgLibraryP
+    <*> cfgEntryPointP
 
 -- | `parseCmdLineArgs` parses command-line arguments into a `Config` value.
 -- If parsing fails, the program is terminated and a help message is shown.
