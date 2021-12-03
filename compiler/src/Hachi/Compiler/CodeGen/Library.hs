@@ -102,7 +102,7 @@ plcNewUnit = do
     let params = []
 
     void $ IR.function name params closureTyPtr $ \[] ->
-        retConstDynamic @() $ ConstantOperand $ C.IntToPtr (Int 1 1) (ptrOf i8)
+        retConstDynamic @() $ ConstantOperand $ Int 1 1
 
 plcNewBool :: MonadCodeGen m => m ()
 plcNewBool = do
