@@ -22,7 +22,10 @@ RUN apt-get update && \
     wget https://apt.llvm.org/llvm.sh && \
     chmod +x llvm.sh && \
     ./llvm.sh 12
-COPY compiler/rts/rts.c /rts.c
+COPY ["compiler/rts/rts.c", "compiler/rts/rts.h", "/"]
+COPY compiler/rts/tiny_sha3 /tiny_sha3
 COPY --from=builder /plc-llvm /plc-llvm
+ENV PATH="/usr/lib/llvm-12/bin:${PATH}"
+ENV LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:${LIBRARY_PATH}"
 ENTRYPOINT [ "/plc-llvm", "--rts", "/rts.c" ]
 CMD []
