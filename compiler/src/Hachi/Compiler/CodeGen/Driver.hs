@@ -34,7 +34,8 @@ runPkgConfig args pkg = do
             map BS.unpack $ BS.split ' ' $ BS.strip $ LBS.toStrict stdout
         ExitFailure _ -> do
             putStrLn $ "pkg-config failed for " ++ show pkgcfg
-            exitWith ec
+            -- if pkg-config fails, let's just try to guess
+            pure ["-l" <> pkg]
 
 -- | `runDriver` @config pkgConfigArgs clangArgs@ runs Clang with arguments
 -- given by @clangArgs@ and additional arguments obtained by running
