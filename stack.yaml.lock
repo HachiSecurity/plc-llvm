@@ -5,32 +5,6 @@
 
 packages:
 - completed:
-    subdir: llvm-hs
-    name: llvm-hs
-    version: 12.0.0
-    git: https://github.com/llvm-hs/llvm-hs
-    pantry-tree:
-      size: 12781
-      sha256: 0ad0627ac9407d6e9380771621d820d49c19f422681105289ef3ea733ca353f6
-    commit: 9db657851caf0aa7805b26bcedbd5f445b70f929
-  original:
-    subdir: llvm-hs
-    git: https://github.com/llvm-hs/llvm-hs
-    commit: 9db657851caf0aa7805b26bcedbd5f445b70f929
-- completed:
-    subdir: llvm-hs-pure
-    name: llvm-hs-pure
-    version: 12.0.0
-    git: https://github.com/llvm-hs/llvm-hs
-    pantry-tree:
-      size: 2712
-      sha256: b46dedc3bfda29f35262505f814968e0aa57ebaf765977e5c9c6da12d3d07850
-    commit: 9db657851caf0aa7805b26bcedbd5f445b70f929
-  original:
-    subdir: llvm-hs-pure
-    git: https://github.com/llvm-hs/llvm-hs
-    commit: 9db657851caf0aa7805b26bcedbd5f445b70f929
-- completed:
     subdir: cardano-prelude
     name: cardano-prelude
     version: 0.1.0.0
@@ -256,7 +230,39 @@ packages:
       sha256: 8321b4411a0c51bec29b606ee5918512c514ff179076c4aef884ded6d072556d
   original:
     hackage: witherable-0.4.2@sha256:f15fef5f9453722c7baf5beb562d536d153366af6a631cc53e60b76fedee90f2,2260
+- completed:
+    subdir: llvm-hs
+    name: llvm-hs
+    version: 12.0.0
+    git: https://github.com/llvm-hs/llvm-hs
+    pantry-tree:
+      size: 12781
+      sha256: 0ad0627ac9407d6e9380771621d820d49c19f422681105289ef3ea733ca353f6
+    commit: 9db657851caf0aa7805b26bcedbd5f445b70f929
+  original:
+    subdir: llvm-hs
+    git: https://github.com/llvm-hs/llvm-hs
+    commit: 9db657851caf0aa7805b26bcedbd5f445b70f929
+- completed:
+    subdir: llvm-hs-pure
+    name: llvm-hs-pure
+    version: 12.0.0
+    git: https://github.com/llvm-hs/llvm-hs
+    pantry-tree:
+      size: 2712
+      sha256: b46dedc3bfda29f35262505f814968e0aa57ebaf765977e5c9c6da12d3d07850
+    commit: 9db657851caf0aa7805b26bcedbd5f445b70f929
+  original:
+    subdir: llvm-hs-pure
+    git: https://github.com/llvm-hs/llvm-hs
+    commit: 9db657851caf0aa7805b26bcedbd5f445b70f929
 snapshots:
+- completed:
+    size: 2722
+    url: https://raw.githubusercontent.com/HachiSecurity/plutus-resolver/main/lts-17.14.yaml
+    sha256: 1336671fa5c699002da0ec26ff0647b06d38bd86f3e2d44d54de4d6ce9f98b88
+  original:
+    url: https://raw.githubusercontent.com/HachiSecurity/plutus-resolver/main/lts-17.14.yaml
 - completed:
     size: 567677
     url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/14.yaml
