@@ -67,6 +67,7 @@ library
     , llvm-hs-pure
     , mtl
     , optparse-applicative
+    , plc-utils
     , plutus-core
     , prettyprinter
     , some
@@ -102,6 +103,7 @@ executable plc-llvm
     , mtl
     , optparse-applicative
     , plc-llvm
+    , plc-utils
     , plutus-core
     , prettyprinter
     , some
@@ -145,6 +147,7 @@ test-suite plc-llvm-test
     , mtl
     , optparse-applicative
     , plc-llvm
+    , plc-utils
     , plutus-core
     , prettyprinter
     , some

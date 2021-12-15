@@ -15,6 +15,7 @@ dependencies:
 - llvm-hs-pure
 - mtl
 - optparse-applicative
+- plc-utils
 - plutus-core
 - prettyprinter
 - some

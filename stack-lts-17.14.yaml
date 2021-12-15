@@ -1,18 +1,20 @@
 resolver: https://raw.githubusercontent.com/HachiSecurity/plutus-resolver/main/lts-17.14.yaml
 
 packages:
-- ./compiler
+  - ./compiler
 
 allow-newer: true
 
 ghc-options:
   # llvm-12 requires c++17 to compile successfully, which requires us to pass
   # some extra flags to clang on macOS, which defaults to an older version
-  llvm-hs: '-optcxx -std=c++17 -optcxx -lstdc++'
+  llvm-hs: "-optcxx -std=c++17 -optcxx -lstdc++"
 
 extra-deps:
   - git: https://github.com/llvm-hs/llvm-hs
     commit: 9db657851caf0aa7805b26bcedbd5f445b70f929
     subdirs:
-    - llvm-hs
-    - llvm-hs-pure
+      - llvm-hs
+      - llvm-hs-pure
+  - git: https://github.com/HachiSecurity/plc-utils
+    commit: a6fbc2eb9fbef5fd48d14bf69faab5c1743da61a
