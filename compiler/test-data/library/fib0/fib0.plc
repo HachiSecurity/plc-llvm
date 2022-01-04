@@ -1,0 +1,22 @@
+(program 1.0.0
+    (lam n (force
+        [
+            (lam f [(lam x [f (delay [x x])]) (lam x [f (delay [x x])])])
+            (lam r (lam v
+                [ (force (builtin ifThenElse))
+                    [(builtin equalsInteger) v (con integer 0)]
+                    (delay (con integer 1))
+                    [ (force (builtin ifThenElse))
+                        [(builtin equalsInteger) v (con integer 1)]
+                        (delay (con integer 1))
+                        (delay [ (builtin addInteger)
+                            (force [(force r) [(builtin subtractInteger) v (con integer 1)]])
+                            (force [(force r) [(builtin subtractInteger) v (con integer 2)]])
+                        ])
+                    ]
+                ]
+            ))
+            n
+        ]
+    ))
+)
