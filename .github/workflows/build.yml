@@ -49,8 +49,10 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.stack
-          key: ${{ runner.os }}-${{ hashFiles('stack.yaml') }}
-          restore-keys: ${{ runner.os }}-
+          key: ${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('**/*.cabal') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ hashFiles('stack.yaml') }}-
+            ${{ runner.os }}-
 
       - name: Install dependencies
         run: |
