@@ -25,6 +25,7 @@ jobs:
           submodules: 'true'
 
       - name: Install Haskell
+        id: "install-haskell"
         uses: haskell/actions/setup@v1
         with:
           ghc-version: "8.10.4"
@@ -48,7 +49,7 @@ jobs:
       - name: Cache .stack
         uses: actions/cache@v2
         with:
-          path: ~/.stack
+          path: ${{ steps.install-haskell.outputs.stack-root }}
           key: ${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('**/*.cabal') }}
           restore-keys: |
             ${{ runner.os }}-${{ hashFiles('stack.yaml') }}-
