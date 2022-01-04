@@ -9,6 +9,7 @@ dependencies:
 - bytestring
 - containers
 - directory
+- extra
 - filepath
 - flat
 - llvm-hs

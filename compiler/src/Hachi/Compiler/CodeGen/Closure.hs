@@ -209,7 +209,7 @@ compileDynamicClosure isDelay name fvs var codeFun = do
 
     _ <- lift $ IR.function entryName [(closureTyPtr, "this"), (closureTyPtr, mkParamName var)] closureTyPtr $
         \[this, arg] -> extendScope var (MkClosurePtr arg) $ do
-            compileTrace (name <> "_entry")
+            compileTrace (name <> "_entry") []
 
             -- we need to load the free variables from the closure pointed to
             -- by `this`, which are stored at offset 3 onwards; note that the
@@ -256,7 +256,7 @@ compileFunPrint = do
             let printName = mkName "Function_print"
 
             _ <- IR.function printName [(closureTyPtr, "this")] VoidType $ \[_] -> do
-                compileTrace "Function_print"
+                compileTrace "Function_print" []
                 void $ call (ConstantOperand printfRef) [(funErrRef, [])]
                 retVoid
 
@@ -355,7 +355,7 @@ lookupVar var ty = do
             unreachable
             pure $ ConstantOperand $ Null closureTyPtr
         Just ptr -> do
-            compileTrace $ "Found " <> T.unpack var <> " in " <> name
+            compileTrace ("Found " <> T.unpack var <> " in " <> name) []
             bitcast (closurePtr ptr) ty
 
 -- | `retClosure` @closurePtr@ returns the pointer represented by @closurePtr@.

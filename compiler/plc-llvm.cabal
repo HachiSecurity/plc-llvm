@@ -61,6 +61,7 @@ library
     , bytestring
     , containers
     , directory
+    , extra
     , filepath
     , flat
     , llvm-hs
@@ -96,6 +97,7 @@ executable plc-llvm
     , bytestring
     , containers
     , directory
+    , extra
     , filepath
     , flat
     , llvm-hs
@@ -139,6 +141,7 @@ test-suite plc-llvm-test
     , bytestring
     , containers
     , directory
+    , extra
     , filepath
     , flat
     , hedgehog

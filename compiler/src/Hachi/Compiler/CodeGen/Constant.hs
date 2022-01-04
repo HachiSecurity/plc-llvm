@@ -393,7 +393,7 @@ compileConstEntry = do
             let llvmName = mkName name
             void $ IR.function llvmName [(closureTyPtr, "this"), (closureTyPtr, "unused")] closureTyPtr $
                 \[this, _] -> do
-                    compileTrace name
+                    compileTrace name []
 
                     v <- compileLoadConstant @a $ MkClosurePtr this
                     vc <- castConstantToPtr @a v
@@ -491,7 +491,7 @@ compileConstPrint ty bodyBuilder = do
             -- generate the pretty-printing function
             _ <- IR.function printName [(closureTyPtr, "this")] VoidType $
                 \[this] -> do
-                    compileTrace (show ty <> "_print")
+                    compileTrace (show ty <> "_print") []
 
                     bodyBuilder $ MkClosurePtr this
 

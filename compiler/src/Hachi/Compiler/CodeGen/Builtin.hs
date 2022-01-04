@@ -92,7 +92,7 @@ withCurried name ps@((sn,isTyVar):dyn) builder = do
     let staticParams = [(closureTyPtr, "this"), (closureTyPtr, mkParamName sn)]
     _ <- IR.function (mkName entryName) staticParams closureTyPtr $
         \[_, arg] -> extendScope sn (MkClosurePtr arg) $ do
-            compileTrace entryName
+            compileTrace entryName []
 
             mkCurry 0 (S.singleton sn) dyn
 

@@ -90,21 +90,21 @@ compileBody (LamAbs _ var term) = do
 compileBody (Apply _ lhs rhs) = do
     name <- mkFresh "app"
 
-    compileTrace name
+    compileTrace name []
 
     -- generate code for both sub-expressions; the resulting operands are
     -- pointers to closures
     l <- compileBody lhs
     r <- compileBody rhs
 
-    compileTrace $ "Entering closure in " <> name
+    compileTrace ("Entering closure in " <> name) []
 
     -- enter the closure pointed to by l, giving it a pointer to another
     -- closure r as argument
     compileApply l r
 compileBody (Force _ term) = do
     name <- mkFresh "force"
-    compileTrace name
+    compileTrace name []
 
     -- Generate code for the term, this can be an arbitrary term and may
     -- not immediately be a delay term - indeed, there may not be a delay

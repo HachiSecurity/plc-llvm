@@ -2,11 +2,13 @@
 module Hachi.Compiler.CodeGen.Common (
     mkParamName,
     fatal,
+    ifTracing,
     compileTrace
 ) where
 
 -------------------------------------------------------------------------------
 
+import Control.Monad.Extra
 import Control.Monad.Reader
 
 import Data.String ( fromString )
@@ -39,28 +41,27 @@ fatal ptr argv = do
     _ <- exit (-1)
     unreachable
 
--- | `compileTrace` @message@ generates an instruction which prints @message@
--- to the standard output, if tracing is enabled in the code generation
--- configuration. Otherwise, this produces no code.
-compileTrace
-    :: ( MonadReader CodeGenSt m
-       , MonadIO m
-       , MonadModuleBuilder m
-       , MonadIRBuilder m
-       )
-    => String -> m ()
-compileTrace msg = do
-    -- only generate this code if tracing is enabled
-    isTracing <- asks (cfgTrace . codeGenCfg)
-    when isTracing $ do
-        -- generate a fresh, global variable to store the string in
-        name <- mkFresh "trace"
-        (ptr, _) <- runIRBuilderT emptyIRBuilder $
-                globalStringPtr (msg <> "\n") (mkName name)
+-- | `ifTracing` @action@ will execute @action@ if tracing is enabled.
+ifTracing :: MonadCodeGen m => m () -> m ()
+ifTracing = whenM (asks (cfgTrace . codeGenCfg))
 
-        -- call printf
-        void $ call
-            (ConstantOperand printfRef)
-            [(ConstantOperand ptr, [])]
+-- | `compileTrace` @message arguments@ generates code which prints
+-- @message@ to the standard output. The @message@ string may contain
+-- formatting characters which will be substituted with values from
+-- @arguments@. If tracing is not enabled in the code generation
+-- configuration, no code is generated.
+compileTrace
+    :: ( MonadCodeGen m, MonadIRBuilder m )
+    => String -> [Operand] -> m ()
+compileTrace msg xs = ifTracing $ do
+    -- generate a fresh, global variable to store the string in
+    name <- mkFresh "trace"
+    (ptr, _) <- runIRBuilderT emptyIRBuilder $
+            globalStringPtr (msg <> "\n") (mkName name)
+
+    -- call printf
+    void $ call
+        (ConstantOperand printfRef) $
+        (ConstantOperand ptr, []) : [(x, []) | x <- xs]
 
 -------------------------------------------------------------------------------
