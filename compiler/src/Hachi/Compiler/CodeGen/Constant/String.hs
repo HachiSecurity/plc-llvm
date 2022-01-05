@@ -28,6 +28,7 @@ globalStrs =
     , ("unIDataErrStr", "Pattern-match failure in unIData\n")
     , ("unBDataErrStr", "Pattern-match failure in unBData\n")
     , ("bsIndexErrStr", "Trying to access element at index %zu of bytestring with length %zu!\n")
+    , ("oomErrStr", "Out of memory.\n")
     , ("spaceStr", " ")
     , ("openParenStr", "(")
     , ("closeParenStr", ")")

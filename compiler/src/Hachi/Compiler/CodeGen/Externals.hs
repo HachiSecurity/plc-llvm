@@ -1,3 +1,5 @@
+{-# LANGUAGE RecordWildCards #-}
+
 -- | This module contains the types, declarations, and references to external
 -- functions that we import from stdlib.
 module Hachi.Compiler.CodeGen.Externals (
@@ -43,10 +45,12 @@ module Hachi.Compiler.CodeGen.Externals (
 -------------------------------------------------------------------------------
 
 import Control.Monad
+import Control.Monad.Reader
 
 import LLVM.AST
 import LLVM.AST.AddrSpace
 import LLVM.AST.Constant
+import LLVM.AST.IntegerPredicate as LLVM
 import LLVM.AST.Linkage
 import LLVM.AST.Visibility
 import LLVM.AST.CallingConvention
@@ -54,7 +58,10 @@ import LLVM.IRBuilder
 
 import Hachi.Compiler.CodeGen.Externals.GMP
 import Hachi.Compiler.CodeGen.Externals.Utility
+import Hachi.Compiler.CodeGen.Globals
+import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
+import Hachi.Compiler.Config
 
 -------------------------------------------------------------------------------
 
@@ -121,11 +128,32 @@ mallocRef = GlobalReference mallocTy $ mkName "malloc"
 -- @size@-many bytes. The return value is cast to @type@, which should
 -- normally be a pointer to something.
 malloc
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    :: (MonadModuleBuilder m, MonadIRBuilder m, MonadCodeGen m)
     => Type -> Operand -> m Operand
 malloc ty size = do
     addr <- call (ConstantOperand mallocRef) [(size, [])]
-    bitcast addr ty
+
+    MkConfig{..} <- asks codeGenCfg
+
+    if not cfgCheckOOM
+    then bitcast addr ty
+    else do
+        oomBranch <- freshName "oom"
+        successBranch <- freshName "allocated"
+
+        -- check whether we received a null pointer from malloc
+        r <- icmp LLVM.EQ addr $ ConstantOperand $ Null $ ptrOf i8
+        condBr r oomBranch successBranch
+
+        -- if yes: print an error and exit
+        emitBlockStart oomBranch
+        _ <- printf oomErrRef []
+        _ <- exit (-1)
+        unreachable
+
+        -- otherwise, cast the pointer to the desired type and continue
+        emitBlockStart successBranch
+        bitcast addr ty
 
 memcpyTy :: Type
 memcpyTy = ptrOf $

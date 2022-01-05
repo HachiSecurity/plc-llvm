@@ -29,6 +29,8 @@ data Config = MkConfig {
     cfgNoLink :: Bool,
     -- | Should the LLVM IR be in plain-text?
     cfgNoSerialise :: Bool,
+    -- | Should the generated code check for OOM after every malloc?
+    cfgCheckOOM :: Bool,
     -- | Should we produce a library?
     cfgLibrary :: Bool,
     -- | If --library is specified, an optional path to a .c source file which
@@ -50,6 +52,7 @@ mkDefaultConfig fp = MkConfig{
     cfgNoAssemble = False,
     cfgNoLink = False,
     cfgNoSerialise = False,
+    cfgCheckOOM = False,
     cfgLibrary = False,
     cfgEntryPoint = Nothing
 }
@@ -107,6 +110,11 @@ cfgNoSerialiseP = switch $
     long "emit-llvm" <>
     help "Generate plain-text LLVM IR instead of bitcode"
 
+cfgCheckOOMP :: Parser Bool
+cfgCheckOOMP = switch $
+    long "check-oom" <>
+    help "Generate code which checks whether malloc succeeds"
+
 cfgLibraryP :: Parser Bool
 cfgLibraryP = switch $
     long "library" <>
@@ -129,6 +137,7 @@ cmdArgsP = MkConfig
     <*> cfgNoAssembleP
     <*> cfgNoLinkP
     <*> cfgNoSerialiseP
+    <*> cfgCheckOOMP
     <*> cfgLibraryP
     <*> cfgEntryPointP
 

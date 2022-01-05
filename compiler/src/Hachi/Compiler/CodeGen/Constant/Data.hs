@@ -22,6 +22,7 @@ import LLVM.AST
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Globals
+import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 
 -------------------------------------------------------------------------------
@@ -74,7 +75,7 @@ dataGlobal name tag ps = do
 -- @dataPtr@ and an additional argument by @extraData@ which is normally empty
 -- or an extra tag in the case of `DataConstr`.
 newData
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    :: (MonadCodeGen m, MonadIRBuilder m)
     => DataTag -> Operand -> Maybe Operand -> m Operand
 newData tag dPtr ps = do
     -- `sizeof` calculates the base size of a Data value at 16 bytes, which

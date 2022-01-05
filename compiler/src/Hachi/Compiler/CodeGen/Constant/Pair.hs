@@ -13,6 +13,7 @@ import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Externals
+import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 
 -------------------------------------------------------------------------------
@@ -20,7 +21,7 @@ import Hachi.Compiler.CodeGen.Types
 -- | `newPair` @fst snd@ generates code which constructs a new pair value,
 -- where the first component is @fst@ and the second component is @snd@.
 newPair
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    :: (MonadCodeGen m, MonadIRBuilder m)
     => ClosurePtr p -> ClosurePtr q -> m Operand
 newPair x y = do
     -- allocate memory for the new pair

@@ -164,7 +164,7 @@ ptrSize = ConstantOperand $ C.sizeof bits closureTyPtr
 -- pointers. The code pointers are free variables are stored in the closure and
 -- the pointer to the closure is returned.
 allocateClosure
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    :: (MonadCodeGen m, MonadIRBuilder m)
     => Bool -> Constant -> Constant -> [Operand] -> m (ClosurePtr 'DynamicPtr)
 allocateClosure isDelay codePtr printPtr fvs = do
     -- allocate enough space for the closure on the heap:
