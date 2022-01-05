@@ -259,13 +259,13 @@ packages:
 - completed:
     name: plc-utils
     version: 0.1.0.0
-    git: git@github.com:HachiSecurity/plc-utils
+    git: https://github.com/HachiSecurity/plc-utils
     pantry-tree:
       size: 816
       sha256: 7494ab06b7b35edd50cbb3497c08c404222544dca61ba022cc46bc0a40901745
     commit: a6fbc2eb9fbef5fd48d14bf69faab5c1743da61a
   original:
-    git: git@github.com:HachiSecurity/plc-utils
+    git: https://github.com/HachiSecurity/plc-utils
     commit: a6fbc2eb9fbef5fd48d14bf69faab5c1743da61a
 snapshots:
 - completed:
