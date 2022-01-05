@@ -361,6 +361,9 @@ lookupVar var ty = do
             pure $ ConstantOperand $ Null closureTyPtr
         Just ptr -> do
             compileTrace ("Found " <> T.unpack var <> " in " <> name) []
+            ifTracing $ do
+                void $ callClosure ClosurePrint ptr []
+                void $ printf nlRef []
             bitcast (closurePtr ptr) ty
 
 -- | `retClosure` @closurePtr@ returns the pointer represented by @closurePtr@.

@@ -161,7 +161,11 @@ compileBinaryInteger
     => String -> (Operand -> Operand -> IRBuilderT m Operand)
     -> m (ClosurePtr 'StaticPtr)
 compileBinaryInteger name builder =
-    compileBinary name gmpTyPtr gmpTyPtr $ \x y ->
+    compileBinary name gmpTyPtr gmpTyPtr $ \x y -> do
+    ifTracing $ do
+        xv <- E.mpzGetUInt x
+        yv <- E.mpzGetUInt y
+        compileTrace (name <> "(%zu, %zu)") [xv, yv]
     builder x y >>= retConstDynamic @a
 
 -- | `compileBinaryNewInteger` @name builder@ generates a built-in function
