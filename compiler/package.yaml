@@ -65,3 +65,11 @@ tests:
     - tasty-hedgehog
     - tasty-ant-xml
     - hedgehog
+
+benchmarks:
+  plc-llvm-benchmark:
+    main: Main.hs
+    source-dirs: bench
+    dependencies:
+      - plc-llvm
+      - criterion
