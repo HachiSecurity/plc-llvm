@@ -3,6 +3,9 @@
 -- | This module contains various LLVM `Type` values used in the code
 -- generator.
 module Hachi.Compiler.CodeGen.Types (
+    -- * Re-exports
+    module Hachi.Compiler.Platform,
+
     -- * Utility functions
     isPtr,
 

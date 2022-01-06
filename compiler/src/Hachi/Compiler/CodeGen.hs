@@ -121,8 +121,8 @@ compileBody (Force _ term) = do
     let falseBr = mkName $ name <> "_fail"
     let contBr = mkName $ name <> "_cont"
 
-    flags <- loadFromClosure ClosureFlags i64 r
-    cond <- icmp LLVM.EQ flags (ConstantOperand $ Int 64 1)
+    flags <- loadFromClosure ClosureFlags iHost r
+    cond <- icmp LLVM.EQ flags (ConstantOperand $ Int platformIntSize 1)
     condBr cond trueBr falseBr
 
     -- Enter the closure that is returned from the body: it corresponds to a
