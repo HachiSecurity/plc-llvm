@@ -13,11 +13,12 @@ import Hachi.Compiler.CodeGen.Types
 
 -------------------------------------------------------------------------------
 
+-- | `newInteger` allocates new memory for a pointer to a gmp integer.
 newInteger
     :: (MonadCodeGen m, MonadIRBuilder m)
     => m Operand
 newInteger = do
-    size <- IR.sizeof 64 gmpTyDef
+    size <- IR.sizeof 64 gmpTyPtr
     E.malloc gmpTyPtr size
 
 -------------------------------------------------------------------------------
