@@ -360,6 +360,6 @@ lookupVar var ty = do
 
 -- | `retClosure` @closurePtr@ returns the pointer represented by @closurePtr@.
 retClosure :: MonadIRBuilder m => ClosurePtr k -> m ()
-retClosure = ret . closurePtr
+retClosure ptr = bitcast (closurePtr ptr) closureTyPtr >>= ret
 
 -------------------------------------------------------------------------------
