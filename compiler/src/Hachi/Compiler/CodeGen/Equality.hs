@@ -10,18 +10,17 @@ module Hachi.Compiler.CodeGen.Equality (
 import LLVM.AST
 import LLVM.AST.Constant
 import LLVM.AST.IntegerPredicate as LLVM
-import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Constant
 import Hachi.Compiler.CodeGen.Constant.ByteString
 import Hachi.Compiler.CodeGen.Constant.Data
+import Hachi.Compiler.CodeGen.Constant.List
+import Hachi.Compiler.CodeGen.Constant.Pair
 import Hachi.Compiler.CodeGen.Externals
+import Hachi.Compiler.CodeGen.IRBuilder as IR
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
-import Hachi.Compiler.CodeGen.Constant.Pair
-import Hachi.Compiler.CodeGen.Constant.List
-import Hachi.Compiler.Platform
 
 -------------------------------------------------------------------------------
 
@@ -83,14 +82,14 @@ eqPair x y = do
     p0x <- getFst p0
     p1x <- getFst p1
 
-    xeq <- call eqDataRef [(closurePtr p0x, []), (closurePtr p1x, [])]
+    xeq <- call eqDataRef [(closurePtr p0x, []), (closurePtr p1x, [])] plcCall
 
     -- retrieve the second component from each pair and check that they
     -- are the same
     p0y <- getSnd p0
     p1y <- getSnd p1
 
-    yeq <- call eqDataRef [(closurePtr p0y, []), (closurePtr p1y, [])]
+    yeq <- call eqDataRef [(closurePtr p0y, []), (closurePtr p1y, [])] plcCall
 
     -- succeed if both components are equal
     IR.and xeq yeq
@@ -183,7 +182,7 @@ eqList xEq xs ys = do
 -- | `eqData` is a computation which generates a function for comparing
 -- `Data` values for value equality.
 eqData :: (MonadCodeGen m, MonadIRBuilder m) => m Operand
-eqData = IR.function "eqData" [(closureTyPtr, "x"), (closureTyPtr, "y")] i1 $ \[x,y] -> do
+eqData = IR.function "eqData" [(closureTyPtr, "x"), (closureTyPtr, "y")] i1 plcFunOpts $ \[x,y] -> do
     -- force both arguments and obtain their values, which should be pointers
     -- to Data objects
     _ <- enterClosure (MkClosurePtr x) Nothing
@@ -216,7 +215,7 @@ eqData = IR.function "eqData" [(closureTyPtr, "x"), (closureTyPtr, "y")] i1 $ \[
     d1ptr <- loadDataPtr d1
 
     let callEqData a b =
-            call eqDataRef [(closurePtr a, []), (closurePtr b, [])]
+            call eqDataRef [(closurePtr a, []), (closurePtr b, [])] plcCall
 
     withDataTag d0 $ \case
         DataConstr -> do

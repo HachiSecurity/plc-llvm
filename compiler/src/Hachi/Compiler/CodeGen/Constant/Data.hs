@@ -15,13 +15,14 @@ module Hachi.Compiler.CodeGen.Constant.Data (
 
 import Control.Monad
 
-import LLVM.AST.Constant
-import LLVM.IRBuilder as IR
 import LLVM.AST
+import LLVM.AST.Constant
+import LLVM.AST.Linkage
 
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Globals
+import Hachi.Compiler.CodeGen.IRBuilder as IR
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
 
@@ -66,7 +67,8 @@ dataGlobal
     :: MonadModuleBuilder m
     => Name -> DataTag -> [Constant] -> m Constant
 dataGlobal name tag ps = do
-    _ <- global name dataTy $ Struct Nothing False (tagToConstant tag : ps)
+    _ <- global name dataTy (Struct Nothing False (tagToConstant tag : ps)) $
+            setLinkage Private
 
     pure $ GlobalReference dataTyPtr name
 

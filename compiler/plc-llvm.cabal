@@ -37,6 +37,7 @@ library
       Hachi.Compiler.CodeGen.Externals.GMP
       Hachi.Compiler.CodeGen.Externals.Utility
       Hachi.Compiler.CodeGen.Globals
+      Hachi.Compiler.CodeGen.IRBuilder
       Hachi.Compiler.CodeGen.Library
       Hachi.Compiler.CodeGen.Monad
       Hachi.Compiler.CodeGen.Types

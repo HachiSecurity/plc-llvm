@@ -1,4 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
@@ -20,7 +21,6 @@ import PlutusCore.Default
 import LLVM.AST
 import LLVM.AST.Constant
 import LLVM.AST.IntegerPredicate as LLVM
-import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Common
@@ -32,11 +32,11 @@ import Hachi.Compiler.CodeGen.Constant.List
 import Hachi.Compiler.CodeGen.Constant.Pair
 import Hachi.Compiler.CodeGen.Constant.Text
 import Hachi.Compiler.CodeGen.Equality
-import Hachi.Compiler.CodeGen.Globals
+import Hachi.Compiler.CodeGen.Externals qualified as E
+import Hachi.Compiler.CodeGen.Globals as G
+import Hachi.Compiler.CodeGen.IRBuilder as IR
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
-import qualified Hachi.Compiler.CodeGen.Externals as E
-import Hachi.Compiler.Platform
 
 -------------------------------------------------------------------------------
 
@@ -90,7 +90,7 @@ withCurried name ps@((sn,isTyVar):dyn) builder = do
     -- the first argument into scope and (if there is more than one parameter)
     -- returns a function that binds the next argument, and so on
     let staticParams = [(closureTyPtr, "this"), (closureTyPtr, mkParamName sn)]
-    _ <- IR.function (mkName entryName) staticParams closureTyPtr $
+    _ <- IR.function (mkName entryName) staticParams closureTyPtr plcFunOpts $
         \[_, arg] -> extendScope sn (MkClosurePtr arg) $ do
             compileTrace entryName []
 
@@ -694,7 +694,7 @@ equalsData =
 
         -- call the data equality function and construct a new dynamic closure
         -- for the resulting boolean value
-        r <- call cmpFun [(x, []), (y, [])]
+        r <- call cmpFun [(x, []), (y, [])] plcCall
         retConstDynamic @Bool r
 
 mkPairData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)

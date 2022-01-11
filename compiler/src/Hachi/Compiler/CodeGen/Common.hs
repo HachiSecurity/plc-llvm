@@ -15,9 +15,10 @@ import Data.String ( fromString )
 import qualified Data.Text as T
 
 import LLVM.AST
-import LLVM.IRBuilder as IR
+import LLVM.AST.Linkage
 
 import Hachi.Compiler.CodeGen.Externals
+import Hachi.Compiler.CodeGen.IRBuilder
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.Config
 
@@ -57,11 +58,13 @@ compileTrace msg xs = ifTracing $ do
     -- generate a fresh, global variable to store the string in
     name <- mkFresh "trace"
     (ptr, _) <- runIRBuilderT emptyIRBuilder $
-            globalStringPtr (msg <> "\n") (mkName name)
+        globalStringPtr (msg <> "\n") (mkName name) $
+        setLinkage Private
 
     -- call printf
     void $ call
-        (ConstantOperand printfRef) $
-        (ConstantOperand ptr, []) : [(x, []) | x <- xs]
+        (ConstantOperand printfRef)
+        ((ConstantOperand ptr, []) : [(x, []) | x <- xs])
+        id
 
 -------------------------------------------------------------------------------

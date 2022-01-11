@@ -31,22 +31,22 @@ import Data.Text.Encoding (encodeUtf8)
 import LLVM.AST as LLVM
 import LLVM.AST.Constant as C
 import LLVM.AST.IntegerPredicate as LLVM
-import LLVM.IRBuilder as IR
+import LLVM.AST.Linkage
 
 import PlutusCore as PLC
 import PlutusCore.Data as PLC
 
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Common
-import Hachi.Compiler.CodeGen.Globals
-import Hachi.Compiler.CodeGen.Monad
-import Hachi.Compiler.CodeGen.Types
-import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Constant.ByteString
 import Hachi.Compiler.CodeGen.Constant.Data
-import Hachi.Compiler.CodeGen.Constant.Pair
 import Hachi.Compiler.CodeGen.Constant.List
-import Hachi.Compiler.Platform
+import Hachi.Compiler.CodeGen.Constant.Pair
+import Hachi.Compiler.CodeGen.Externals
+import Hachi.Compiler.CodeGen.Globals as G
+import Hachi.Compiler.CodeGen.IRBuilder as IR
+import Hachi.Compiler.CodeGen.Monad
+import Hachi.Compiler.CodeGen.Types
 
 -------------------------------------------------------------------------------
 
@@ -110,7 +110,7 @@ instance CompileConstant Integer where
     compileConstant name val = do
         -- generate a global variable for the arbitrary precision integer
         let gmpName = mkName $ name <> "_gmp"
-        _ <- global gmpName gmpTy emptyGmpTy
+        _ <- global gmpName gmpTy emptyGmpTy $ setLinkage Private
         let gmpRef = GlobalReference gmpTyPtr gmpName
 
         -- the arbitrary precision integer needs to be initialised, but we
@@ -150,11 +150,12 @@ instance CompileConstant BS.ByteString where
         let arrTy = ArrayType (fromIntegral size) i8
         let arrName = mkName $ name <> "_data"
 
-        _ <- global arrName arrTy arr
+        _ <- global arrName arrTy arr $ setLinkage Private
         let dataRef = GlobalReference (ptrOf arrTy) arrName
 
-        _ <- global (mkName name) bytestringTy $
-            Struct Nothing False [Int 64 $ toInteger size, dataRef]
+        let bsVal = Struct Nothing False [Int 64 $ toInteger size, dataRef]
+
+        _ <- global (mkName name) bytestringTy bsVal $ setLinkage Private
 
         pure $ GlobalReference bytestringTyPtr (mkName name)
 
@@ -174,7 +175,7 @@ instance CompileConstant T.Text where
         let arr = Array i8 $ map (Int 8 . fromIntegral) bd
         let arrTy = ArrayType (genericLength bd) i8
 
-        _ <- global (mkName name) arrTy arr
+        _ <- global (mkName name) arrTy arr $ setLinkage Private
         pure $ GlobalReference (ptrOf arrTy) (mkName name)
 
     compileLoadConstant = loadFromClosure (ClosureFreeVar 0) (ptrOf i8)
@@ -292,7 +293,8 @@ instance (CompileConstant a, CompileConstant b) => CompileConstant (a,b) where
         yr <- compileSubConstant sndName y
 
         -- create a new global for the pair of pointer-sized values
-        _ <- global (mkName name) pairTy $ Struct Nothing False [xr, yr]
+        let pairVal = Struct Nothing False [xr, yr]
+        _ <- global (mkName name) pairTy pairVal $ setLinkage Private
 
         -- return a reference to the global
         pure $ GlobalReference pairTyPtr (mkName name)
@@ -336,7 +338,8 @@ instance CompileConstant a => CompileConstant [a] where
 
         -- create a new global for this cons cell comprised of the
         -- pointers to the head and tail
-        _ <- global (mkName name) listTy $ Struct Nothing False [xr, xsr]
+        let listVal = Struct Nothing False [xr, xsr]
+        _ <- global (mkName name) listTy listVal $ setLinkage Private
 
         -- return a reference to the global
         pure $ GlobalReference listTyPtr (mkName name)
@@ -391,7 +394,9 @@ compileConstEntry = do
         Nothing -> do
             -- generate the entry code
             let llvmName = mkName name
-            void $ IR.function llvmName [(closureTyPtr, "this"), (closureTyPtr, "unused")] closureTyPtr $
+            let entryParams = [(closureTyPtr, "this"), (closureTyPtr, "unused")]
+
+            void $ IR.function llvmName entryParams closureTyPtr plcFunOpts $
                 \[this, _] -> do
                     compileTrace name []
 
@@ -489,7 +494,7 @@ compileConstPrint ty bodyBuilder = do
         Just ref -> pure ref
         Nothing -> do
             -- generate the pretty-printing function
-            _ <- IR.function printName [(closureTyPtr, "this")] VoidType $
+            _ <- IR.function printName [(closureTyPtr, "this")] VoidType plcFunOpts $
                 \[this] -> do
                     compileTrace (show ty <> "_print") []
 

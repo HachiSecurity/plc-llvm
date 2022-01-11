@@ -22,22 +22,23 @@ import LLVM
 import LLVM.AST as LLVM
 import LLVM.AST.Constant
 import LLVM.AST.IntegerPredicate as LLVM
+import LLVM.AST.Linkage
 import LLVM.Context
 import LLVM.Target
-import LLVM.IRBuilder as IR
 
-import Hachi.Compiler.Config
-import Hachi.Compiler.FreeVars
 import Hachi.Compiler.CodeGen.Builtin
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Constant
 import Hachi.Compiler.CodeGen.Driver
 import Hachi.Compiler.CodeGen.Externals
-import Hachi.Compiler.CodeGen.Globals
+import Hachi.Compiler.CodeGen.Globals as G
+import Hachi.Compiler.CodeGen.IRBuilder as IR
 import Hachi.Compiler.CodeGen.Library
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
+import Hachi.Compiler.Config
+import Hachi.Compiler.FreeVars
 
 -------------------------------------------------------------------------------
 
@@ -197,7 +198,7 @@ generateEntry outPath body = do
 
     if cfgLibrary
     then do
-        void $ IR.function "plc_entry" [] closureTyPtr $ \_ -> do
+        void $ IR.function "plc_entry" [] closureTyPtr id $ \_ -> do
             ptr <- commonEntry body
 
             ret $ closurePtr ptr
@@ -209,12 +210,12 @@ generateEntry outPath body = do
             "#include \"rts.h\"\n\n" <>
             "extern closure *plc_entry();\n\n" <>
             api <> "\n"
-    else void $ IR.function "main" [] VoidType $ \_ -> do
+    else void $ IR.function "main" [] VoidType id $ \_ -> do
         ptr <- commonEntry body
 
         -- call the print code of the resulting closure
         printFun <- loadFromClosure ClosurePrint printFnTy ptr
-        void $ call printFun [(closurePtr ptr, [])]
+        void $ call printFun [(closurePtr ptr, [])] plcCall
 
         void $ printf nlRef []
 
@@ -237,7 +238,8 @@ compileProgram cfg outPath (Program _ _ term) = do
     _ <- typedef "mpz_t" $ Just gmpTyDef
 
     (errorMsg, _) <- runIRBuilderT emptyIRBuilder $
-        globalStringPtr "Something has gone wrong.\n" "errorMsg"
+        globalStringPtr "Something has gone wrong.\n" "errorMsg" $
+        setLinkage LinkOnce
 
     -- initialise the compilation context with empty counters
     counter <- liftIO $ newIORef M.empty

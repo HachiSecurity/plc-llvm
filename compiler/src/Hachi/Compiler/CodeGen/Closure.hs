@@ -44,16 +44,17 @@ import Data.Word
 
 import LLVM.AST
 import LLVM.AST.AddrSpace
+import LLVM.AST.CallingConvention
 import LLVM.AST.Constant as C
+import LLVM.AST.Linkage
 import LLVM.AST.Typed
-import LLVM.IRBuilder as IR
 
 import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Externals
-import Hachi.Compiler.CodeGen.Globals
+import Hachi.Compiler.CodeGen.Globals as G
+import Hachi.Compiler.CodeGen.IRBuilder as IR
 import Hachi.Compiler.CodeGen.Monad
 import Hachi.Compiler.CodeGen.Types
-import Hachi.Compiler.Platform
 
 -------------------------------------------------------------------------------
 
@@ -140,10 +141,11 @@ compileClosure isPoly name codePtr printPtr fvs = do
             , IntegerType bits
             , ArrayType (fromIntegral $ length fvs) (ptrOf i8)
             ]
+    let closureVal = Struct Nothing False $
+            codePtr : printPtr : Int bits (toInteger $ fromEnum isPoly) :
+            [Array (ptrOf i8) $ map (`C.BitCast` ptrOf i8) fvs]
 
-    void $ global closureName closureType $ Struct Nothing False $
-        codePtr : printPtr : Int bits (toInteger $ fromEnum isPoly) :
-        [Array (ptrOf i8) $ map (`C.BitCast` ptrOf i8) fvs]
+    void $ global closureName closureType closureVal $ setLinkage Private
 
     pure $ MkStaticClosurePtr $
         GlobalReference (PointerType closureType $ AddrSpace 0) closureName
@@ -206,8 +208,9 @@ compileDynamicClosure
 compileDynamicClosure isDelay name fvs var codeFun = do
     let entryName = mkName $ name <> "_entry"
     let entryTy = mkEntryTy 1
+    let entryParams = [(closureTyPtr, "this"), (closureTyPtr, mkParamName var)]
 
-    _ <- lift $ IR.function entryName [(closureTyPtr, "this"), (closureTyPtr, mkParamName var)] closureTyPtr $
+    _ <- lift $ IR.function entryName entryParams closureTyPtr plcFunOpts $
         \[this, arg] -> extendScope var (MkClosurePtr arg) $ do
             compileTrace (name <> "_entry") []
 
@@ -255,9 +258,9 @@ compileFunPrint = do
         Nothing -> do
             let printName = mkName "Function_print"
 
-            _ <- IR.function printName [(closureTyPtr, "this")] VoidType $ \[_] -> do
+            _ <- IR.function printName [(closureTyPtr, "this")] VoidType plcFunOpts $ \[_] -> do
                 compileTrace "Function_print" []
-                void $ call (ConstantOperand printfRef) [(funErrRef, [])]
+                void $ call (ConstantOperand printfRef) [(funErrRef, [])] plcCall
                 retVoid
 
             let ref = GlobalReference printFnTy printName
@@ -285,7 +288,7 @@ loadFromClosure prop ty ptr = do
 -- @component@ from the closure represented by @ptr@, assumes it is a function,
 -- and then calls it with @args@ as arguments.
 callClosure
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    :: (MonadFail m, MonadModuleBuilder m, MonadIRBuilder m)
     => ClosureComponent
     -> ClosurePtr k
     -> [Operand]
@@ -304,13 +307,12 @@ callClosure prop closure argv = do
         then bitcast arg closureTyPtr
         else pure arg
 
-    fmap MkClosurePtr <$> call entry $
-        (ptr, []) : [(arg, []) | arg <- castArgs]
+    MkClosurePtr <$> call entry ((ptr, []) : [(arg, []) | arg <- castArgs]) plcCall
 
 -- `enterClosure` @ptr args@ enters the closure represented by @ptr@ and
 -- provides the arguments given by @args@.
 enterClosure
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    :: (MonadFail m, MonadModuleBuilder m, MonadIRBuilder m)
     => ClosurePtr k -> Maybe Operand -> m (ClosurePtr 'DynamicPtr)
 enterClosure ptr mArg = callClosure ClosureCode ptr [arg]
     where arg = fromMaybe (ConstantOperand $ Null closureTyPtr) mArg
@@ -319,7 +321,7 @@ enterClosure ptr mArg = callClosure ClosureCode ptr [arg]
 -- program to enter the closure represented by @funClosure@ with the argument
 -- given by @argClosure@.
 compileApply
-    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    :: (MonadFail m, MonadModuleBuilder m, MonadIRBuilder m)
     => ClosurePtr f -> ClosurePtr x -> m (ClosurePtr 'DynamicPtr)
 compileApply f x =
     -- enter the closure pointed to by f, giving it a pointer to another
@@ -331,7 +333,9 @@ compileApply f x =
 -- generate code which prints an error at runtime. For convenience, we cast
 -- the type of the resulting `Operand` to @type@, which will normally be
 -- `closureTyPtr`.
-lookupVar :: (MonadCodeGen m, MonadIRBuilder m) => T.Text -> Type -> m Operand
+lookupVar
+    :: (MonadCodeGen m, MonadIRBuilder m, MonadFail m)
+    => T.Text -> Type -> m Operand
 lookupVar var ty = do
     name <- mkFresh "var"
 
@@ -347,7 +351,8 @@ lookupVar var ty = do
         Nothing -> do
             -- generate code that prints a suitable error message
             ptr <- globalStringPtr
-                (T.unpack var <> " is not in scope.\n") (mkName name)
+                (T.unpack var <> " is not in scope.\n") (mkName name) $
+                setLinkage Private
             void $ printf (ConstantOperand ptr) []
             void $ exit (-1)
 

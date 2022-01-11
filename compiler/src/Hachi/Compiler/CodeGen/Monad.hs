@@ -65,13 +65,16 @@ newtype CodeGen m a = MkCodeGen { runCodeGen :: ReaderT CodeGenSt m a }
     deriving ( Functor, Applicative, Monad, MonadIO, MonadFix
              , MonadReader CodeGenSt
              , MonadModuleBuilder, MonadIRBuilder
+             , MonadFail
              )
 
 -- | A constraint synonym for the type class constraints we usually expect our
 -- code generation monad to satisfy.
 type MonadCodeGen :: (* -> *) -> Constraint
 type MonadCodeGen m =
-    (MonadIO m, MonadModuleBuilder m, MonadReader CodeGenSt m, MonadFix m)
+    ( MonadIO m, MonadFail m, MonadModuleBuilder m
+    , MonadReader CodeGenSt m, MonadFix m
+    )
 
 -- | `mkFresh` @prefix@ generates a fresh name starting with @prefix@.
 mkFresh :: (MonadReader CodeGenSt m, MonadIO m) => String -> m String
