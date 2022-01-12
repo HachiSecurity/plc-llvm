@@ -214,9 +214,7 @@ generateEntry outPath body = do
         ptr <- commonEntry body
 
         -- call the print code of the resulting closure
-        printFun <- loadFromClosure ClosurePrint printFnTy ptr
-        void $ call printFun [(closurePtr ptr, [])] plcCall
-
+        void $ callClosure ClosurePrint ptr []
         void $ printf nlRef []
 
         retVoid
