@@ -210,6 +210,8 @@ call fun args f = do
             emitCallWithResult instr r
         Right (PointerType (FunctionType r _ _) _) ->
             emitCallWithResult instr r
-        _ -> fail "Cannot call non-function (Malformed AST)."
+        ty -> fail $
+            "[CodeGen:call] Cannot call non-function (Malformed AST):\n" ++
+            show ty
 
 -------------------------------------------------------------------------------
