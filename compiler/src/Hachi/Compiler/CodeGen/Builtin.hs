@@ -517,7 +517,7 @@ trace =
     in withCurried "trace" ps $ \[_,txt,a] -> do
         -- this should be some string, so let's just call its pretty-printing
         -- function to render it
-        _ <- callClosure ClosurePrint (MkClosurePtr txt) []
+        printClosure (MkClosurePtr txt)
         -- then add a \n character and return the pointer to the other
         -- argument as the result of this built-in
         _ <- E.printf nlRef []

@@ -261,7 +261,7 @@ instance CompileConstant PLC.Data where
         let handleCase ref = do
                 _ <- printf ref []
                 cls <- loadDataPtr ptr
-                _ <- callClosure ClosurePrint cls []
+                printClosure cls
                 retVoid
 
         -- depending on the constructor tag, use the relevant pretty-printer
@@ -269,10 +269,10 @@ instance CompileConstant PLC.Data where
             DataConstr -> do
                 _ <- printf dataConstrRef []
                 tag <- loadConstrTag ptr
-                _ <- callClosure ClosurePrint tag []
+                printClosure tag
                 _ <- printf spaceRef []
                 cls <- loadDataPtr ptr
-                _ <- callClosure ClosurePrint cls []
+                printClosure cls
                 retVoid
             DataMap -> handleCase dataMapRef
             DataList -> handleCase dataListRef
@@ -312,12 +312,12 @@ instance (CompileConstant a, CompileConstant b) => CompileConstant (a,b) where
         -- both components must be pointers to closures; retrieve them and
         -- call their respective pretty-printing functions
         x <- getFst ptr
-        _ <- callClosure ClosurePrint x []
+        printClosure x
 
         void $ printf commaRef []
 
         y <- getSnd ptr
-        _ <- callClosure ClosurePrint y []
+        printClosure y
 
         -- print the closing bracket
         void $ printf closeParenRef []
@@ -359,12 +359,12 @@ instance CompileConstant a => CompileConstant [a] where
             -- list is a cons cell: both components are pointers to closures;
             -- retrieve them and call their respective pretty-printing functions
             x <- getHead ptr
-            _ <- callClosure ClosurePrint x []
+            printClosure x
 
             _ <- printf consRef []
 
             xs <- getTail ptr
-            _ <- callClosure ClosurePrint xs []
+            printClosure xs
 
             _ <- printf closeParenRef []
 
@@ -394,7 +394,7 @@ compileConstEntry = do
         Nothing -> do
             -- generate the entry code
             let llvmName = mkName name
-            let entryParams = [(closureTyPtr, "this"), (closureTyPtr, "unused")]
+            let entryParams = clsEntryParams "unused"
 
             void $ IR.function llvmName entryParams closureTyPtr plcFunOpts $
                 \[this, _] -> do

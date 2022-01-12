@@ -9,6 +9,7 @@ module Hachi.Compiler.CodeGen.Closure (
     -- * Creating closures
     mkEntryTy,
     clsEntryTy,
+    clsEntryParams,
     varEntryTy,
     printFnTy,
     mkClosureName,
@@ -22,6 +23,7 @@ module Hachi.Compiler.CodeGen.Closure (
     loadFromClosure,
     callClosure,
     enterClosure,
+    printClosure,
     compileApply,
     lookupVar,
 
@@ -111,9 +113,19 @@ mkEntryTy :: Int -> Type
 mkEntryTy arity = ptrOf $ FunctionType closureTyPtr params False
     where params = closureTyPtr : replicate arity closureTyPtr
 
+-- | `clsParamTys` is the list of parameter `Type`s for closure
+-- entry functions.
+clsParamTys :: [Type]
+clsParamTys = [closureTyPtr, closureTyPtr]
+
 -- | `clsEntryTy` is the `Type` of closure entry functions.
 clsEntryTy :: Type
-clsEntryTy = mkEntryTy 1
+clsEntryTy = ptrOf $ FunctionType closureTyPtr clsParamTys False
+
+-- | `clsEntryParams` @varName@ constructs a list of parameters for a closure's
+-- entry function, where @varName@ is the name of the variable being bound.
+clsEntryParams :: T.Text -> [(Type, ParameterName)]
+clsEntryParams var = zip clsParamTys ["this", mkParamName var]
 
 varEntryTy :: Type
 varEntryTy = mkEntryTy 1
@@ -296,26 +308,32 @@ callClosure
 callClosure prop closure argv = do
     let ty = fnTyForComponent prop
     entry <- loadFromClosure prop ty closure
-
     ptr <- bitcast (closurePtr closure) closureTyPtr
 
-    -- make sure that the arguments are all closure*
-    castArgs <- forM argv $ \arg -> do
-        argTy <- typeOf arg
+    let callArgs = (ptr, []) : [(arg, []) | arg <- argv]
 
-        if argTy /= Right closureTyPtr
-        then bitcast arg closureTyPtr
-        else pure arg
-
-    MkClosurePtr <$> call entry ((ptr, []) : [(arg, []) | arg <- castArgs]) plcCall
+    MkClosurePtr <$> call entry callArgs plcCall
 
 -- `enterClosure` @ptr args@ enters the closure represented by @ptr@ and
 -- provides the arguments given by @args@.
 enterClosure
     :: (MonadFail m, MonadModuleBuilder m, MonadIRBuilder m)
     => ClosurePtr k -> Maybe Operand -> m (ClosurePtr 'DynamicPtr)
-enterClosure ptr mArg = callClosure ClosureCode ptr [arg]
+enterClosure ptr mArg = do
+    argTy <- typeOf arg
+    targ <-
+        if argTy /= Right closureTyPtr
+        then bitcast arg closureTyPtr
+        else pure arg
+    callClosure ClosureCode ptr [targ]
     where arg = fromMaybe (ConstantOperand $ Null closureTyPtr) mArg
+
+-- | `printClosure` @ptr@ invokes the pretty-printing function of the closure
+-- represented by @ptr@.
+printClosure
+    :: (MonadFail m, MonadModuleBuilder m, MonadIRBuilder m)
+    => ClosurePtr k -> m ()
+printClosure ptr = void $ callClosure ClosurePrint ptr []
 
 -- | `compileApply` @funClosure argClosure@ generates code which causes the
 -- program to enter the closure represented by @funClosure@ with the argument
@@ -362,7 +380,7 @@ lookupVar var ty = do
         Just ptr -> do
             compileTrace ("Found " <> T.unpack var <> " in " <> name) []
             ifTracing $ do
-                void $ callClosure ClosurePrint ptr []
+                printClosure ptr
                 void $ printf nlRef []
             bitcast (closurePtr ptr) ty
 

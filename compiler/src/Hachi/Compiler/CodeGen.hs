@@ -214,7 +214,7 @@ generateEntry outPath body = do
         ptr <- commonEntry body
 
         -- call the print code of the resulting closure
-        void $ callClosure ClosurePrint ptr []
+        printClosure ptr
         void $ printf nlRef []
 
         retVoid
