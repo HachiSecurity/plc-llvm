@@ -385,7 +385,11 @@ lookupVar var ty = do
             bitcast (closurePtr ptr) ty
 
 -- | `retClosure` @closurePtr@ returns the pointer represented by @closurePtr@.
-retClosure :: MonadIRBuilder m => ClosurePtr k -> m ()
-retClosure ptr = bitcast (closurePtr ptr) closureTyPtr >>= ret
+retClosure :: (MonadModuleBuilder m, MonadIRBuilder m) => ClosurePtr k -> m ()
+retClosure ptr = do
+    tyr <- typeOf $ closurePtr ptr
+    case tyr of
+        Right ty | ty == closureTyPtr -> ret $ closurePtr ptr
+        _ -> bitcast (closurePtr ptr) closureTyPtr >>= ret
 
 -------------------------------------------------------------------------------
