@@ -53,9 +53,11 @@ library
       DataKinds
       FlexibleContexts
       GADTs
+      ImportQualifiedPost
       KindSignatures
       OverloadedStrings
       StandaloneKindSignatures
+      TypeApplications
   ghc-options: -Werror=missing-fields -Werror=missing-methods -Wall
   build-depends:
       base
@@ -89,9 +91,11 @@ executable plc-llvm
       DataKinds
       FlexibleContexts
       GADTs
+      ImportQualifiedPost
       KindSignatures
       OverloadedStrings
       StandaloneKindSignatures
+      TypeApplications
   ghc-options: -Werror=missing-fields -Werror=missing-methods -Wall
   build-depends:
       base
@@ -133,9 +137,11 @@ test-suite plc-llvm-test
       DataKinds
       FlexibleContexts
       GADTs
+      ImportQualifiedPost
       KindSignatures
       OverloadedStrings
       StandaloneKindSignatures
+      TypeApplications
   ghc-options: -Werror=missing-fields -Werror=missing-methods -Wall
   build-depends:
       base
@@ -177,9 +183,11 @@ benchmark plc-llvm-benchmark
       DataKinds
       FlexibleContexts
       GADTs
+      ImportQualifiedPost
       KindSignatures
       OverloadedStrings
       StandaloneKindSignatures
+      TypeApplications
   ghc-options: -Werror=missing-fields -Werror=missing-methods
   build-depends:
       base

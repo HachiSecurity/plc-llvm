@@ -29,9 +29,11 @@ default-extensions:
 - DataKinds
 - FlexibleContexts
 - GADTs
+- ImportQualifiedPost
 - KindSignatures
 - OverloadedStrings
 - StandaloneKindSignatures
+- TypeApplications
 
 ghc-options:
 - -Werror=missing-fields
