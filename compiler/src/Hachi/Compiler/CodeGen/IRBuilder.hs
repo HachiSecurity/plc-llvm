@@ -19,7 +19,9 @@ module Hachi.Compiler.CodeGen.IRBuilder (
 
     -- * Instructions
     plcCall,
-    call
+    call,
+    castIfNeeded,
+    castToClosure
 ) where
 
 -------------------------------------------------------------------------------
@@ -213,5 +215,24 @@ call fun args f = do
         ty -> fail $
             "[CodeGen:call] Cannot call non-function (Malformed AST):\n" ++
             show ty
+
+-- | `castIfNeeded` @type ptr@ casts the type of @ptr@ to @type@, but only if
+-- it is not already @type@.
+castIfNeeded
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Type -> Operand -> m Operand
+castIfNeeded exTy ptr = do
+    tyr <- typeOf ptr
+
+    case tyr of
+        Right ty | ty == exTy -> pure ptr
+        _ -> bitcast ptr exTy
+
+-- | `castToClosure` @ptr@ casts the type of @ptr@ to @closureTyPtr@, but only
+-- if it is not already @closureTyPtr@.
+castToClosure
+    :: (MonadModuleBuilder m, MonadIRBuilder m)
+    => Operand -> m Operand
+castToClosure = castIfNeeded closureTyPtr
 
 -------------------------------------------------------------------------------

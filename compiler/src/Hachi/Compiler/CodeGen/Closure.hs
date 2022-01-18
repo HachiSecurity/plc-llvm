@@ -290,10 +290,10 @@ loadFromClosure
     => ClosureComponent -> Type -> ClosurePtr k -> m Operand
 loadFromClosure prop ty ptr = do
     let ix = indicesForComponent prop
-    ptrt <- bitcast (closurePtr ptr) closureTyPtr
+    ptrt <- castToClosure (closurePtr ptr)
     addr <- gep ptrt $ ConstantOperand (Int 32 0) : ix
 
-    r <- bitcast addr (ptrOf ty)
+    r <- castIfNeeded (ptrOf ty) addr
     load r 0
 
 -- | `callClosure` @component ptr args@ loads the component described by
@@ -308,7 +308,7 @@ callClosure
 callClosure prop closure argv = do
     let ty = fnTyForComponent prop
     entry <- loadFromClosure prop ty closure
-    ptr <- bitcast (closurePtr closure) closureTyPtr
+    ptr <- castToClosure (closurePtr closure)
 
     let callArgs = (ptr, []) : [(arg, []) | arg <- argv]
 
@@ -382,14 +382,10 @@ lookupVar var ty = do
             ifTracing $ do
                 printClosure ptr
                 void $ printf nlRef []
-            bitcast (closurePtr ptr) ty
+            castIfNeeded ty (closurePtr ptr)
 
 -- | `retClosure` @closurePtr@ returns the pointer represented by @closurePtr@.
 retClosure :: (MonadModuleBuilder m, MonadIRBuilder m) => ClosurePtr k -> m ()
-retClosure ptr = do
-    tyr <- typeOf $ closurePtr ptr
-    case tyr of
-        Right ty | ty == closureTyPtr -> ret $ closurePtr ptr
-        _ -> bitcast (closurePtr ptr) closureTyPtr >>= ret
+retClosure ptr = castToClosure (closurePtr ptr) >>= ret
 
 -------------------------------------------------------------------------------
