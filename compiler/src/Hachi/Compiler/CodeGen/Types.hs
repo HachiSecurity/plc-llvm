@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
 -- | This module contains various LLVM `Type` values used in the code
@@ -53,7 +55,7 @@ module Hachi.Compiler.CodeGen.Types (
 
     PtrKind(..),
     ClosurePtr(..),
-    closurePtr,
+    FromClosurePtr(..),
     toDynamicPtr
 ) where
 
@@ -233,10 +235,17 @@ data ClosurePtr (k :: PtrKind) where
 deriving instance Eq (ClosurePtr k)
 deriving instance Show (ClosurePtr k)
 
--- | `closurePtr` @closurePtr@ returns @closurePtr@ as an `Operand` value.
-closurePtr :: ClosurePtr k -> Operand
-closurePtr (MkClosurePtr ptr) = ptr
-closurePtr (MkStaticClosurePtr ptr) = ConstantOperand ptr
+class FromClosurePtr k to where
+    -- | `closurePtr` @closurePtr@ returns @closurePtr@'s underlying
+    -- LLVM representation.
+    closurePtr :: ClosurePtr k -> to
+
+instance FromClosurePtr 'StaticPtr Constant where
+    closurePtr (MkStaticClosurePtr c) = c
+
+instance FromClosurePtr k Operand where
+    closurePtr (MkClosurePtr ptr) = ptr
+    closurePtr (MkStaticClosurePtr c) = ConstantOperand c
 
 -- | `toDynamicPtr` @closurePtr@ turns a closure pointer into a dynamic
 -- closure pointer. This is conceptually a no-op and just allows us to forget
