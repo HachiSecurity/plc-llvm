@@ -238,11 +238,13 @@ closurePtr :: ClosurePtr k -> Operand
 closurePtr (MkClosurePtr ptr) = ptr
 closurePtr (MkStaticClosurePtr ptr) = ConstantOperand ptr
 
--- | `toDynamicPtr` @closurePtr@ turns a static closure pointer into a dynamic
+-- | `toDynamicPtr` @closurePtr@ turns a closure pointer into a dynamic
 -- closure pointer. This is conceptually a no-op and just allows us to forget
--- information in case we only need a `DynamicPtr`, but have a `StaticPtr`.
+-- information in case we only need a `DynamicPtr`, but have a `StaticPtr`
+-- or don't know which one we have.
 -- Static pointers are always acceptable where dynamic pointers are expected.
-toDynamicPtr :: ClosurePtr 'StaticPtr -> ClosurePtr 'DynamicPtr
+toDynamicPtr :: ClosurePtr k -> ClosurePtr 'DynamicPtr
 toDynamicPtr (MkStaticClosurePtr ptr) = MkClosurePtr (ConstantOperand ptr)
+toDynamicPtr (MkClosurePtr ptr) = MkClosurePtr ptr
 
 -------------------------------------------------------------------------------
