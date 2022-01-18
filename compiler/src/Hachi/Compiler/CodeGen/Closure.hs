@@ -151,11 +151,11 @@ compileClosure isPoly name codePtr printPtr fvs = do
     let closureName = mkClosureName name
     let closureType = StructureType False
             [ clsEntryTy, printFnTy
-            , IntegerType bits
+            , iHost
             , ArrayType (fromIntegral $ length fvs) (ptrOf i8)
             ]
     let closureVal = Struct Nothing False $
-            codePtr : printPtr : Int bits (toInteger $ fromEnum isPoly) :
+            codePtr : printPtr : Int platformIntSize (toInteger $ fromEnum isPoly) :
             [Array (ptrOf i8) $ map (`C.BitCast` ptrOf i8) fvs]
 
     void $ global closureName closureType closureVal $ setLinkage Private
