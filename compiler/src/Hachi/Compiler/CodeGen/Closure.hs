@@ -65,6 +65,7 @@ import Hachi.Compiler.CodeGen.Types
 --
 -- - A pointer to the code for the closure.
 -- - A pointer to the print code for the closure.
+-- - Closure flags.
 -- - Zero or more free variables. (LLVM will accept more elements than the
 -- array's indicated size) https://llvm.org/docs/LangRef.html#array-type
 closureTyDef :: Type
