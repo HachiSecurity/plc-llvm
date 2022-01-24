@@ -53,12 +53,12 @@ mkClosureVar n = (nameString n, False)
 -- @term@ is guaranteed not to generate code which performs calls to PLC
 -- functions.
 isSimpleTerm :: Term UPLC.Name DefaultUni DefaultFun () -> Bool
-isSimpleTerm (Error _) = True
-isSimpleTerm (Var _ _) = True
-isSimpleTerm (LamAbs _ _ _) = True
-isSimpleTerm (Delay _ _) = True
-isSimpleTerm (Constant _ _) = True
-isSimpleTerm (Builtin _ _) = True
+isSimpleTerm Error{} = True
+isSimpleTerm Var{} = True
+isSimpleTerm LamAbs{} = True
+isSimpleTerm Delay{} = True
+isSimpleTerm Constant{} = True
+isSimpleTerm Builtin{} = True
 isSimpleTerm _ = False
 
 -- | `compileForce` @name continuation closure terminator@ generates code
