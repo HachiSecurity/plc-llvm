@@ -31,6 +31,7 @@ library
       Hachi.Compiler.CodeGen.Constant.Pair
       Hachi.Compiler.CodeGen.Constant.String
       Hachi.Compiler.CodeGen.Constant.Text
+      Hachi.Compiler.CodeGen.CPS
       Hachi.Compiler.CodeGen.Driver
       Hachi.Compiler.CodeGen.Equality
       Hachi.Compiler.CodeGen.Externals

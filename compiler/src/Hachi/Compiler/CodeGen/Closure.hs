@@ -52,7 +52,6 @@ import LLVM.AST
 import LLVM.AST.AddrSpace
 import LLVM.AST.Constant as C
 import LLVM.AST.Linkage
-import LLVM.AST.Typed
 
 import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Externals
@@ -120,7 +119,7 @@ mkEntryTy arity = ptrOf $ FunctionType closureTyPtr params False
 -- | `clsParamTys` is the list of parameter `Type`s for closure
 -- entry functions.
 clsParamTys :: [Type]
-clsParamTys = [closureTyPtr, closureTyPtr]
+clsParamTys = [closureTyPtr, closureTyPtr, contTyPtr]
 
 -- | `clsEntryTy` is the `Type` of closure entry functions.
 clsEntryTy :: Type
@@ -129,7 +128,7 @@ clsEntryTy = ptrOf $ FunctionType closureTyPtr clsParamTys False
 -- | `clsEntryParams` @varName@ constructs a list of parameters for a closure's
 -- entry function, where @varName@ is the name of the variable being bound.
 clsEntryParams :: T.Text -> [(Type, ParameterName)]
-clsEntryParams var = zip clsParamTys ["this", mkParamName var]
+clsEntryParams var = zip clsParamTys ["this", mkParamName var, "k"]
 
 varEntryTy :: Type
 varEntryTy = mkEntryTy 1
@@ -148,7 +147,11 @@ mkClosureName name = mkName $ name <> "_closure"
 -- variable representing a closure for @name@.
 compileClosure
     :: MonadModuleBuilder m
-    => Bool -> String -> Constant -> Constant -> [Constant]
+    => Bool
+    -> String
+    -> Constant
+    -> Constant
+    -> [Constant]
     -> m (ClosurePtr 'StaticPtr)
 compileClosure isPoly name codePtr printPtr fvs = do
     let closureName = mkClosureName name
@@ -190,13 +193,24 @@ class HasFreeVars ptr where
 instance HasFreeVars (ClosurePtr k) where
     loadFreeVar this ty i = loadFromClosure (ClosureFreeVar i) ty this
 
+instance HasFreeVars Continuation where
+    loadFreeVar this ty i = do
+        ptr <- castIfNeeded contTyPtr $ contPtr this
+        addr <- gep ptr
+            [ ConstantOperand (Int 32 0)
+            , ConstantOperand (Int 32 1)
+            , ConstantOperand (Int 32 i)
+            ]
+        load addr 0 >>= castIfNeeded (ptrOf ty)
+
 -- | `allocateClosure` @isDelay codePtr printPtr freeVars@ allocates a closure
 -- with enough space to store all of @freeVars@ in addition to the code
 -- pointers. The code pointers are free variables are stored in the closure and
 -- the pointer to the closure is returned.
 allocateClosure
     :: (MonadCodeGen m, MonadIRBuilder m)
-    => Bool -> Constant -> Constant -> [Operand] -> m (ClosurePtr 'DynamicPtr)
+    => Bool -> Constant -> Constant -> [Operand]
+    -> m (ClosurePtr 'DynamicPtr)
 allocateClosure isDelay codePtr printPtr fvs = do
     -- allocate enough space for the closure on the heap:
     -- 2 code pointers + one pointer for each free variable
@@ -257,14 +271,14 @@ withFreeVars this m = do
 compileDynamicClosure
     :: MonadCodeGen m
     => Bool -> String -> S.Set (T.Text, Bool) -> T.Text
-    -> (Operand -> Operand -> IRBuilderT m ())
+    -> (Operand -> Operand -> Continuation -> IRBuilderT m ())
     -> IRBuilderT m (ClosurePtr 'DynamicPtr)
 compileDynamicClosure isDelay name fvs var codeFun = do
     let entryName = mkName $ name <> "_entry"
     let entryParams = clsEntryParams var
 
     _ <- lift $ IR.function entryName entryParams closureTyPtr plcFunOpts $
-        \[this, arg] ->
+        \[this, arg, k] ->
             localFreeVars fvs $
             extendScope var (LocalClosure $ MkClosurePtr arg) $ do
             compileTrace (name <> "_entry") []
@@ -272,7 +286,7 @@ compileDynamicClosure isDelay name fvs var codeFun = do
             -- update the local environment with mappings to the free variables
             -- we have obtained from the closure represented by `this` and
             -- compile the body of the function
-            withFreeVars (MkClosurePtr this) $ codeFun this arg
+            withFreeVars (MkClosurePtr this) $ codeFun this arg (MkCont k)
 
     let codePtr = GlobalReference clsEntryTy entryName
 
@@ -353,14 +367,10 @@ callClosure prop closure argv = do
 -- provides the arguments given by @args@.
 enterClosure
     :: (MonadFail m, MonadModuleBuilder m, MonadIRBuilder m)
-    => ClosurePtr k -> Maybe Operand -> m (ClosurePtr 'DynamicPtr)
-enterClosure ptr mArg = do
-    argTy <- typeOf arg
-    targ <-
-        if argTy /= Right closureTyPtr
-        then bitcast arg closureTyPtr
-        else pure arg
-    callClosure ClosureCode ptr [targ]
+    => ClosurePtr k -> Continuation -> Maybe Operand -> m (ClosurePtr 'DynamicPtr)
+enterClosure ptr k mArg = do
+    targ <- castToClosure arg
+    callClosure ClosureCode ptr [targ, contPtr k]
     where arg = fromMaybe (ConstantOperand $ Null closureTyPtr) mArg
 
 -- | `printClosure` @ptr@ invokes the pretty-printing function of the closure
@@ -375,11 +385,14 @@ printClosure ptr = void $ callClosure ClosurePrint ptr []
 -- given by @argClosure@.
 compileApply
     :: (MonadFail m, MonadModuleBuilder m, MonadIRBuilder m)
-    => ClosurePtr f -> ClosurePtr x -> m (ClosurePtr 'DynamicPtr)
-compileApply f x =
+    => Continuation
+    -> ClosurePtr f
+    -> ClosurePtr x
+    -> m (ClosurePtr 'DynamicPtr)
+compileApply k f x =
     -- enter the closure pointed to by f, giving it a pointer to another
     -- closure x as argument
-    enterClosure f $ Just (closurePtr x)
+    enterClosure f k $ Just (closurePtr x)
 
 -- | `lookupVar` @name type@ generates code which retrieves the variable named
 -- @name@ from the local environment. If the variable is not in scope, we

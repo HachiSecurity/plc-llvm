@@ -42,6 +42,7 @@ import Hachi.Compiler.CodeGen.Constant.ByteString
 import Hachi.Compiler.CodeGen.Constant.Data
 import Hachi.Compiler.CodeGen.Constant.List
 import Hachi.Compiler.CodeGen.Constant.Pair
+import Hachi.Compiler.CodeGen.CPS
 import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Globals as G
 import Hachi.Compiler.CodeGen.IRBuilder as IR
@@ -397,7 +398,7 @@ compileConstEntry = do
             let entryParams = clsEntryParams "unused"
 
             void $ IR.function llvmName entryParams closureTyPtr plcFunOpts $
-                \[this, _] -> do
+                \[this, _, k] -> do
                     compileTrace name []
 
                     v <- compileLoadConstant @a $ MkClosurePtr this
@@ -405,7 +406,8 @@ compileConstEntry = do
                     ptr <- bitcast vc (ptrOf i8)
                     store returnRef 0 ptr
 
-                    ret this
+                    r <- callCont (MkCont k) this
+                    retClosure r
 
             -- construct a reference to the entry code and store it in the
             -- global lookup table
@@ -472,9 +474,13 @@ compileConstDynamic val = do
 -- new closure.
 retConstDynamic
     :: forall a m. (MonadCodeGen m, MonadIRBuilder m, CompileConstant a)
-    => Operand
+    => Continuation
+    -> Operand
     -> m ()
-retConstDynamic val = compileConstDynamic @a val >>= retClosure
+retConstDynamic k val =
+    compileConstDynamic @a val >>=
+    (callCont k . closurePtr) >>=
+    retClosure
 
 -- | `compileConstPrint` @name builder@ compiles a print function for a
 -- constant which loads the constant value from the closure using @builder@.
@@ -526,7 +532,7 @@ loadConstVal ty = do
     -- we then cast it to a pointer of the appropriate type we want and load
     -- the corresponding value
     if isPtr ty
-    then bitcast ptr ty
+    then castIfNeeded ty ptr
     else ptrtoint ptr ty
 
 -------------------------------------------------------------------------------

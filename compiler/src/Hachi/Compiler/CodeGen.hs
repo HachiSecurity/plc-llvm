@@ -31,6 +31,7 @@ import Hachi.Compiler.CodeGen.Builtin
 import Hachi.Compiler.CodeGen.Closure
 import Hachi.Compiler.CodeGen.Common
 import Hachi.Compiler.CodeGen.Constant
+import Hachi.Compiler.CodeGen.CPS
 import Hachi.Compiler.CodeGen.Driver
 import Hachi.Compiler.CodeGen.Externals
 import Hachi.Compiler.CodeGen.Globals as G
@@ -47,14 +48,64 @@ import Hachi.Compiler.FreeVars
 mkClosureVar :: UPLC.Name -> (T.Text, Bool)
 mkClosureVar n = (nameString n, False)
 
+-- | `isSimpleTerm` @term@ determines whether @term@ is "simple" in the context
+-- of a function application. Specifically, @term@ is simple if compiling
+-- @term@ is guaranteed not to generate code which performs calls to PLC
+-- functions.
+isSimpleTerm :: Term UPLC.Name DefaultUni DefaultFun () -> Bool
+isSimpleTerm (Error _) = True
+isSimpleTerm (Var _ _) = True
+isSimpleTerm (LamAbs _ _ _) = True
+isSimpleTerm (Delay _ _) = True
+isSimpleTerm (Constant _ _) = True
+isSimpleTerm (Builtin _ _) = True
+isSimpleTerm _ = False
+
+-- | `compileForce` @name continuation closure terminator@ generates code
+-- which forces the closure given by @closure@ and passes the result to
+-- @continuation@. The computation @terminator@ is used to generate code
+-- which handles the result of the continuation.
+compileForce
+    :: (MonadCodeGen m, MonadIRBuilder m)
+    => String -> Continuation -> Operand
+    -> (ClosurePtr 'DynamicPtr -> m a)
+    -> m a
+compileForce name k x terminator = do
+    -- We need to determine whether evaluation of the body results in a
+    -- delay term or not - the PLC interpreter treats the latter as an
+    -- error so we should, too. For this purpose, we store some flags
+    -- in the closure that indicate whether the closure belongs to a
+    -- delay term or not. Here, we inspect those flags to determine
+    -- whether to enter the closure or print an error.
+    let trueBr = mkName $ name <> "_delay"
+    let falseBr = mkName $ name <> "_fail"
+
+    flags <- loadFromClosure ClosureFlags iHost (MkClosurePtr x)
+    cond <- icmp LLVM.EQ flags (ConstantOperand $ Int platformIntSize 1)
+    condBr cond trueBr falseBr
+
+    -- Enter the closure that is returned from the body: it corresponds to a
+    -- delay term
+    emitBlockStart trueBr
+    r <- compileApply k (MkClosurePtr x) (MkClosurePtr x) >>= terminator
+
+    -- The closure does not belong to a delay term: this is a runtime error
+    emitBlockStart falseBr
+    void $ printf forceErrRef []
+    void $ exit (-1)
+    unreachable
+
+    pure r
+
 -- | `compileBody` @term@ compiles @term@ to LLVM.
 compileBody
     :: MonadCodeGen m
-    => Term UPLC.Name DefaultUni DefaultFun ()
+    => Continuation
+    -> Term UPLC.Name DefaultUni DefaultFun ()
     -> IRBuilderT m (ClosurePtr 'DynamicPtr)
 -- (error): as soon as execution reaches this term, print a message indicating
 -- that an error condition has been reached and terminate execution
-compileBody (Error _) = do
+compileBody _ (Error _) = do
     errMsg <- asks codeGenErrMsg
 
     -- print the error message and terminate the program
@@ -69,7 +120,8 @@ compileBody (Error _) = do
 -- as soon as execution reaches the variable expression
 -- 2. the variable is in scope, in which case it represents a pointer to a
 -- closure which we return up the call stack
-compileBody (Var _ x) = MkClosurePtr <$> lookupVar (nameString x) closureTyPtr
+compileBody k (Var _ x) =
+    lookupVar (nameString x) closureTyPtr >>= callCont k
 -- (lam x e): since PLC has higher-order functions, functions may escape the
 -- scope in which they are defined in. Therefore, we require closures which
 -- store pointers to the free variables. We compile functions as follows:
@@ -84,7 +136,7 @@ compileBody (Var _ x) = MkClosurePtr <$> lookupVar (nameString x) closureTyPtr
 -- 2. We generate code that dynamically allocates a closure. The closure will
 --    consist of a pointer to the entry function that we generated in step 1
 --    and pointers to all free variables.
-compileBody (LamAbs _ var term) = do
+compileBody k (LamAbs _ var term) = do
     name <- mkFresh "fun"
 
     -- TODO: the S.map here might be overly pessimistic, we might be able
@@ -92,65 +144,157 @@ compileBody (LamAbs _ var term) = do
     let fvs = S.map mkClosureVar
             $ S.delete var $ freeVars term
 
-    compileDynamicClosure False name fvs (UPLC.nameString var) $
-        \_ _ -> compileBody term >>= retClosure
-compileBody (Apply _ lhs rhs) = do
-    name <- mkFresh "app"
+    ptr <- compileDynamicClosure False name fvs (UPLC.nameString var) $
+        \_ _ k' -> compileBody k' term >>= retClosure
 
-    compileTrace name []
+    -- pass the pointer to the new closure to the continuation
+    callCont k $ closurePtr ptr
+compileBody k (Apply _ lhs rhs)
+    -- compiling applications is the most complicated aspect of the code
+    -- generation, since the generated code involves a guaranteed function
+    -- call at the end: this is, on its own, not a problem, but it is if
+    -- either operand of the application is also an application, because
+    -- we must then perform a CPS transformation to ensure that all calls
+    -- are tail calls; to avoid introducing this complexity where it is
+    -- not required, we perform a simple check here to see if both operands
+    -- are "simple" and will not result in code that performs any function
+    -- calls, in which case we don't need to perform a CPS transformation
+    | isSimpleTerm lhs && isSimpleTerm rhs = do
+        name <- mkFresh "app"
 
-    -- generate code for both sub-expressions; the resulting operands are
-    -- pointers to closures
-    l <- compileBody lhs
-    r <- compileBody rhs
+        compileTrace name []
 
-    compileTrace ("Entering closure in " <> name) []
+        -- both calls to `compileBody` here are guaranteed to not use `k` or
+        -- make any PLC function calls, since `isSimpleTerm` is `True` for
+        -- both of them
+        l <- compileBody cpsReturnCont lhs
+        r <- compileBody cpsReturnCont rhs
 
-    -- enter the closure pointed to by l, giving it a pointer to another
-    -- closure r as argument
-    compileApply l r
-compileBody (Force _ term) = do
-    name <- mkFresh "force"
-    compileTrace name []
+        compileTrace ("Entering closure in " <> name) []
 
-    -- Generate code for the term, this can be an arbitrary term and may
-    -- not immediately be a delay term - indeed, there may not be a delay
-    -- term at all!
-    r <- compileBody term
+        -- enter the closure pointed to by l, giving it a pointer to another
+        -- closure r as argument
+        compileApply k l r
+    | otherwise = do
+        -- if the operands of the function application are not "simple", then
+        -- we essentially need to perform some lambda-lifting; consider the
+        -- following PLC program:
+        --
+        -- [[f x] [g y]]
+        --
+        -- Compiling [f x] will result in at least one function call and
+        -- compiling [g y] will result in at least one function call; while
+        -- we also need to perform a function call for the outer application.
+        -- Therefore, we need to break this up into essentially the following
+        -- program (with explicit continuations, using Haskell notation):
+        --
+        -- \k f g x y -> let _cont_l a = let _cont_r b = a k b
+        --                               in g _cont_r y
+        --               in f _cont_l x
+        --
+        -- which is equivalent to
+        --
+        -- \k f g x y -> f (\a -> g (\b -> a k b) y) x
+        --
+        -- In particular, note that `k` is free in both of the continuations
+        -- and that `a` is free in the second continuation.
+        name <- mkFresh "app"
+        fvs <- currentFreeVars
 
-    -- We need to determine whether evaluation of the body results in a
-    -- delay term or not - the PLC interpreter treats the latter as an
-    -- error so we should, too. For this purpose, we store some flags
-    -- in the closure that indicate whether the closure belongs to a
-    -- delay term or not. Here, we inspect those flags to determine
-    -- whether to enter the closure or print an error.
-    let trueBr = mkName $ name <> "_delay"
-    let falseBr = mkName $ name <> "_fail"
-    let contBr = mkName $ name <> "_cont"
+        compileTrace name []
 
-    flags <- loadFromClosure ClosureFlags iHost r
-    cond <- icmp LLVM.EQ flags (ConstantOperand $ Int platformIntSize 1)
-    condBr cond trueBr falseBr
+        -- generate some names for the parameters of the continuations, as well
+        -- as the current continuation that we need to store as a free variable
+        -- in the continuations
+        let argK = T.pack (name <> "_k")
+        let argR = T.pack (name <> "_arg_r")
+        let argL = T.pack (name <> "_arg_l")
 
-    -- Enter the closure that is returned from the body: it corresponds to a
-    -- delay term
-    emitBlockStart trueBr
-    ptr <- enterClosure r $ Just (closurePtr r)
-    br contBr
+        -- calculate the sets of free variables of the two continuations
+        let fvsR = S.map mkClosureVar (freeVars rhs)
+                `S.union` S.singleton (argL, False)
+                `S.union` S.singleton (argK, True)
+        let fvsL = S.map mkClosureVar (S.union (freeVars lhs) (freeVars rhs))
+                `S.union` S.singleton (argK, True)
 
-    -- The closure does not belong to a delay term: this is a runtime error
-    emitBlockStart falseBr
-    void $ printf forceErrRef []
-    void $ exit (-1)
-    unreachable
+        -- generate code for the first continuation
+        contL <-
+            extendScope argK (LocalCont k) $
+            compileDynamicCont (name <> "_cont_l") fvsL argL $
+            \_ _ -> do
+                -- generate code for the second continuation; we need to do
+                -- this inside of the first continuation since we wish to
+                -- capture its argument as a free variable
+                contR <- compileDynamicCont (name <> "_cont_r") fvsR argR $
+                    \_ b -> do
+                        compileTrace ("Entering closure in " <> name) []
 
-    emitBlockStart contBr
+                        -- retrieve the initial continuation and the result of
+                        -- evaluating the LHS from the current continuation
+                        -- closure
+                        k <- MkCont <$> lookupVar argK contTyPtr
+                        a <- MkClosurePtr <$> lookupVar argL closureTyPtr
 
-    pure ptr
+                        -- enter the closure pointed to by `a`, giving it a
+                        -- pointer to another closure `b` as argument
+                        compileApply k a (MkClosurePtr b) >>= retClosure
+
+                -- compile the body of the right sub-term and instruct the
+                -- code generator to use `contR` as the continuation
+                r <- compileBody contR rhs
+                retClosure r
+
+        -- compile the body of the left sub-term and instruct the code
+        -- generator to use `contL` as the continuation
+        compileBody contL lhs
+compileBody k (Force _ term)
+    -- similarly to applications, we can generate simpler code if `term`
+    -- is "simple"
+    | isSimpleTerm term = do
+        name <- mkFresh "force"
+        compileTrace name []
+
+        let contBr = mkName $ name <> "_cont"
+
+        -- compile `term`, which we know won't result in any function
+        -- calls since the check for `isSimpleTerm` passed; if force is
+        -- successful (i.e. applied to a delay term), then we jump to
+        -- the `contBr` label, whcih skips past the error branch
+        r <- compileBody cpsReturnCont term
+        ptr <- compileForce name k (closurePtr r) $ \ptr -> do
+            br contBr
+            pure ptr
+
+        emitBlockStart contBr
+        pure ptr
+    | otherwise = do
+        name <- mkFresh "force"
+        compileTrace name []
+
+        -- a `Force` term is similar to a function application, except that the
+        -- function argument is meaningless and not used. Since `term` may be
+        -- a function application itself
+        let argK = T.pack (name <> "_k")
+        let arg = T.pack (name <> "_arg")
+
+        -- calculate the set of free variables of the continuation
+        let fvs = S.map mkClosureVar (freeVars term)
+                `S.union` S.singleton (argK, True)
+
+        cont <- extendScope argK (LocalCont k) $ compileDynamicCont (name <> "_cont") fvs arg $
+            \_ x -> do
+                k <- MkCont <$> lookupVar argK contTyPtr
+                compileForce name k x retClosure
+
+        -- Generate code for the term, this can be an arbitrary term and may
+        -- not immediately be a delay term - indeed, there may not be a delay
+        -- term at all!
+        compileBody cont term
+
 -- (delay t): we compile this just like a lambda abstraction to prevent it
 -- from being executed straight away - a force expression is then just like
 -- function application, minus the argument
-compileBody (Delay _ term) = do
+compileBody k (Delay _ term) = do
     name <- mkFresh "delay"
 
     -- TODO: the S.map here might be overly pessimistic, we might be able
@@ -161,22 +305,27 @@ compileBody (Delay _ term) = do
     -- therefore, if evaluation results in a delay term, we get a result
     -- equivalent to the one we get when evaluation results in a function;
     -- in the future, we might want to print a different message
-    compileDynamicClosure True name fvs "_delayArg" $
-        \_ _ -> compileBody term >>= retClosure
-compileBody (Constant _ val) = toDynamicPtr <$> compileConst val
-compileBody (Builtin _ f) = do
+    ptr <- compileDynamicClosure True name fvs "_delayArg" $
+        \_ _ k' -> compileBody k' term >>= retClosure
+
+    callCont k $ closurePtr ptr
+compileBody k (Constant _ val) = do
+    r <- compileConst val
+    callCont k $ closurePtr r
+compileBody k (Builtin _ f) = do
     builtins <- asks codeGenBuiltins
     case M.lookup f builtins of
         Nothing -> error $ "No such builtin: " <> show f
-        Just ref -> pure $ toDynamicPtr ref
+        Just ref -> callCont k $ closurePtr ref
 
 -- | `commonEntry` @term@ generates common entry code that is the same for
 -- both executables and libraries.
 commonEntry
     :: MonadCodeGen m
-    => Term UPLC.Name DefaultUni DefaultFun ()
+    => Continuation
+    -> Term UPLC.Name DefaultUni DefaultFun ()
     -> IRBuilderT m (ClosurePtr 'DynamicPtr)
-commonEntry body = do
+commonEntry k body = do
     generateConstantGlobals
 
     -- initialise the runtime system
@@ -190,7 +339,7 @@ commonEntry body = do
 
     -- compile the program; the resulting Operand represent a pointer to some
     -- kind of closure (function or constant)
-    local (\st -> st{codeGenBuiltins = builtins}) $ compileBody body
+    local (\st -> st{codeGenBuiltins = builtins}) $ compileBody k body
 
 -- | `generateEntry` @term@ generates code for @term@ surrounded by a small
 -- wrapper which calls the print function of the closure that results from
@@ -202,10 +351,12 @@ generateEntry
 generateEntry outPath body = do
     MkConfig{..} <- asks codeGenCfg
 
+    k <- compileCpsReturn
+
     if cfgLibrary
     then do
         void $ IR.function "plc_entry" [] closureTyPtr id $ \_ -> do
-            ptr <- commonEntry body
+            ptr <- commonEntry k body
 
             ret $ closurePtr ptr
 
@@ -217,7 +368,7 @@ generateEntry outPath body = do
             "extern closure *plc_entry();\n\n" <>
             api <> "\n"
     else void $ IR.function "main" [] VoidType id $ \_ -> do
-        ptr <- commonEntry body
+        ptr <- commonEntry k body
 
         -- call the print code of the resulting closure
         printClosure ptr
@@ -235,6 +386,7 @@ compileProgram cfg outPath (Program _ _ term) = do
     forM_ externalDefinitions emitDefn
 
     _ <- typedef "closure" $ Just closureTyDef
+    _ <- typedef "continuation" $ Just contTyDef
     _ <- typedef "bytestring" $ Just bytestringTyDef
     _ <- typedef "pair" $ Just pairTyDef
     _ <- typedef "list" $ Just listTyDef

@@ -28,6 +28,7 @@ import Hachi.Compiler.CodeGen.Constant.Data
 import Hachi.Compiler.CodeGen.Constant.Integer
 import Hachi.Compiler.CodeGen.Constant.List
 import Hachi.Compiler.CodeGen.Constant.Pair
+import Hachi.Compiler.CodeGen.CPS
 import Hachi.Compiler.CodeGen.Externals.GMP
 import Hachi.Compiler.CodeGen.IRBuilder as IR
 import Hachi.Compiler.CodeGen.Monad
@@ -55,7 +56,8 @@ plcApply = do
     let params = [(closureTyPtr, "f"), (closureTyPtr, "x")]
 
     void $ libFunction name params closureTyPtr $ \[f,x] ->
-        compileApply (MkClosurePtr f) (MkClosurePtr x) >>= retClosure
+        compileApply cpsReturnCont (MkClosurePtr f) (MkClosurePtr x) >>=
+        retClosure
 
 -- | `plcPrintClosure` generates a function which can be used to invoke a
 -- closure's pretty-printing function.
@@ -84,7 +86,7 @@ plcNewInteger = do
             , (ConstantOperand $ Int platformIntSize 10, [])
             ] id
 
-        retConstDynamic @Integer int
+        retConstDynamic @Integer cpsReturnCont int
 
 plcNewByteString :: MonadCodeGen m => m ()
 plcNewByteString = do
@@ -99,7 +101,7 @@ plcNewByteString = do
                              ]
         store dataAddr 0 ptr
 
-        retConstDynamic @ByteString addr
+        retConstDynamic @ByteString cpsReturnCont addr
 
 plcNewText :: MonadCodeGen m => m ()
 plcNewText = do
@@ -107,7 +109,7 @@ plcNewText = do
     let params = [(ptrOf i8, "ptr")]
 
     void $ libFunction name params closureTyPtr $ \[ptr] ->
-        retConstDynamic @Text ptr
+        retConstDynamic @Text cpsReturnCont ptr
 
 plcNewUnit :: MonadCodeGen m => m ()
 plcNewUnit = do
@@ -115,7 +117,8 @@ plcNewUnit = do
     let params = []
 
     void $ libFunction name params closureTyPtr $ \[] ->
-        retConstDynamic @() $ ConstantOperand $ Int 1 1
+        retConstDynamic @() cpsReturnCont $
+        ConstantOperand $ Int 1 1
 
 plcNewBool :: MonadCodeGen m => m ()
 plcNewBool = do
@@ -123,23 +126,25 @@ plcNewBool = do
     let params = [(i8, "val")]
 
     void $ libFunction name params closureTyPtr $ \[val] ->
-        trunc val i1 >>= retConstDynamic @Bool
+        trunc val i1 >>= retConstDynamic @Bool cpsReturnCont
 
 plcNewPair :: MonadCodeGen m => m ()
 plcNewPair = do
     let name = "plc_new_pair"
     let params = [(closureTyPtr, "fst"), (closureTyPtr, "snd")]
 
-    void $ libFunction name params closureTyPtr $ \[x, y] -> do
-        newPair (MkClosurePtr x) (MkClosurePtr y) >>= retConstDynamic @((),())
+    void $ libFunction name params closureTyPtr $ \[x, y] ->
+        newPair (MkClosurePtr x) (MkClosurePtr y) >>=
+        retConstDynamic @((),()) cpsReturnCont
 
 plcEmptyList :: MonadCodeGen m => m ()
 plcEmptyList = do
     let name = "plc_empty_list"
     let params = []
 
-    void $ libFunction name params closureTyPtr $ \[] -> do
-        retConstDynamic @[()] $ ConstantOperand $ Null listTyPtr
+    void $ libFunction name params closureTyPtr $ \[] ->
+        retConstDynamic @[()] cpsReturnCont $
+        ConstantOperand $ Null listTyPtr
 
 
 plcNewList :: MonadCodeGen m => m ()
@@ -148,47 +153,52 @@ plcNewList = do
     let params = [(closureTyPtr, "hd"), (closureTyPtr, "tl")]
 
     void $ libFunction name params closureTyPtr $ \[x, y] -> do
-        listNew x y >>= retConstDynamic @[()]
+        listNew x y >>= retConstDynamic @[()] cpsReturnCont
 
 plcNewDataConstr :: MonadCodeGen m => m ()
 plcNewDataConstr = do
     let name = "plc_new_data_constr"
     let params = [(closureTyPtr, "tag"), (closureTyPtr, "list")]
 
-    void $ libFunction name params closureTyPtr $ \[tag, xs] -> do
-        newData DataConstr xs (Just tag) >>= retConstDynamic @Data
+    void $ libFunction name params closureTyPtr $ \[tag, xs] ->
+        newData DataConstr xs (Just tag) >>=
+        retConstDynamic @Data cpsReturnCont
 
 plcNewDataMap :: MonadCodeGen m => m ()
 plcNewDataMap = do
     let name = "plc_new_data_map"
     let params = [(closureTyPtr, "list")]
 
-    void $ libFunction name params closureTyPtr $ \[xs] -> do
-        newData DataMap xs Nothing >>= retConstDynamic @Data
+    void $ libFunction name params closureTyPtr $ \[xs] ->
+        newData DataMap xs Nothing >>=
+        retConstDynamic @Data cpsReturnCont
 
 plcNewDataList :: MonadCodeGen m => m ()
 plcNewDataList = do
     let name = "plc_new_data_list"
     let params = [(closureTyPtr, "list")]
 
-    void $ libFunction name params closureTyPtr $ \[xs] -> do
-        newData DataList xs Nothing >>= retConstDynamic @Data
+    void $ libFunction name params closureTyPtr $ \[xs] ->
+        newData DataList xs Nothing >>=
+        retConstDynamic @Data cpsReturnCont
 
 plcNewDataInteger :: MonadCodeGen m => m ()
 plcNewDataInteger = do
     let name = "plc_new_data_integer"
     let params = [(closureTyPtr, "n")]
 
-    void $ libFunction name params closureTyPtr $ \[n] -> do
-        newData DataI n Nothing >>= retConstDynamic @Data
+    void $ libFunction name params closureTyPtr $ \[n] ->
+        newData DataI n Nothing >>=
+        retConstDynamic @Data cpsReturnCont
 
 plcNewDataByteString :: MonadCodeGen m => m ()
 plcNewDataByteString = do
     let name = "plc_new_data_bytestring"
     let params = [(closureTyPtr, "str")]
 
-    void $ libFunction name params closureTyPtr $ \[str] -> do
-        newData DataB str Nothing >>= retConstDynamic @Data
+    void $ libFunction name params closureTyPtr $ \[str] ->
+        newData DataB str Nothing >>=
+        retConstDynamic @Data cpsReturnCont
 
 -------------------------------------------------------------------------------
 
