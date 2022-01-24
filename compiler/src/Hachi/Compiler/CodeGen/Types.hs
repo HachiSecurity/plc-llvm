@@ -60,7 +60,11 @@ module Hachi.Compiler.CodeGen.Types (
     -- * Continuations
     contTy,
     contTyPtr,
-    Continuation(..)
+    Continuation(..),
+
+    -- * Locals
+    Local(..),
+    localOperand
 ) where
 
 -------------------------------------------------------------------------------
@@ -273,3 +277,15 @@ newtype Continuation = MkCont { contPtr :: Operand }
 
 -------------------------------------------------------------------------------
 
+-- | Local variables can be closures or continuations.
+data Local
+    = LocalClosure (ClosurePtr 'DynamicPtr)
+    | LocalCont Continuation
+    deriving (Eq, Show)
+
+-- | `localOperand` @local@ retrieves the underlying `Operand` of @local@.
+localOperand :: Local -> Operand
+localOperand (LocalClosure c) = closurePtr c
+localOperand (LocalCont c) = contPtr c
+
+-------------------------------------------------------------------------------
