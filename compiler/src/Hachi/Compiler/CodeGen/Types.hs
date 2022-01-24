@@ -17,7 +17,6 @@ module Hachi.Compiler.CodeGen.Types (
     i32,
     i64,
     ptrOf,
-    funPtr,
     char,
     stringPtr,
     asStringPtr,
@@ -56,7 +55,12 @@ module Hachi.Compiler.CodeGen.Types (
     PtrKind(..),
     ClosurePtr(..),
     FromClosurePtr(..),
-    toDynamicPtr
+    toDynamicPtr,
+
+    -- * Continuations
+    contTy,
+    contTyPtr,
+    Continuation(..)
 ) where
 
 -------------------------------------------------------------------------------
@@ -92,9 +96,6 @@ i64 = IntegerType 64
 
 ptrOf :: Type -> Type
 ptrOf ty = PointerType ty $ AddrSpace 0
-
-funPtr :: Type
-funPtr = ptrOf $ FunctionType VoidType [] False
 
 char :: Type
 char = i8
@@ -257,3 +258,18 @@ toDynamicPtr (MkStaticClosurePtr ptr) = MkClosurePtr (ConstantOperand ptr)
 toDynamicPtr (MkClosurePtr ptr) = MkClosurePtr ptr
 
 -------------------------------------------------------------------------------
+
+-- | `contTy` is a `Type` for continuations.
+contTy :: Type
+contTy = NamedTypeReference "continuation"
+
+-- | `contTyPtr` is a `Type` representing a pointer to a continuation.
+contTyPtr :: Type
+contTyPtr = ptrOf contTy
+
+-- | Represents pointers to continuations.
+newtype Continuation = MkCont { contPtr :: Operand }
+    deriving (Eq, Show)
+
+-------------------------------------------------------------------------------
+
