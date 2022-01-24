@@ -68,7 +68,7 @@ withCurried name ps@((sn,isTyVar):dyn) builder = do
 
     -- this helper function generates code which creates dynamic closures for
     -- the functions that are returned to bind the 2nd argument onwards
-    let mkCurry :: Int -> S.Set T.Text -> [(T.Text,Bool)]
+    let mkCurry :: Int -> S.Set (T.Text, Bool) -> [(T.Text,Bool)]
                 -> IRBuilderT m ()
         mkCurry _ _ [] = do
             -- if there are no further parameters, retrieve all of the
@@ -82,21 +82,21 @@ withCurried name ps@((sn,isTyVar):dyn) builder = do
             -- dynamic closure for the function that binds it
             let dynName = name <> "_dynamic_" <> show ix
             ptr <- compileDynamicClosure isTyVar' dynName fvs vn $ \_ arg -> do
-                extendScope vn (MkClosurePtr arg) $
-                    mkCurry (ix+1) (S.union (S.singleton vn) fvs) vs
+                extendScope vn (LocalClosure $ MkClosurePtr arg) $
+                    mkCurry (ix+1) (S.union (S.singleton (vn, False)) fvs) vs
             retClosure ptr
 
     -- construct the static closure for this built-in function, which brings
     -- the first argument into scope and (if there is more than one parameter)
     -- returns a function that binds the next argument, and so on
-    let staticParams = [(closureTyPtr, "this"), (closureTyPtr, mkParamName sn)]
+    let staticParams = clsEntryParams sn
     _ <- IR.function (mkName entryName) staticParams closureTyPtr plcFunOpts $
-        \[_, arg] -> extendScope sn (MkClosurePtr arg) $ do
+        \[_, arg] -> extendScope sn (LocalClosure $ MkClosurePtr arg) $ do
             compileTrace entryName []
 
-            mkCurry 0 (S.singleton sn) dyn
+            mkCurry 0 (S.singleton (sn, False)) dyn
 
-    let codePtr = GlobalReference (mkEntryTy 1) (mkName entryName)
+    let codePtr = GlobalReference clsEntryTy (mkName entryName)
 
     printPtr <- compileFunPrint
 

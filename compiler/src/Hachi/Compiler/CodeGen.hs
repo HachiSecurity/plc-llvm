@@ -7,12 +7,13 @@ module Hachi.Compiler.CodeGen ( generateCode ) where
 import Control.Monad.IO.Class
 import Control.Monad.Reader
 
-import qualified Data.ByteString.Char8 as BS
+import Data.ByteString.Char8 qualified as BS
 import Data.IORef
-import qualified Data.Map as M
+import Data.Map qualified as M
 import Data.Maybe
-import qualified Data.Set as S
+import Data.Set qualified as S
 import Data.String (fromString)
+import Data.Text qualified as T
 
 import System.FilePath
 
@@ -41,6 +42,10 @@ import Hachi.Compiler.Config
 import Hachi.Compiler.FreeVars
 
 -------------------------------------------------------------------------------
+
+-- | `mkClosureVar` @name@ constructs a pair of @
+mkClosureVar :: UPLC.Name -> (T.Text, Bool)
+mkClosureVar n = (nameString n, False)
 
 -- | `compileBody` @term@ compiles @term@ to LLVM.
 compileBody
@@ -84,7 +89,8 @@ compileBody (LamAbs _ var term) = do
 
     -- TODO: the S.map here might be overly pessimistic, we might be able
     -- to replace it with S.mapMonotonic for better performance
-    let fvs = S.map nameString $ S.delete var $ freeVars term
+    let fvs = S.map mkClosureVar
+            $ S.delete var $ freeVars term
 
     compileDynamicClosure False name fvs (UPLC.nameString var) $
         \_ _ -> compileBody term >>= retClosure
@@ -149,7 +155,7 @@ compileBody (Delay _ term) = do
 
     -- TODO: the S.map here might be overly pessimistic, we might be able
     -- to replace it with S.mapMonotonic for better performance
-    let fvs = S.map nameString $ freeVars term
+    let fvs = S.map mkClosureVar $ freeVars term
 
     -- for now we are compiling it exactly the same way as a function and,
     -- therefore, if evaluation results in a delay term, we get a result
@@ -253,7 +259,8 @@ compileProgram cfg outPath (Program _ _ term) = do
             codeGenBuiltins = M.empty,
             codeGenConstEntries = constEntries,
             codeGenConstPrinters = constPrinters,
-            codeGenFunPrinter = funPrinter
+            codeGenFunPrinter = funPrinter,
+            codeGenFreeVars = S.empty
         }
 
     -- compile the program

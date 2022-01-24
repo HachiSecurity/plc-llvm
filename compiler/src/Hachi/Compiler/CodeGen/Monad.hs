@@ -1,5 +1,5 @@
-{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE GeneralisedNewtypeDeriving #-}
 
 module Hachi.Compiler.CodeGen.Monad (
     ConstantTy(..),
@@ -8,7 +8,9 @@ module Hachi.Compiler.CodeGen.Monad (
     MonadCodeGen,
     mkFresh,
     extendScope,
-    updateEnv
+    updateEnv,
+    localFreeVars,
+    currentFreeVars
 ) where
 
 -------------------------------------------------------------------------------
@@ -53,11 +55,12 @@ data CodeGenSt = MkCodeGenSt {
     codeGenCfg :: Config,
     codeGenErrMsg :: Constant,
     codeGenCounters :: IORef (M.Map String (IORef Integer)),
-    codeGenEnv :: M.Map T.Text (ClosurePtr 'DynamicPtr),
+    codeGenEnv :: M.Map T.Text Local,
     codeGenBuiltins :: M.Map UPLC.DefaultFun (ClosurePtr 'StaticPtr),
     codeGenConstEntries :: IORef (M.Map ConstantTy Constant),
     codeGenConstPrinters :: IORef (M.Map ConstantTy Constant),
-    codeGenFunPrinter :: IORef (Maybe Constant)
+    codeGenFunPrinter :: IORef (Maybe Constant),
+    codeGenFreeVars :: S.Set (T.Text, Bool)
 }
 
 -- | The code generator monad.
@@ -93,7 +96,7 @@ mkFresh prefix = asks codeGenCounters >>= \countersRef-> liftIO $ do
 -- @action@ along with @operand@ which represents the LLVM identifier.
 extendScope
     :: MonadReader CodeGenSt m
-    => T.Text -> ClosurePtr 'DynamicPtr -> m a -> m a
+    => T.Text -> Local -> m a -> m a
 extendScope name val = local $ \st ->
     st{ codeGenEnv = M.insert name val (codeGenEnv st) }
 
@@ -103,10 +106,20 @@ extendScope name val = local $ \st ->
 -- @operands@.
 updateEnv
     :: MonadReader CodeGenSt m
-    => S.Set T.Text -> [ClosurePtr 'DynamicPtr] -> m a -> m a
+    => S.Set T.Text -> [Local] -> m a -> m a
 updateEnv names operands = local $ \st ->
     st{ codeGenEnv = M.union namedOperands (codeGenEnv st) }
     where namedOperands = M.fromList
                         $ zip (S.toList names) operands
+
+-- | `localFreeVars` @freeVars@ sets the set of free variables in the current
+-- compilation scope to @freeVars@.
+localFreeVars :: MonadReader CodeGenSt m => S.Set (T.Text, Bool) -> m a -> m a
+localFreeVars fvs = local $ \st -> st{ codeGenFreeVars = fvs }
+
+-- | `currentFreeVars` is a computation which retrieves the set of free
+-- variables in the current compilation scope.
+currentFreeVars :: MonadReader CodeGenSt m => m (S.Set (T.Text, Bool))
+currentFreeVars = asks codeGenFreeVars
 
 -------------------------------------------------------------------------------
