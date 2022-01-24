@@ -98,7 +98,7 @@ jobs:
           tag: 'latest-plc-llvm'
           overwrite: true
 
-      - name: Run benchmark
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: |
-          stack --no-terminal build --bench --fast --system-ghc
+      # - name: Run benchmark
+      #   if: ${{ matrix.os == 'ubuntu-latest' }}
+      #   run: |
+      #     stack --no-terminal build --bench --fast --system-ghc
