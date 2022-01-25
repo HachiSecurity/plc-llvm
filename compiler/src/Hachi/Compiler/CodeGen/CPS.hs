@@ -185,19 +185,26 @@ compileCpsReturn = do
 
 -------------------------------------------------------------------------------
 
--- | `callCont` @continuationPtr argument@ generates code which calls the
--- continuation pointed at by @continuationPtr@ with the @argument@.
-callCont
-    :: (MonadCodeGen m, MonadIRBuilder m)
-    => Continuation -> Operand -> m (ClosurePtr 'DynamicPtr)
-callCont (MkCont k) arg = do
-    -- retrieve the function pointer from the continuation closure
-    funPtr <- flip load 0 =<<
-              gep k [ConstantOperand (Int 32 0), ConstantOperand (Int 32 0)]
+-- | A class of types which may represent continuations.
+class ContinuationRep a where
+    -- | `callCont` @continuationPtr argument@ generates code which calls the
+    -- continuation pointed at by @continuationPtr@ with the @argument@.
+    callCont
+        :: (MonadCodeGen m, MonadIRBuilder m)
+        => Continuation -> a -> m (ClosurePtr 'DynamicPtr)
 
-    -- cast it to the right type and call it with a pointer to the
-    -- continuation closure and the argument for the parameter as arguments
-    contFunPtr <- bitcast funPtr contEntryTy
-    MkClosurePtr <$> call contFunPtr [(k, []), (arg, [])] plcCall
+instance ContinuationRep Operand where
+    callCont (MkCont k) arg = do
+        -- retrieve the function pointer from the continuation closure
+        funPtr <- flip load 0 =<<
+                gep k [ConstantOperand (Int 32 0), ConstantOperand (Int 32 0)]
+
+        -- cast it to the right type and call it with a pointer to the
+        -- continuation closure and the argument for the parameter as arguments
+        contFunPtr <- bitcast funPtr contEntryTy
+        MkClosurePtr <$> call contFunPtr [(k, []), (arg, [])] plcCall
+
+instance ContinuationRep (ClosurePtr k) where
+    callCont k = callCont @Operand k . closurePtr
 
 -------------------------------------------------------------------------------

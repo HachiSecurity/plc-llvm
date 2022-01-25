@@ -479,7 +479,7 @@ retConstDynamic
     -> m ()
 retConstDynamic k val =
     compileConstDynamic @a val >>=
-    (callCont k . closurePtr) >>=
+    callCont k >>=
     retClosure
 
 -- | `compileConstPrint` @name builder@ compiles a print function for a

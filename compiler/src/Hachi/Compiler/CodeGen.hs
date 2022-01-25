@@ -97,15 +97,14 @@ compileForce name k x terminator = do
 
     pure r
 
--- | `compileBody` @term@ compiles @term@ to LLVM.
-compileBody
+-- | `compileNonCPS` @term@ compiles a "simple" @term@.
+compileNonCPS
     :: MonadCodeGen m
-    => Continuation
-    -> Term UPLC.Name DefaultUni DefaultFun ()
+    => Term UPLC.Name DefaultUni DefaultFun ()
     -> IRBuilderT m (ClosurePtr 'DynamicPtr)
 -- (error): as soon as execution reaches this term, print a message indicating
 -- that an error condition has been reached and terminate execution
-compileBody _ (Error _) = do
+compileNonCPS (Error _) = do
     errMsg <- asks codeGenErrMsg
 
     -- print the error message and terminate the program
@@ -120,8 +119,8 @@ compileBody _ (Error _) = do
 -- as soon as execution reaches the variable expression
 -- 2. the variable is in scope, in which case it represents a pointer to a
 -- closure which we return up the call stack
-compileBody k (Var _ x) =
-    lookupVar (nameString x) closureTyPtr >>= callCont k
+compileNonCPS (Var _ x) =
+    MkClosurePtr <$> lookupVar (nameString x) closureTyPtr
 -- (lam x e): since PLC has higher-order functions, functions may escape the
 -- scope in which they are defined in. Therefore, we require closures which
 -- store pointers to the free variables. We compile functions as follows:
@@ -136,7 +135,7 @@ compileBody k (Var _ x) =
 -- 2. We generate code that dynamically allocates a closure. The closure will
 --    consist of a pointer to the entry function that we generated in step 1
 --    and pointers to all free variables.
-compileBody k (LamAbs _ var term) = do
+compileNonCPS (LamAbs _ var term) = do
     name <- mkFresh "fun"
 
     -- TODO: the S.map here might be overly pessimistic, we might be able
@@ -144,11 +143,40 @@ compileBody k (LamAbs _ var term) = do
     let fvs = S.map mkClosureVar
             $ S.delete var $ freeVars term
 
-    ptr <- compileDynamicClosure False name fvs (UPLC.nameString var) $
+    -- return the pointer to the new closure to the continuation
+    compileDynamicClosure False name fvs (UPLC.nameString var) $
         \_ _ k' -> compileBody k' term >>= retClosure
+-- (delay t): we compile this just like a lambda abstraction to prevent it
+-- from being executed straight away - a force expression is then just like
+-- function application, minus the argument
+compileNonCPS (Delay _ term) = do
+    name <- mkFresh "delay"
 
-    -- pass the pointer to the new closure to the continuation
-    callCont k $ closurePtr ptr
+    -- TODO: the S.map here might be overly pessimistic, we might be able
+    -- to replace it with S.mapMonotonic for better performance
+    let fvs = S.map mkClosureVar $ freeVars term
+
+    -- for now we are compiling it exactly the same way as a function and,
+    -- therefore, if evaluation results in a delay term, we get a result
+    -- equivalent to the one we get when evaluation results in a function;
+    -- in the future, we might want to print a different message
+    compileDynamicClosure True name fvs "_delayArg" $
+        \_ _ k' -> compileBody k' term >>= retClosure
+compileNonCPS (Constant _ val) = toDynamicPtr <$> compileConst val
+compileNonCPS (Builtin _ f) = do
+    builtins <- asks codeGenBuiltins
+    case M.lookup f builtins of
+        Nothing -> error $ "No such builtin: " <> show f
+        Just ref -> pure $ toDynamicPtr ref
+compileNonCPS _ = fail "compileNonCPS: called on a complex term"
+
+-- | `compileBody` @term@ compiles @term@ to LLVM.
+compileBody
+    :: MonadCodeGen m
+    => Continuation
+    -> Term UPLC.Name DefaultUni DefaultFun ()
+    -> IRBuilderT m (ClosurePtr 'DynamicPtr)
+compileBody _ t@(Error _) = compileNonCPS t
 compileBody k (Apply _ lhs rhs)
     -- compiling applications is the most complicated aspect of the code
     -- generation, since the generated code involves a guaranteed function
@@ -167,8 +195,8 @@ compileBody k (Apply _ lhs rhs)
         -- both calls to `compileBody` here are guaranteed to not use `k` or
         -- make any PLC function calls, since `isSimpleTerm` is `True` for
         -- both of them
-        l <- compileBody cpsReturnCont lhs
-        r <- compileBody cpsReturnCont rhs
+        l <- compileNonCPS lhs
+        r <- compileNonCPS rhs
 
         compileTrace ("Entering closure in " <> name) []
 
@@ -260,7 +288,7 @@ compileBody k (Force _ term)
         -- calls since the check for `isSimpleTerm` passed; if force is
         -- successful (i.e. applied to a delay term), then we jump to
         -- the `contBr` label, whcih skips past the error branch
-        r <- compileBody cpsReturnCont term
+        r <- compileNonCPS term
         ptr <- compileForce name k (closurePtr r) $ \ptr -> do
             br contBr
             pure ptr
@@ -290,33 +318,7 @@ compileBody k (Force _ term)
         -- not immediately be a delay term - indeed, there may not be a delay
         -- term at all!
         compileBody cont term
-
--- (delay t): we compile this just like a lambda abstraction to prevent it
--- from being executed straight away - a force expression is then just like
--- function application, minus the argument
-compileBody k (Delay _ term) = do
-    name <- mkFresh "delay"
-
-    -- TODO: the S.map here might be overly pessimistic, we might be able
-    -- to replace it with S.mapMonotonic for better performance
-    let fvs = S.map mkClosureVar $ freeVars term
-
-    -- for now we are compiling it exactly the same way as a function and,
-    -- therefore, if evaluation results in a delay term, we get a result
-    -- equivalent to the one we get when evaluation results in a function;
-    -- in the future, we might want to print a different message
-    ptr <- compileDynamicClosure True name fvs "_delayArg" $
-        \_ _ k' -> compileBody k' term >>= retClosure
-
-    callCont k $ closurePtr ptr
-compileBody k (Constant _ val) = do
-    r <- compileConst val
-    callCont k $ closurePtr r
-compileBody k (Builtin _ f) = do
-    builtins <- asks codeGenBuiltins
-    case M.lookup f builtins of
-        Nothing -> error $ "No such builtin: " <> show f
-        Just ref -> callCont k $ closurePtr ref
+compileBody k simpleTerm = compileNonCPS simpleTerm >>= callCont k
 
 -- | `commonEntry` @term@ generates common entry code that is the same for
 -- both executables and libraries.

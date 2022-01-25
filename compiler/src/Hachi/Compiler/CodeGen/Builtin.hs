@@ -88,7 +88,7 @@ withCurried name ps@((sn,isTyVar):dyn) builder = do
             ptr <- compileDynamicClosure isTyVar' dynName fvs vn $
                 \_ arg k -> extendScope vn (LocalClosure $ MkClosurePtr arg) $
                     mkCurry (ix+1) (S.union (S.singleton (vn, False)) fvs) k vs
-            callCont pk (closurePtr ptr) >>= retClosure
+            callCont pk ptr >>= retClosure
 
     -- construct the static closure for this built-in function, which brings
     -- the first argument into scope and (if there is more than one parameter)
@@ -536,15 +536,13 @@ fstPair :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 fstPair =
     let ps = mkParams 2 [pairTyPtr]
     in compileCurried "fstPair" ps $
-        \k [ptr] -> getFst ptr >>=
-        \r -> callCont k (closurePtr r) >>= retClosure
+        \k [ptr] -> getFst ptr >>= callCont k >>= retClosure
 
 sndPair :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 sndPair =
     let ps = mkParams 2 [pairTyPtr]
     in compileCurried "sndPair" ps $
-        \k [ptr] -> getSnd ptr >>=
-        \r -> callCont k (closurePtr r) >>= retClosure
+        \k [ptr] -> getSnd ptr >>= callCont k >>= retClosure
 
 -------------------------------------------------------------------------------
 
@@ -584,7 +582,7 @@ headList =
 
         listCase xs nullCode $ do
             r <- getHead xs
-            callCont k (closurePtr r) >>= retClosure
+            callCont k r >>= retClosure
 
 tailList :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 tailList =
@@ -597,7 +595,7 @@ tailList =
 
         listCase xs nullCode $ do
             r <- getTail xs
-            callCont k (closurePtr r) >>= retClosure
+            callCont k r >>= retClosure
 
 nullList :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
 nullList =
@@ -680,7 +678,7 @@ unMapData =
     withDataTag d $ \case
         DataMap -> do
             r <- loadDataPtr d
-            callCont k (closurePtr r) >>= retClosure
+            callCont k r >>= retClosure
         _ -> fatal unMapDataErrRef []
 
 unListData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
@@ -690,7 +688,7 @@ unListData =
     withDataTag d $ \case
         DataList -> do
             r <- loadDataPtr d
-            callCont k (closurePtr r) >>= retClosure
+            callCont k r >>= retClosure
         _ -> fatal unListDataErrRef []
 
 unIData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
@@ -700,7 +698,7 @@ unIData =
     withDataTag d $ \case
         DataI -> do
             r <- loadDataPtr d
-            callCont k (closurePtr r) >>= retClosure
+            callCont k r >>= retClosure
         _ -> fatal unIDataErrRef []
 
 unBData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
@@ -710,7 +708,7 @@ unBData =
     withDataTag d $ \case
         DataB -> do
             r <- loadDataPtr d
-            callCont k (closurePtr r) >>= retClosure
+            callCont k r >>= retClosure
         _ -> fatal unBDataErrRef []
 
 equalsData :: MonadCodeGen m => m (ClosurePtr 'StaticPtr)
