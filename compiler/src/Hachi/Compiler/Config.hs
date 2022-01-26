@@ -35,7 +35,10 @@ data Config = MkConfig {
     cfgLibrary :: Bool,
     -- | If --library is specified, an optional path to a .c source file which
     -- contains the entry point for the program.
-    cfgEntryPoint :: Maybe FilePath
+    cfgEntryPoint :: Maybe FilePath,
+    -- | An optional value indicating what set of optimisations should be
+    -- applied to the program.
+    cfgOptimisationLevel :: Maybe Word
 } deriving (Eq, Show)
 
 -- | `mkDefaultConfig` @input@ constructs a `Config` with reasonable defaults
@@ -54,7 +57,8 @@ mkDefaultConfig fp = MkConfig{
     cfgNoSerialise = False,
     cfgCheckOOM = False,
     cfgLibrary = False,
-    cfgEntryPoint = Nothing
+    cfgEntryPoint = Nothing,
+    cfgOptimisationLevel = Nothing
 }
 
 cfgInputP :: Parser FilePath
@@ -125,6 +129,16 @@ cfgEntryPointP = optional $ strOption $
     long "entry-point" <>
     help "The path to a C source file which contains the entry point"
 
+cfgOptimisationLevelP :: Parser (Maybe Word)
+cfgOptimisationLevelP = optional $ option (eitherReader optLevel) $
+    short 'O' <>
+    help "A number (0-3) indicating what optimisations should be applied"
+    where optLevel "0" = pure 0
+          optLevel "1" = pure 1
+          optLevel "2" = pure 2
+          optLevel "3" = pure 3
+          optLevel _ = Left "Not a valid optimisation level"
+
 cmdArgsP :: Parser Config
 cmdArgsP = MkConfig
     <$> cfgInputP
@@ -140,6 +154,7 @@ cmdArgsP = MkConfig
     <*> cfgCheckOOMP
     <*> cfgLibraryP
     <*> cfgEntryPointP
+    <*> cfgOptimisationLevelP
 
 -- | `parseCmdLineArgs` parses command-line arguments into a `Config` value.
 -- If parsing fails, the program is terminated and a help message is shown.

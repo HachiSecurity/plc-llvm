@@ -26,6 +26,7 @@ import LLVM.AST.IntegerPredicate as LLVM
 import LLVM.AST.Linkage
 import LLVM.Context
 import LLVM.Target
+import LLVM.PassManager
 
 import Hachi.Compiler.CodeGen.Builtin
 import Hachi.Compiler.CodeGen.Closure
@@ -513,14 +514,18 @@ generateCode
 generateCode cfg@MkConfig{..} p =
     let outputName = fromMaybe cfgInput cfgOutput
         compiler = compileProgram cfg outputName p
+        passSetSpec = defaultCuratedPassSetSpec{ optLevel = cfgOptimisationLevel }
     in withContext $ \ctx ->
     -- withModuleFromLLVMAssembly ctx (File "wrapper.ll") $ \m -> moduleAST m >>= print
 
+    withPassManager passSetSpec $ \pm ->
     withHostTargetMachineDefault $ \tm ->
     buildModuleT (fromString $ takeBaseName cfgInput) compiler >>= \compiled ->
     withModuleFromAST ctx compiled{
         moduleSourceFileName = fromString cfgInput
     } $ \m -> do
+        _ <- runPassManager pm m
+
         -- by default, we generate LLVM bitcode (the binary representation),
         -- but if the user has requested plain-text LLVM IR, we generate
         -- that instead
