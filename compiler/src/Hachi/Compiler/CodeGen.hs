@@ -203,6 +203,86 @@ compileBody k (Apply _ lhs rhs)
         -- enter the closure pointed to by l, giving it a pointer to another
         -- closure r as argument
         compileApply k l r
+    | isSimpleTerm lhs = do
+        name <- mkFresh "app"
+        fvs <- currentFreeVars
+
+        compileTrace name []
+
+        a <- compileNonCPS lhs
+
+        -- generate some names for the parameters of the continuations, as well
+        -- as the current continuation that we need to store as a free variable
+        -- in the continuations
+        let argK = T.pack (name <> "_k")
+        let argR = T.pack (name <> "_arg_r")
+        let argL = T.pack (name <> "_arg_l")
+
+        -- calculate the sets of free variables of the two continuations
+        let fvsR = S.map mkClosureVar (freeVars rhs)
+                `S.union` S.singleton (argL, False)
+                `S.union` S.singleton (argK, True)
+
+        -- generate code for the first continuation
+        cont <-
+            extendScope argK (LocalCont k) $
+            extendScope argL (LocalClosure a) $
+            compileDynamicCont (name <> "_cont") fvsR argR $
+                \_ b -> do
+                    compileTrace ("Entering closure in " <> name) []
+
+                    -- retrieve the initial continuation and the result of
+                    -- evaluating the LHS from the current continuation
+                    -- closure
+                    k <- MkCont <$> lookupVar argK contTyPtr
+                    a <- MkClosurePtr <$> lookupVar argL closureTyPtr
+
+                    -- enter the closure pointed to by `a`, giving it a
+                    -- pointer to another closure `b` as argument
+                    compileApply k a (MkClosurePtr b) >>= retClosure
+
+        -- compile the body of the left sub-term and instruct the code
+        -- generator to use `contL` as the continuation
+        compileBody cont rhs
+    | isSimpleTerm rhs = do
+        name <- mkFresh "app"
+        fvs <- currentFreeVars
+
+        compileTrace name []
+
+        -- generate some names for the parameters of the continuations, as well
+        -- as the current continuation that we need to store as a free variable
+        -- in the continuations
+        let argK = T.pack (name <> "_k")
+        let argL = T.pack (name <> "_arg_l")
+
+        -- calculate the sets of free variables of the two continuations
+        let fvsL = S.map mkClosureVar (S.union (freeVars lhs) (freeVars rhs))
+                `S.union` S.singleton (argK, True)
+
+        -- generate code for the first continuation
+        cont <-
+            extendScope argK (LocalCont k) $
+            compileDynamicCont (name <> "_cont") fvsL argL $
+            \_ a -> do
+                -- retrieve the initial continuation and the result of
+                -- evaluating the LHS from the current continuation
+                -- closure
+                k <- MkCont <$> lookupVar argK contTyPtr
+
+                compileTrace ("Entering closure in " <> name) []
+
+                -- compile the body of the right sub-term and instruct the
+                -- code generator to use `contR` as the continuation
+                b <- compileNonCPS rhs
+
+                -- enter the closure pointed to by `a`, giving it a
+                -- pointer to another closure `b` as argument
+                compileApply k (MkClosurePtr a) b >>= retClosure
+
+        -- compile the body of the left sub-term and instruct the code
+        -- generator to use `contL` as the continuation
+        compileBody cont lhs
     | otherwise = do
         -- if the operands of the function application are not "simple", then
         -- we essentially need to perform some lambda-lifting; consider the
@@ -309,7 +389,9 @@ compileBody k (Force _ term)
         let fvs = S.map mkClosureVar (freeVars term)
                 `S.union` S.singleton (argK, True)
 
-        cont <- extendScope argK (LocalCont k) $ compileDynamicCont (name <> "_cont") fvs arg $
+        cont <-
+            extendScope argK (LocalCont k) $
+            compileDynamicCont (name <> "_cont") fvs arg $
             \_ x -> do
                 k <- MkCont <$> lookupVar argK contTyPtr
                 compileForce name k x retClosure
