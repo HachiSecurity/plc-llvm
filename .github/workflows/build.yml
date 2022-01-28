@@ -103,7 +103,7 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4.2.2
         with:
           branch: haddock
-          folder: docs
+          folder: compiler/docs
 
       # - name: Run benchmark
       #   if: ${{ matrix.os == 'ubuntu-latest' }}
