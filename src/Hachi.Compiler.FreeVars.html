@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Hachi.Compiler.FreeVars</span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Hachi.Compiler.FreeVars.html#freeVars"><span class="hs-identifier">freeVars</span></a></span><span> </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-5"></span><span>
+</span><span id="line-6"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Set</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">S</span></span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">UntypedPlutusCore</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">UPLC</span></span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-comment">-- | `freeVars` @term@ calculates the set of free variables for @term@.</span><span>
+</span><span id="line-13"></span><span class="hs-comment">-- For some reason, this function does not seem to exist in the plutus</span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- libraries (it does exist for typed plutus and plutus IR though).</span><span>
+</span><span id="line-15"></span><span id="local-6989586621679259435"><span id="local-6989586621679259436"><span id="local-6989586621679259437"><span id="local-6989586621679259438"><span class="annot"><a href="Hachi.Compiler.FreeVars.html#freeVars"><span class="hs-identifier hs-type">freeVars</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Ord</span></span><span> </span><span class="annot"><a href="#local-6989586621679259438"><span class="hs-identifier hs-type">name</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Term</span></span><span> </span><span class="annot"><a href="#local-6989586621679259438"><span class="hs-identifier hs-type">name</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259437"><span class="hs-identifier hs-type">uni</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259436"><span class="hs-identifier hs-type">fun</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259435"><span class="hs-identifier hs-type">ann</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">S.Set</span></span><span> </span><span class="annot"><a href="#local-6989586621679259438"><span class="hs-identifier hs-type">name</span></a></span></span></span></span></span><span>
+</span><span id="line-16"></span><span id="freeVars"><span class="annot"><span class="annottext">freeVars :: Term name uni fun ann -&gt; Set name
+</span><a href="Hachi.Compiler.FreeVars.html#freeVars"><span class="hs-identifier hs-var hs-var">freeVars</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Var</span></span><span> </span><span class="annot"><span class="annottext">ann
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679259428"><span class="annot"><span class="annottext">name
+</span><a href="#local-6989586621679259428"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">name -&gt; Set name
+forall a. a -&gt; Set a
+</span><span class="hs-identifier hs-var">S.singleton</span></span><span> </span><span class="annot"><span class="annottext">name
+</span><a href="#local-6989586621679259428"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-17"></span><span class="annot"><a href="Hachi.Compiler.FreeVars.html#freeVars"><span class="hs-identifier hs-var">freeVars</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">LamAbs</span></span><span> </span><span class="annot"><span class="annottext">ann
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679259425"><span class="annot"><span class="annottext">name
+</span><a href="#local-6989586621679259425"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span id="local-6989586621679259424"><span class="annot"><span class="annottext">Term name uni fun ann
+</span><a href="#local-6989586621679259424"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">name -&gt; Set name -&gt; Set name
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">S.delete</span></span><span> </span><span class="annot"><span class="annottext">name
+</span><a href="#local-6989586621679259425"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Term name uni fun ann -&gt; Set name
+forall name (uni :: * -&gt; *) fun ann.
+Ord name =&gt;
+Term name uni fun ann -&gt; Set name
+</span><a href="Hachi.Compiler.FreeVars.html#freeVars"><span class="hs-identifier hs-var">freeVars</span></a></span><span> </span><span class="annot"><span class="annottext">Term name uni fun ann
+</span><a href="#local-6989586621679259424"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="annot"><a href="Hachi.Compiler.FreeVars.html#freeVars"><span class="hs-identifier hs-var">freeVars</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Apply</span></span><span> </span><span class="annot"><span class="annottext">ann
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679259421"><span class="annot"><span class="annottext">Term name uni fun ann
+</span><a href="#local-6989586621679259421"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span id="local-6989586621679259420"><span class="annot"><span class="annottext">Term name uni fun ann
+</span><a href="#local-6989586621679259420"><span class="hs-identifier hs-var">r</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Set name -&gt; Set name -&gt; Set name
+forall a. Ord a =&gt; Set a -&gt; Set a -&gt; Set a
+</span><span class="hs-identifier hs-var">S.union</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Term name uni fun ann -&gt; Set name
+forall name (uni :: * -&gt; *) fun ann.
+Ord name =&gt;
+Term name uni fun ann -&gt; Set name
+</span><a href="Hachi.Compiler.FreeVars.html#freeVars"><span class="hs-identifier hs-var">freeVars</span></a></span><span> </span><span class="annot"><span class="annottext">Term name uni fun ann
+</span><a href="#local-6989586621679259421"><span class="hs-identifier hs-var">l</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Term name uni fun ann -&gt; Set name
+forall name (uni :: * -&gt; *) fun ann.
+Ord name =&gt;
+Term name uni fun ann -&gt; Set name
+</span><a href="Hachi.Compiler.FreeVars.html#freeVars"><span class="hs-identifier hs-var">freeVars</span></a></span><span> </span><span class="annot"><span class="annottext">Term name uni fun ann
+</span><a href="#local-6989586621679259420"><span class="hs-identifier hs-var">r</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="annot"><a href="Hachi.Compiler.FreeVars.html#freeVars"><span class="hs-identifier hs-var">freeVars</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Force</span></span><span> </span><span class="annot"><span class="annottext">ann
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679259417"><span class="annot"><span class="annottext">Term name uni fun ann
+</span><a href="#local-6989586621679259417"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Term name uni fun ann -&gt; Set name
+forall name (uni :: * -&gt; *) fun ann.
+Ord name =&gt;
+Term name uni fun ann -&gt; Set name
+</span><a href="Hachi.Compiler.FreeVars.html#freeVars"><span class="hs-identifier hs-var">freeVars</span></a></span><span> </span><span class="annot"><span class="annottext">Term name uni fun ann
+</span><a href="#local-6989586621679259417"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-20"></span><span class="annot"><a href="Hachi.Compiler.FreeVars.html#freeVars"><span class="hs-identifier hs-var">freeVars</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Delay</span></span><span> </span><span class="annot"><span class="annottext">ann
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679259415"><span class="annot"><span class="annottext">Term name uni fun ann
+</span><a href="#local-6989586621679259415"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Term name uni fun ann -&gt; Set name
+forall name (uni :: * -&gt; *) fun ann.
+Ord name =&gt;
+Term name uni fun ann -&gt; Set name
+</span><a href="Hachi.Compiler.FreeVars.html#freeVars"><span class="hs-identifier hs-var">freeVars</span></a></span><span> </span><span class="annot"><span class="annottext">Term name uni fun ann
+</span><a href="#local-6989586621679259415"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-21"></span><span class="annot"><a href="Hachi.Compiler.FreeVars.html#freeVars"><span class="hs-identifier hs-var">freeVars</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Constant</span></span><span> </span><span class="annot"><span class="annottext">ann
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Some (ValueOf uni)
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Set name
+forall a. Set a
+</span><span class="hs-identifier hs-var">S.empty</span></span><span>
+</span><span id="line-22"></span><span class="annot"><a href="Hachi.Compiler.FreeVars.html#freeVars"><span class="hs-identifier hs-var">freeVars</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Builtin</span></span><span> </span><span class="annot"><span class="annottext">ann
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">fun
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Set name
+forall a. Set a
+</span><span class="hs-identifier hs-var">S.empty</span></span><span>
+</span><span id="line-23"></span><span class="annot"><a href="Hachi.Compiler.FreeVars.html#freeVars"><span class="hs-identifier hs-var">freeVars</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Error</span></span><span> </span><span class="annot"><span class="annottext">ann
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Set name
+forall a. Set a
+</span><span class="hs-identifier hs-var">S.empty</span></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-26"></span></pre></body></html>

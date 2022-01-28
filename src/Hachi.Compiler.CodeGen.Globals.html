@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Hachi.Compiler.CodeGen.Globals</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-5"></span><span>
+</span><span id="line-6"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">LLVM.AST</span></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">LLVM.AST.Constant</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">LLVM.AST.Linkage</span></span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Constant.String.html"><span class="hs-identifier">Hachi.Compiler.CodeGen.Constant.String</span></a></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.IRBuilder.html"><span class="hs-identifier">Hachi.Compiler.CodeGen.IRBuilder</span></a></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html"><span class="hs-identifier">Hachi.Compiler.CodeGen.Monad</span></a></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html"><span class="hs-identifier">Hachi.Compiler.CodeGen.Types</span></a></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Hachi.Compiler.TH.html"><span class="hs-identifier">Hachi.Compiler.TH</span></a></span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- | `generateConstantGlobals` is a computation which emits global definitions</span><span>
+</span><span id="line-23"></span><span class="hs-comment">-- related to constants.</span><span>
+</span><span id="line-24"></span><span id="local-6989586621679260444"><span class="annot"><a href="Hachi.Compiler.CodeGen.Globals.html#generateConstantGlobals"><span class="hs-identifier hs-type">generateConstantGlobals</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#MonadCodeGen"><span class="hs-identifier hs-type">MonadCodeGen</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679260444"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679260444"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679260444"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span></span><span>
+</span><span id="line-25"></span><span id="generateConstantGlobals"><span class="annot"><span class="annottext">generateConstantGlobals :: m ()
+</span><a href="Hachi.Compiler.CodeGen.Globals.html#generateConstantGlobals"><span class="hs-identifier hs-var hs-var">generateConstantGlobals</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">m ((), [BasicBlock]) -&gt; m ()
+forall (f :: * -&gt; *) a. Functor f =&gt; f a -&gt; f ()
+</span><span class="hs-identifier hs-var">void</span></span><span> </span><span class="annot"><span class="annottext">(m ((), [BasicBlock]) -&gt; m ()) -&gt; m ((), [BasicBlock]) -&gt; m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-26"></span><span>    </span><span class="annot"><span class="annottext">m Operand -&gt; m ()
+forall (f :: * -&gt; *) a. Functor f =&gt; f a -&gt; f ()
+</span><span class="hs-identifier hs-var">void</span></span><span> </span><span class="annot"><span class="annottext">(m Operand -&gt; m ()) -&gt; m Operand -&gt; m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Name -&gt; Type -&gt; Constant -&gt; (Global -&gt; Global) -&gt; m Operand
+forall (m :: * -&gt; *).
+MonadModuleBuilder m =&gt;
+Name -&gt; Type -&gt; Constant -&gt; (Global -&gt; Global) -&gt; m Operand
+</span><a href="Hachi.Compiler.CodeGen.IRBuilder.html#global"><span class="hs-identifier hs-var">global</span></a></span><span> </span><span class="annot"><span class="annottext">Name
+</span><span class="hs-string">&quot;returnRegister&quot;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Type -&gt; Type
+</span><a href="Hachi.Compiler.CodeGen.Types.html#ptrOf"><span class="hs-identifier hs-var">ptrOf</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="Hachi.Compiler.CodeGen.Types.html#i8"><span class="hs-identifier hs-var">i8</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Type -&gt; Constant
+</span><span class="hs-identifier hs-var">Null</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Type -&gt; Type
+</span><a href="Hachi.Compiler.CodeGen.Types.html#ptrOf"><span class="hs-identifier hs-var">ptrOf</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="Hachi.Compiler.CodeGen.Types.html#i8"><span class="hs-identifier hs-var">i8</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span>         </span><span class="annot"><span class="annottext">((Global -&gt; Global) -&gt; m Operand)
+-&gt; (Global -&gt; Global) -&gt; m Operand
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Linkage -&gt; Global -&gt; Global
+</span><a href="Hachi.Compiler.CodeGen.IRBuilder.html#setLinkage"><span class="hs-identifier hs-var">setLinkage</span></a></span><span> </span><span class="annot"><span class="annottext">Linkage
+</span><span class="hs-identifier hs-var">LinkOnce</span></span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span>    </span><span class="annot"><span class="annottext">IRBuilderState -&gt; IRBuilderT m () -&gt; m ((), [BasicBlock])
+forall (m :: * -&gt; *) a.
+Monad m =&gt;
+IRBuilderState -&gt; IRBuilderT m a -&gt; m (a, [BasicBlock])
+</span><span class="hs-identifier hs-var">runIRBuilderT</span></span><span> </span><span class="annot"><span class="annottext">IRBuilderState
+</span><span class="hs-identifier hs-var">emptyIRBuilder</span></span><span> </span><span class="annot"><span class="annottext">(IRBuilderT m () -&gt; m ((), [BasicBlock]))
+-&gt; IRBuilderT m () -&gt; m ((), [BasicBlock])
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[(String, String)]
+-&gt; ((String, String) -&gt; IRBuilderT m Constant) -&gt; IRBuilderT m ()
+forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
+(Foldable t, Monad m) =&gt;
+t a -&gt; (a -&gt; m b) -&gt; m ()
+</span><span class="hs-identifier hs-var">forM_</span></span><span> </span><span class="annot"><span class="annottext">[(String, String)]
+</span><a href="Hachi.Compiler.CodeGen.Constant.String.html#globalStrs"><span class="hs-identifier hs-var">globalStrs</span></a></span><span> </span><span class="annot"><span class="annottext">(((String, String) -&gt; IRBuilderT m Constant) -&gt; IRBuilderT m ())
+-&gt; ((String, String) -&gt; IRBuilderT m Constant) -&gt; IRBuilderT m ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679260430"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679260430"><span class="hs-identifier hs-var">nm</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679260429"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679260429"><span class="hs-identifier hs-var">val</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-30"></span><span>        </span><span class="annot"><span class="annottext">String -&gt; Name -&gt; (Global -&gt; Global) -&gt; IRBuilderT m Constant
+forall (m :: * -&gt; *).
+(MonadModuleBuilder m, MonadFail m) =&gt;
+String -&gt; Name -&gt; (Global -&gt; Global) -&gt; m Constant
+</span><a href="Hachi.Compiler.CodeGen.IRBuilder.html#globalStringPtr"><span class="hs-identifier hs-var">globalStringPtr</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679260429"><span class="hs-identifier hs-var">val</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Name
+</span><span class="hs-identifier hs-var">mkName</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679260430"><span class="hs-identifier hs-var">nm</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">((Global -&gt; Global) -&gt; IRBuilderT m Constant)
+-&gt; (Global -&gt; Global) -&gt; IRBuilderT m Constant
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Linkage -&gt; Global -&gt; Global
+</span><a href="Hachi.Compiler.CodeGen.IRBuilder.html#setLinkage"><span class="hs-identifier hs-var">setLinkage</span></a></span><span> </span><span class="annot"><span class="annottext">Linkage
+</span><span class="hs-identifier hs-var">LinkOnce</span></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-special">$(</span><span id="emptyListRef"><span id="consRef"><span id="commaRef"><span id="closeParenRef"><span id="openParenRef"><span id="spaceRef"><span id="oomErrRef"><span id="bsIndexErrRef"><span id="unBDataErrRef"><span id="unIDataErrRef"><span id="unListDataErrRef"><span id="unMapDataErrRef"><span id="unConstrDataErrRef"><span id="tailErrRef"><span id="headErrRef"><span id="dataMatchErrRef"><span id="funErrRef"><span id="forceErrRef"><span id="dataByteStringRef"><span id="dataIntegerRef"><span id="dataListRef"><span id="dataMapRef"><span id="dataConstrRef"><span id="unitRef"><span id="falseRef"><span id="trueRef"><span id="hexFormatRef"><span id="strFormatRef"><span id="i64FormatRef"><span id="nlRef"><span class="hs-identifier">mkGlobalStrRefs</span><span> </span><span class="hs-identifier">globalStrs</span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span class="annot"><a href="Hachi.Compiler.CodeGen.Globals.html#returnRef"><span class="hs-identifier hs-type">returnRef</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Operand</span></span><span>
+</span><span id="line-35"></span><span id="returnRef"><span class="annot"><span class="annottext">returnRef :: Operand
+</span><a href="Hachi.Compiler.CodeGen.Globals.html#returnRef"><span class="hs-identifier hs-var hs-var">returnRef</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Constant -&gt; Operand
+</span><span class="hs-identifier hs-var">ConstantOperand</span></span><span>
+</span><span id="line-36"></span><span>          </span><span class="annot"><span class="annottext">(Constant -&gt; Operand) -&gt; Constant -&gt; Operand
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Type -&gt; Name -&gt; Constant
+</span><span class="hs-identifier hs-var">GlobalReference</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Type -&gt; Type
+</span><a href="Hachi.Compiler.CodeGen.Types.html#ptrOf"><span class="hs-identifier hs-var">ptrOf</span></a></span><span> </span><span class="annot"><span class="annottext">(Type -&gt; Type) -&gt; Type -&gt; Type
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Type -&gt; Type
+</span><a href="Hachi.Compiler.CodeGen.Types.html#ptrOf"><span class="hs-identifier hs-var">ptrOf</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="Hachi.Compiler.CodeGen.Types.html#i8"><span class="hs-identifier hs-var">i8</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Name
+</span><span class="hs-string">&quot;returnRegister&quot;</span></span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-39"></span></pre></body></html>

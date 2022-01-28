@@ -1,0 +1,82 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Hachi.Compiler.CodeGen.Externals.Utility</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-2"></span><span>    </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Externals.Utility.html#globalFromType"><span class="hs-identifier">globalFromType</span></a></span><span>
+</span><span id="line-3"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-4"></span><span>
+</span><span id="line-5"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-6"></span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">LLVM.AST</span></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">LLVM.AST.CallingConvention</span></span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">LLVM.AST.Linkage</span></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">LLVM.AST.Visibility</span></span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- | `globalFromType` @name type@ constructs a `Global` given its @name@ and</span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- @type@.</span><span>
+</span><span id="line-16"></span><span class="annot"><a href="Hachi.Compiler.CodeGen.Externals.Utility.html#globalFromType"><span class="hs-identifier hs-type">globalFromType</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Global</span></span><span>
+</span><span id="line-17"></span><span id="globalFromType"><span class="annot"><span class="annottext">globalFromType :: String -&gt; Type -&gt; Global
+</span><a href="Hachi.Compiler.CodeGen.Externals.Utility.html#globalFromType"><span class="hs-identifier hs-var hs-var">globalFromType</span></a></span></span><span> </span><span id="local-6989586621679259161"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679259161"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">PointerType</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">FunctionType</span></span><span> </span><span id="local-6989586621679259158"><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679259158"><span class="hs-identifier hs-var">rt</span></a></span></span><span> </span><span id="local-6989586621679259157"><span class="annot"><span class="annottext">[Type]
+</span><a href="#local-6989586621679259157"><span class="hs-identifier hs-var">pts</span></a></span></span><span> </span><span id="local-6989586621679259156"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679259156"><span class="hs-identifier hs-var">varArgs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">AddrSpace
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-18"></span><span>    </span><span class="annot"><span class="annottext">Linkage
+-&gt; Visibility
+-&gt; Maybe StorageClass
+-&gt; CallingConvention
+-&gt; [ParameterAttribute]
+-&gt; Type
+-&gt; Name
+-&gt; ([Parameter], Bool)
+-&gt; [Either GroupID FunctionAttribute]
+-&gt; Maybe ShortByteString
+-&gt; Maybe ShortByteString
+-&gt; Word32
+-&gt; Maybe ShortByteString
+-&gt; Maybe Constant
+-&gt; [BasicBlock]
+-&gt; Maybe Constant
+-&gt; [(ShortByteString, MDRef MDNode)]
+-&gt; Global
+</span><span class="hs-identifier hs-var">Function</span></span><span> </span><span class="annot"><span class="annottext">Linkage
+</span><span class="hs-identifier hs-var">External</span></span><span> </span><span class="annot"><span class="annottext">Visibility
+</span><span class="hs-identifier hs-var">Default</span></span><span> </span><span class="annot"><span class="annottext">Maybe StorageClass
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">CallingConvention
+</span><span class="hs-identifier hs-var">C</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679259158"><span class="hs-identifier hs-var">rt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Name
+</span><span class="hs-identifier hs-var">mkName</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679259161"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">([Parameter], Bool)
+</span><a href="#local-6989586621679259150"><span class="hs-identifier hs-var">pTy</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-19"></span><span>        </span><span class="annot"><span class="annottext">Maybe ShortByteString
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">Maybe ShortByteString
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Maybe ShortByteString
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">Maybe Constant
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">Maybe Constant
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679259150"><span class="annot"><span class="annottext">pTy :: ([Parameter], Bool)
+</span><a href="#local-6989586621679259150"><span class="hs-identifier hs-var hs-var">pTy</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><span class="annottext">Type -&gt; Name -&gt; [ParameterAttribute] -&gt; Parameter
+</span><span class="hs-identifier hs-var">Parameter</span></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679259148"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Name
+</span><span class="hs-identifier hs-var">mkName</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&quot;</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679259148"><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679259148"><span class="hs-identifier hs-var">ty</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[Type]
+</span><a href="#local-6989586621679259157"><span class="hs-identifier hs-var">pts</span></a></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679259156"><span class="hs-identifier hs-var">varArgs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="annot"><a href="Hachi.Compiler.CodeGen.Externals.Utility.html#globalFromType"><span class="hs-identifier hs-var">globalFromType</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Type
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-22"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; Global
+forall a. HasCallStack =&gt; String -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;globalFromType must be applied to a function pointer&quot;</span></span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-25"></span></pre></body></html>

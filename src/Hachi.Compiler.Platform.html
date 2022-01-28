@@ -1,0 +1,89 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LINE 1 &quot;src/Hachi/Compiler/Platform.hsc&quot; #-}</span><span>
+</span><span id="line-1"></span><span>
+</span><span id="line-2"></span><span class="hs-comment">-- | This module exports platform-specific information.</span><span>
+</span><span id="line-3"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Hachi.Compiler.Platform</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-4"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Platform-specific sizes</span></span><span>
+</span><span id="line-5"></span><span>    </span><span class="annot"><a href="Hachi.Compiler.Platform.html#platformPtrSize"><span class="hs-identifier">platformPtrSize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>    </span><span class="annot"><a href="Hachi.Compiler.Platform.html#platformIntSize"><span class="hs-identifier">platformIntSize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>    </span><span class="annot"><a href="Hachi.Compiler.Platform.html#platformUnsignedLongIntSize"><span class="hs-identifier">platformUnsignedLongIntSize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>    </span><span class="annot"><a href="Hachi.Compiler.Platform.html#platformGmpLimbSize"><span class="hs-identifier">platformGmpLimbSize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="Hachi.Compiler.Platform.html#platformGmpSize"><span class="hs-identifier">platformGmpSize</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><span class="hs-comment">-- * Platform-specific LLVM types</span></span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="Hachi.Compiler.Platform.html#iHost"><span class="hs-identifier">iHost</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="Hachi.Compiler.Platform.html#iUnsignedLongInt"><span class="hs-identifier">iUnsignedLongInt</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><a href="Hachi.Compiler.Platform.html#gmpLimb"><span class="hs-identifier">gmpLimb</span></a></span><span>
+</span><span id="line-15"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">LLVM.AST</span></span><span>
+</span><span id="line-22"></span><span>
+</span><span id="line-23"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span id="local-6989586621679259452"><span class="annot"><a href="Hachi.Compiler.Platform.html#platformPtrSize"><span class="hs-identifier hs-type">platformPtrSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Num</span></span><span> </span><span class="annot"><a href="#local-6989586621679259452"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259452"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-26"></span><span id="platformPtrSize"><span class="annot"><span class="annottext">platformPtrSize :: a
+</span><a href="Hachi.Compiler.Platform.html#platformPtrSize"><span class="hs-identifier hs-var hs-var">platformPtrSize</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">8</span></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-pragma">{-# LINE 27 &quot;src/Hachi/Compiler/Platform.hsc&quot; #-}</span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span id="local-6989586621679259461"><span class="annot"><a href="Hachi.Compiler.Platform.html#platformIntSize"><span class="hs-identifier hs-type">platformIntSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Num</span></span><span> </span><span class="annot"><a href="#local-6989586621679259461"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259461"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-29"></span><span id="platformIntSize"><span class="annot"><span class="annottext">platformIntSize :: a
+</span><a href="Hachi.Compiler.Platform.html#platformIntSize"><span class="hs-identifier hs-var hs-var">platformIntSize</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">4</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">8</span></span><span>
+</span><span id="line-30"></span><span class="hs-pragma">{-# LINE 30 &quot;src/Hachi/Compiler/Platform.hsc&quot; #-}</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span id="local-6989586621679259450"><span class="annot"><a href="Hachi.Compiler.Platform.html#platformUnsignedLongIntSize"><span class="hs-identifier hs-type">platformUnsignedLongIntSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Num</span></span><span> </span><span class="annot"><a href="#local-6989586621679259450"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259450"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-32"></span><span id="platformUnsignedLongIntSize"><span class="annot"><span class="annottext">platformUnsignedLongIntSize :: a
+</span><a href="Hachi.Compiler.Platform.html#platformUnsignedLongIntSize"><span class="hs-identifier hs-var hs-var">platformUnsignedLongIntSize</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">8</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">8</span></span><span>
+</span><span id="line-33"></span><span class="hs-pragma">{-# LINE 33 &quot;src/Hachi/Compiler/Platform.hsc&quot; #-}</span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span id="local-6989586621679259449"><span class="annot"><a href="Hachi.Compiler.Platform.html#platformGmpLimbSize"><span class="hs-identifier hs-type">platformGmpLimbSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Num</span></span><span> </span><span class="annot"><a href="#local-6989586621679259449"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259449"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-35"></span><span id="platformGmpLimbSize"><span class="annot"><span class="annottext">platformGmpLimbSize :: a
+</span><a href="Hachi.Compiler.Platform.html#platformGmpLimbSize"><span class="hs-identifier hs-var hs-var">platformGmpLimbSize</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">8</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">a -&gt; a -&gt; a
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">*</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">8</span></span><span>
+</span><span id="line-36"></span><span class="hs-pragma">{-# LINE 36 &quot;src/Hachi/Compiler/Platform.hsc&quot; #-}</span><span>
+</span><span id="line-36"></span><span>
+</span><span id="line-37"></span><span id="local-6989586621679259448"><span class="annot"><a href="Hachi.Compiler.Platform.html#platformGmpSize"><span class="hs-identifier hs-type">platformGmpSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Num</span></span><span> </span><span class="annot"><a href="#local-6989586621679259448"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259448"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-38"></span><span id="platformGmpSize"><span class="annot"><span class="annottext">platformGmpSize :: a
+</span><a href="Hachi.Compiler.Platform.html#platformGmpSize"><span class="hs-identifier hs-var hs-var">platformGmpSize</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">16</span></span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span class="hs-pragma">{-# LINE 39 &quot;src/Hachi/Compiler/Platform.hsc&quot; #-}</span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span class="annot"><a href="Hachi.Compiler.Platform.html#iHost"><span class="hs-identifier hs-type">iHost</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span>
+</span><span id="line-43"></span><span id="iHost"><span class="annot"><span class="annottext">iHost :: Type
+</span><a href="Hachi.Compiler.Platform.html#iHost"><span class="hs-identifier hs-var hs-var">iHost</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Type
+</span><span class="hs-identifier hs-var">IntegerType</span></span><span> </span><span class="annot"><span class="annottext">Word32
+forall a. Num a =&gt; a
+</span><a href="Hachi.Compiler.Platform.html#platformIntSize"><span class="hs-identifier hs-var">platformIntSize</span></a></span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="annot"><a href="Hachi.Compiler.Platform.html#iUnsignedLongInt"><span class="hs-identifier hs-type">iUnsignedLongInt</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span>
+</span><span id="line-46"></span><span id="iUnsignedLongInt"><span class="annot"><span class="annottext">iUnsignedLongInt :: Type
+</span><a href="Hachi.Compiler.Platform.html#iUnsignedLongInt"><span class="hs-identifier hs-var hs-var">iUnsignedLongInt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Type
+</span><span class="hs-identifier hs-var">IntegerType</span></span><span> </span><span class="annot"><span class="annottext">Word32
+forall a. Num a =&gt; a
+</span><a href="Hachi.Compiler.Platform.html#platformUnsignedLongIntSize"><span class="hs-identifier hs-var">platformUnsignedLongIntSize</span></a></span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="annot"><a href="Hachi.Compiler.Platform.html#gmpLimb"><span class="hs-identifier hs-type">gmpLimb</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span>
+</span><span id="line-49"></span><span id="gmpLimb"><span class="annot"><span class="annottext">gmpLimb :: Type
+</span><a href="Hachi.Compiler.Platform.html#gmpLimb"><span class="hs-identifier hs-var hs-var">gmpLimb</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Type
+</span><span class="hs-identifier hs-var">IntegerType</span></span><span> </span><span class="annot"><span class="annottext">Word32
+forall a. Num a =&gt; a
+</span><a href="Hachi.Compiler.Platform.html#platformGmpLimbSize"><span class="hs-identifier hs-var">platformGmpLimbSize</span></a></span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-52"></span></pre></body></html>

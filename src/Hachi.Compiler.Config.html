@@ -1,0 +1,780 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Hachi.Compiler.Config</span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-3"></span><span>  </span><span class="annot"><a href="Hachi.Compiler.Config.html#Config"><span class="hs-identifier">Config</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>  </span><span class="annot"><a href="Hachi.Compiler.Config.html#mkDefaultConfig"><span class="hs-identifier">mkDefaultConfig</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>  </span><span class="annot"><a href="Hachi.Compiler.Config.html#parseCmdLineArgs"><span class="hs-identifier">parseCmdLineArgs</span></a></span><span>
+</span><span id="line-6"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Options.Applicative</span></span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">data</span><span> </span><span id="Config"><span class="annot"><a href="Hachi.Compiler.Config.html#Config"><span class="hs-identifier hs-var">Config</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkConfig"><span class="annot"><a href="Hachi.Compiler.Config.html#MkConfig"><span class="hs-identifier hs-var">MkConfig</span></a></span></span><span> </span><span class="hs-special">{</span><span>
+</span><span id="line-15"></span><span>    </span><span id="cfgInput"><span class="annot"><span class="annottext">Config -&gt; FilePath
+</span><a href="Hachi.Compiler.Config.html#cfgInput"><span class="hs-identifier hs-var hs-var">cfgInput</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>    </span><span id="cfgOutput"><span class="annot"><span class="annottext">Config -&gt; Maybe FilePath
+</span><a href="Hachi.Compiler.Config.html#cfgOutput"><span class="hs-identifier hs-var hs-var">cfgOutput</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>    </span><span id="cfgRTS"><span class="annot"><span class="annottext">Config -&gt; Maybe FilePath
+</span><a href="Hachi.Compiler.Config.html#cfgRTS"><span class="hs-identifier hs-var hs-var">cfgRTS</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-comment">-- | Is the input a binary file that must be deserialised?</span><span>
+</span><span id="line-19"></span><span>    </span><span id="cfgDeserialise"><span class="annot"><span class="annottext">Config -&gt; Bool
+</span><a href="Hachi.Compiler.Config.html#cfgDeserialise"><span class="hs-identifier hs-var hs-var">cfgDeserialise</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-comment">-- | Is the input typed?</span><span>
+</span><span id="line-21"></span><span>    </span><span id="cfgTyped"><span class="annot"><span class="annottext">Config -&gt; Bool
+</span><a href="Hachi.Compiler.Config.html#cfgTyped"><span class="hs-identifier hs-var hs-var">cfgTyped</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>    </span><span class="hs-comment">-- | Should the resulting LLVM code print diagnostic information?</span><span>
+</span><span id="line-23"></span><span>    </span><span id="cfgTrace"><span class="annot"><span class="annottext">Config -&gt; Bool
+</span><a href="Hachi.Compiler.Config.html#cfgTrace"><span class="hs-identifier hs-var hs-var">cfgTrace</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>    </span><span class="hs-comment">-- | Should the compiler print diagnostic information while running?</span><span>
+</span><span id="line-25"></span><span>    </span><span id="cfgVerbose"><span class="annot"><span class="annottext">Config -&gt; Bool
+</span><a href="Hachi.Compiler.Config.html#cfgVerbose"><span class="hs-identifier hs-var hs-var">cfgVerbose</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>    </span><span class="hs-comment">-- | Should the compiler generate an object file?</span><span>
+</span><span id="line-27"></span><span>    </span><span id="cfgNoAssemble"><span class="annot"><span class="annottext">Config -&gt; Bool
+</span><a href="Hachi.Compiler.Config.html#cfgNoAssemble"><span class="hs-identifier hs-var hs-var">cfgNoAssemble</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>    </span><span class="hs-comment">-- | Should the compiler generate an executable?</span><span>
+</span><span id="line-29"></span><span>    </span><span id="cfgNoLink"><span class="annot"><span class="annottext">Config -&gt; Bool
+</span><a href="Hachi.Compiler.Config.html#cfgNoLink"><span class="hs-identifier hs-var hs-var">cfgNoLink</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>    </span><span class="hs-comment">-- | Should the LLVM IR be in plain-text?</span><span>
+</span><span id="line-31"></span><span>    </span><span id="cfgNoSerialise"><span class="annot"><span class="annottext">Config -&gt; Bool
+</span><a href="Hachi.Compiler.Config.html#cfgNoSerialise"><span class="hs-identifier hs-var hs-var">cfgNoSerialise</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>    </span><span class="hs-comment">-- | Should the generated code check for OOM after every malloc?</span><span>
+</span><span id="line-33"></span><span>    </span><span id="cfgCheckOOM"><span class="annot"><span class="annottext">Config -&gt; Bool
+</span><a href="Hachi.Compiler.Config.html#cfgCheckOOM"><span class="hs-identifier hs-var hs-var">cfgCheckOOM</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-comment">-- | Should we produce a library?</span><span>
+</span><span id="line-35"></span><span>    </span><span id="cfgLibrary"><span class="annot"><span class="annottext">Config -&gt; Bool
+</span><a href="Hachi.Compiler.Config.html#cfgLibrary"><span class="hs-identifier hs-var hs-var">cfgLibrary</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span>
+</span><span id="line-36"></span><span>    </span><span class="hs-comment">-- | If --library is specified, an optional path to a .c source file which</span><span>
+</span><span id="line-37"></span><span>    </span><span class="hs-comment">-- contains the entry point for the program.</span><span>
+</span><span id="line-38"></span><span>    </span><span id="cfgEntryPoint"><span class="annot"><span class="annottext">Config -&gt; Maybe FilePath
+</span><a href="Hachi.Compiler.Config.html#cfgEntryPoint"><span class="hs-identifier hs-var hs-var">cfgEntryPoint</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>    </span><span class="hs-comment">-- | An optional value indicating what set of optimisations should be</span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-comment">-- applied to the program.</span><span>
+</span><span id="line-41"></span><span>    </span><span id="cfgOptimisationLevel"><span class="annot"><span class="annottext">Config -&gt; Maybe Word
+</span><a href="Hachi.Compiler.Config.html#cfgOptimisationLevel"><span class="hs-identifier hs-var hs-var">cfgOptimisationLevel</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word</span></span><span>
+</span><span id="line-42"></span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679259228"><span id="local-6989586621679259230"><span class="annot"><span class="annottext">Config -&gt; Config -&gt; Bool
+(Config -&gt; Config -&gt; Bool)
+-&gt; (Config -&gt; Config -&gt; Bool) -&gt; Eq Config
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: Config -&gt; Config -&gt; Bool
+$c/= :: Config -&gt; Config -&gt; Bool
+== :: Config -&gt; Config -&gt; Bool
+$c== :: Config -&gt; Config -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259221"><span id="local-6989586621679259223"><span id="local-6989586621679259225"><span class="annot"><span class="annottext">Int -&gt; Config -&gt; ShowS
+[Config] -&gt; ShowS
+Config -&gt; FilePath
+(Int -&gt; Config -&gt; ShowS)
+-&gt; (Config -&gt; FilePath) -&gt; ([Config] -&gt; ShowS) -&gt; Show Config
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; FilePath) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [Config] -&gt; ShowS
+$cshowList :: [Config] -&gt; ShowS
+show :: Config -&gt; FilePath
+$cshow :: Config -&gt; FilePath
+showsPrec :: Int -&gt; Config -&gt; ShowS
+$cshowsPrec :: Int -&gt; Config -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- | `mkDefaultConfig` @input@ constructs a `Config` with reasonable defaults</span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- and using @input@ as the input source file.</span><span>
+</span><span id="line-46"></span><span class="annot"><a href="Hachi.Compiler.Config.html#mkDefaultConfig"><span class="hs-identifier hs-type">mkDefaultConfig</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Hachi.Compiler.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span>
+</span><span id="line-47"></span><span id="mkDefaultConfig"><span class="annot"><span class="annottext">mkDefaultConfig :: FilePath -&gt; Config
+</span><a href="Hachi.Compiler.Config.html#mkDefaultConfig"><span class="hs-identifier hs-var hs-var">mkDefaultConfig</span></a></span></span><span> </span><span id="local-6989586621679259219"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679259219"><span class="hs-identifier hs-var">fp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">MkConfig :: FilePath
+-&gt; Maybe FilePath
+-&gt; Maybe FilePath
+-&gt; Bool
+-&gt; Bool
+-&gt; Bool
+-&gt; Bool
+-&gt; Bool
+-&gt; Bool
+-&gt; Bool
+-&gt; Bool
+-&gt; Bool
+-&gt; Maybe FilePath
+-&gt; Maybe Word
+-&gt; Config
+</span><a href="Hachi.Compiler.Config.html#MkConfig"><span class="hs-identifier hs-type">MkConfig</span></a></span><span class="hs-special">{</span><span>
+</span><span id="line-48"></span><span>    </span><span class="annot"><span class="annottext">cfgInput :: FilePath
+</span><a href="Hachi.Compiler.Config.html#cfgInput"><span class="hs-identifier hs-var">cfgInput</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679259219"><span class="hs-identifier hs-var">fp</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-49"></span><span>    </span><span class="annot"><span class="annottext">cfgOutput :: Maybe FilePath
+</span><a href="Hachi.Compiler.Config.html#cfgOutput"><span class="hs-identifier hs-var">cfgOutput</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe FilePath
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span>
+</span><span id="line-50"></span><span>    </span><span class="annot"><span class="annottext">cfgRTS :: Maybe FilePath
+</span><a href="Hachi.Compiler.Config.html#cfgRTS"><span class="hs-identifier hs-var">cfgRTS</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe FilePath
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span>
+</span><span id="line-51"></span><span>    </span><span class="annot"><span class="annottext">cfgDeserialise :: Bool
+</span><a href="Hachi.Compiler.Config.html#cfgDeserialise"><span class="hs-identifier hs-var">cfgDeserialise</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">,</span><span>
+</span><span id="line-52"></span><span>    </span><span class="annot"><span class="annottext">cfgTyped :: Bool
+</span><a href="Hachi.Compiler.Config.html#cfgTyped"><span class="hs-identifier hs-var">cfgTyped</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">,</span><span>
+</span><span id="line-53"></span><span>    </span><span class="annot"><span class="annottext">cfgTrace :: Bool
+</span><a href="Hachi.Compiler.Config.html#cfgTrace"><span class="hs-identifier hs-var">cfgTrace</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">,</span><span>
+</span><span id="line-54"></span><span>    </span><span class="annot"><span class="annottext">cfgVerbose :: Bool
+</span><a href="Hachi.Compiler.Config.html#cfgVerbose"><span class="hs-identifier hs-var">cfgVerbose</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>    </span><span class="annot"><span class="annottext">cfgNoAssemble :: Bool
+</span><a href="Hachi.Compiler.Config.html#cfgNoAssemble"><span class="hs-identifier hs-var">cfgNoAssemble</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>    </span><span class="annot"><span class="annottext">cfgNoLink :: Bool
+</span><a href="Hachi.Compiler.Config.html#cfgNoLink"><span class="hs-identifier hs-var">cfgNoLink</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">,</span><span>
+</span><span id="line-57"></span><span>    </span><span class="annot"><span class="annottext">cfgNoSerialise :: Bool
+</span><a href="Hachi.Compiler.Config.html#cfgNoSerialise"><span class="hs-identifier hs-var">cfgNoSerialise</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">,</span><span>
+</span><span id="line-58"></span><span>    </span><span class="annot"><span class="annottext">cfgCheckOOM :: Bool
+</span><a href="Hachi.Compiler.Config.html#cfgCheckOOM"><span class="hs-identifier hs-var">cfgCheckOOM</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">,</span><span>
+</span><span id="line-59"></span><span>    </span><span class="annot"><span class="annottext">cfgLibrary :: Bool
+</span><a href="Hachi.Compiler.Config.html#cfgLibrary"><span class="hs-identifier hs-var">cfgLibrary</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">,</span><span>
+</span><span id="line-60"></span><span>    </span><span class="annot"><span class="annottext">cfgEntryPoint :: Maybe FilePath
+</span><a href="Hachi.Compiler.Config.html#cfgEntryPoint"><span class="hs-identifier hs-var">cfgEntryPoint</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe FilePath
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">,</span><span>
+</span><span id="line-61"></span><span>    </span><span class="annot"><span class="annottext">cfgOptimisationLevel :: Maybe Word
+</span><a href="Hachi.Compiler.Config.html#cfgOptimisationLevel"><span class="hs-identifier hs-var">cfgOptimisationLevel</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Word
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-62"></span><span class="hs-special">}</span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span class="annot"><a href="Hachi.Compiler.Config.html#cfgInputP"><span class="hs-identifier hs-type">cfgInputP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span>
+</span><span id="line-65"></span><span id="cfgInputP"><span class="annot"><span class="annottext">cfgInputP :: Parser FilePath
+</span><a href="Hachi.Compiler.Config.html#cfgInputP"><span class="hs-identifier hs-var hs-var">cfgInputP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Mod ArgumentFields FilePath -&gt; Parser FilePath
+forall s. IsString s =&gt; Mod ArgumentFields s -&gt; Parser s
+</span><span class="hs-identifier hs-var">strArgument</span></span><span> </span><span class="annot"><span class="annottext">(Mod ArgumentFields FilePath -&gt; Parser FilePath)
+-&gt; Mod ArgumentFields FilePath -&gt; Parser FilePath
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-66"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod ArgumentFields FilePath
+forall (f :: * -&gt; *) a. HasMetavar f =&gt; FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">metavar</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;INPUT&quot;</span></span><span> </span><span class="annot"><span class="annottext">Mod ArgumentFields FilePath
+-&gt; Mod ArgumentFields FilePath -&gt; Mod ArgumentFields FilePath
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-67"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod ArgumentFields FilePath
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">help</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;The path to the PLC source file&quot;</span></span><span>
+</span><span id="line-68"></span><span>
+</span><span id="line-69"></span><span class="annot"><a href="Hachi.Compiler.Config.html#cfgOutputP"><span class="hs-identifier hs-type">cfgOutputP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span class="hs-special">)</span><span>
+</span><span id="line-70"></span><span id="cfgOutputP"><span class="annot"><span class="annottext">cfgOutputP :: Parser (Maybe FilePath)
+</span><a href="Hachi.Compiler.Config.html#cfgOutputP"><span class="hs-identifier hs-var hs-var">cfgOutputP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser FilePath -&gt; Parser (Maybe FilePath)
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">optional</span></span><span> </span><span class="annot"><span class="annottext">(Parser FilePath -&gt; Parser (Maybe FilePath))
+-&gt; Parser FilePath -&gt; Parser (Maybe FilePath)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields FilePath -&gt; Parser FilePath
+forall s. IsString s =&gt; Mod OptionFields s -&gt; Parser s
+</span><span class="hs-identifier hs-var">strOption</span></span><span> </span><span class="annot"><span class="annottext">(Mod OptionFields FilePath -&gt; Parser FilePath)
+-&gt; Mod OptionFields FilePath -&gt; Parser FilePath
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-71"></span><span>    </span><span class="annot"><span class="annottext">Char -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. HasName f =&gt; Char -&gt; Mod f a
+</span><span class="hs-identifier hs-var">short</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'o'</span></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields FilePath
+-&gt; Mod OptionFields FilePath -&gt; Mod OptionFields FilePath
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-72"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">long</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;output&quot;</span></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields FilePath
+-&gt; Mod OptionFields FilePath -&gt; Mod OptionFields FilePath
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-73"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. HasMetavar f =&gt; FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">metavar</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;OUTPUT&quot;</span></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields FilePath
+-&gt; Mod OptionFields FilePath -&gt; Mod OptionFields FilePath
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-74"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">help</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;The path of the output file to generate&quot;</span></span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span class="annot"><a href="Hachi.Compiler.Config.html#cfgRTSP"><span class="hs-identifier hs-type">cfgRTSP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span class="hs-special">)</span><span>
+</span><span id="line-77"></span><span id="cfgRTSP"><span class="annot"><span class="annottext">cfgRTSP :: Parser (Maybe FilePath)
+</span><a href="Hachi.Compiler.Config.html#cfgRTSP"><span class="hs-identifier hs-var hs-var">cfgRTSP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser FilePath -&gt; Parser (Maybe FilePath)
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">optional</span></span><span> </span><span class="annot"><span class="annottext">(Parser FilePath -&gt; Parser (Maybe FilePath))
+-&gt; Parser FilePath -&gt; Parser (Maybe FilePath)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields FilePath -&gt; Parser FilePath
+forall s. IsString s =&gt; Mod OptionFields s -&gt; Parser s
+</span><span class="hs-identifier hs-var">strOption</span></span><span> </span><span class="annot"><span class="annottext">(Mod OptionFields FilePath -&gt; Parser FilePath)
+-&gt; Mod OptionFields FilePath -&gt; Parser FilePath
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-78"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">long</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;rts&quot;</span></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields FilePath
+-&gt; Mod OptionFields FilePath -&gt; Mod OptionFields FilePath
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-79"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">help</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;The path to rts.c&quot;</span></span><span>
+</span><span id="line-80"></span><span>
+</span><span id="line-81"></span><span class="annot"><a href="Hachi.Compiler.Config.html#cfgDeserialiseP"><span class="hs-identifier hs-type">cfgDeserialiseP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-82"></span><span id="cfgDeserialiseP"><span class="annot"><span class="annottext">cfgDeserialiseP :: Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgDeserialiseP"><span class="hs-identifier hs-var hs-var">cfgDeserialiseP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Parser Bool
+</span><span class="hs-identifier hs-var">switch</span></span><span> </span><span class="annot"><span class="annottext">(Mod FlagFields Bool -&gt; Parser Bool)
+-&gt; Mod FlagFields Bool -&gt; Parser Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-83"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">long</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;deserialise&quot;</span></span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Mod FlagFields Bool -&gt; Mod FlagFields Bool
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-84"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">help</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Deserialise PLC from binary&quot;</span></span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="annot"><a href="Hachi.Compiler.Config.html#cfgTypedP"><span class="hs-identifier hs-type">cfgTypedP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-87"></span><span id="cfgTypedP"><span class="annot"><span class="annottext">cfgTypedP :: Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgTypedP"><span class="hs-identifier hs-var hs-var">cfgTypedP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Parser Bool
+</span><span class="hs-identifier hs-var">switch</span></span><span> </span><span class="annot"><span class="annottext">(Mod FlagFields Bool -&gt; Parser Bool)
+-&gt; Mod FlagFields Bool -&gt; Parser Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-88"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">long</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;typed&quot;</span></span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Mod FlagFields Bool -&gt; Mod FlagFields Bool
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-89"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">help</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Parse the input as typed PLC&quot;</span></span><span>
+</span><span id="line-90"></span><span>
+</span><span id="line-91"></span><span class="annot"><a href="Hachi.Compiler.Config.html#cfgTraceP"><span class="hs-identifier hs-type">cfgTraceP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-92"></span><span id="cfgTraceP"><span class="annot"><span class="annottext">cfgTraceP :: Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgTraceP"><span class="hs-identifier hs-var hs-var">cfgTraceP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Parser Bool
+</span><span class="hs-identifier hs-var">switch</span></span><span> </span><span class="annot"><span class="annottext">(Mod FlagFields Bool -&gt; Parser Bool)
+-&gt; Mod FlagFields Bool -&gt; Parser Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-93"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">long</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;trace&quot;</span></span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Mod FlagFields Bool -&gt; Mod FlagFields Bool
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-94"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">help</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Inject tracing code into the LLVM IR&quot;</span></span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span><span class="annot"><a href="Hachi.Compiler.Config.html#cfgVerboseP"><span class="hs-identifier hs-type">cfgVerboseP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-97"></span><span id="cfgVerboseP"><span class="annot"><span class="annottext">cfgVerboseP :: Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgVerboseP"><span class="hs-identifier hs-var hs-var">cfgVerboseP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Parser Bool
+</span><span class="hs-identifier hs-var">switch</span></span><span> </span><span class="annot"><span class="annottext">(Mod FlagFields Bool -&gt; Parser Bool)
+-&gt; Mod FlagFields Bool -&gt; Parser Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-98"></span><span>    </span><span class="annot"><span class="annottext">Char -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. HasName f =&gt; Char -&gt; Mod f a
+</span><span class="hs-identifier hs-var">short</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'v'</span></span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Mod FlagFields Bool -&gt; Mod FlagFields Bool
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-99"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">long</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;verbose&quot;</span></span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Mod FlagFields Bool -&gt; Mod FlagFields Bool
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-100"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">help</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Print diagnostic messages during compilation&quot;</span></span><span>
+</span><span id="line-101"></span><span>
+</span><span id="line-102"></span><span class="annot"><a href="Hachi.Compiler.Config.html#cfgNoAssembleP"><span class="hs-identifier hs-type">cfgNoAssembleP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-103"></span><span id="cfgNoAssembleP"><span class="annot"><span class="annottext">cfgNoAssembleP :: Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgNoAssembleP"><span class="hs-identifier hs-var hs-var">cfgNoAssembleP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Parser Bool
+</span><span class="hs-identifier hs-var">switch</span></span><span> </span><span class="annot"><span class="annottext">(Mod FlagFields Bool -&gt; Parser Bool)
+-&gt; Mod FlagFields Bool -&gt; Parser Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-104"></span><span>    </span><span class="annot"><span class="annottext">Char -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. HasName f =&gt; Char -&gt; Mod f a
+</span><span class="hs-identifier hs-var">short</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'S'</span></span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Mod FlagFields Bool -&gt; Mod FlagFields Bool
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-105"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">help</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Do not assemble the LLVM IR into an object file&quot;</span></span><span>
+</span><span id="line-106"></span><span>
+</span><span id="line-107"></span><span class="annot"><a href="Hachi.Compiler.Config.html#cfgNoLinkP"><span class="hs-identifier hs-type">cfgNoLinkP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-108"></span><span id="cfgNoLinkP"><span class="annot"><span class="annottext">cfgNoLinkP :: Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgNoLinkP"><span class="hs-identifier hs-var hs-var">cfgNoLinkP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Parser Bool
+</span><span class="hs-identifier hs-var">switch</span></span><span> </span><span class="annot"><span class="annottext">(Mod FlagFields Bool -&gt; Parser Bool)
+-&gt; Mod FlagFields Bool -&gt; Parser Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-109"></span><span>    </span><span class="annot"><span class="annottext">Char -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. HasName f =&gt; Char -&gt; Mod f a
+</span><span class="hs-identifier hs-var">short</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'c'</span></span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Mod FlagFields Bool -&gt; Mod FlagFields Bool
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-110"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">help</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Do not link the program into an executable&quot;</span></span><span>
+</span><span id="line-111"></span><span>
+</span><span id="line-112"></span><span class="annot"><a href="Hachi.Compiler.Config.html#cfgNoSerialiseP"><span class="hs-identifier hs-type">cfgNoSerialiseP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-113"></span><span id="cfgNoSerialiseP"><span class="annot"><span class="annottext">cfgNoSerialiseP :: Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgNoSerialiseP"><span class="hs-identifier hs-var hs-var">cfgNoSerialiseP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Parser Bool
+</span><span class="hs-identifier hs-var">switch</span></span><span> </span><span class="annot"><span class="annottext">(Mod FlagFields Bool -&gt; Parser Bool)
+-&gt; Mod FlagFields Bool -&gt; Parser Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-114"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">long</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;emit-llvm&quot;</span></span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Mod FlagFields Bool -&gt; Mod FlagFields Bool
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-115"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">help</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Generate plain-text LLVM IR instead of bitcode&quot;</span></span><span>
+</span><span id="line-116"></span><span>
+</span><span id="line-117"></span><span class="annot"><a href="Hachi.Compiler.Config.html#cfgCheckOOMP"><span class="hs-identifier hs-type">cfgCheckOOMP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-118"></span><span id="cfgCheckOOMP"><span class="annot"><span class="annottext">cfgCheckOOMP :: Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgCheckOOMP"><span class="hs-identifier hs-var hs-var">cfgCheckOOMP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Parser Bool
+</span><span class="hs-identifier hs-var">switch</span></span><span> </span><span class="annot"><span class="annottext">(Mod FlagFields Bool -&gt; Parser Bool)
+-&gt; Mod FlagFields Bool -&gt; Parser Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-119"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">long</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;check-oom&quot;</span></span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Mod FlagFields Bool -&gt; Mod FlagFields Bool
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-120"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">help</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Generate code which checks whether malloc succeeds&quot;</span></span><span>
+</span><span id="line-121"></span><span>
+</span><span id="line-122"></span><span class="annot"><a href="Hachi.Compiler.Config.html#cfgLibraryP"><span class="hs-identifier hs-type">cfgLibraryP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-123"></span><span id="cfgLibraryP"><span class="annot"><span class="annottext">cfgLibraryP :: Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgLibraryP"><span class="hs-identifier hs-var hs-var">cfgLibraryP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Parser Bool
+</span><span class="hs-identifier hs-var">switch</span></span><span> </span><span class="annot"><span class="annottext">(Mod FlagFields Bool -&gt; Parser Bool)
+-&gt; Mod FlagFields Bool -&gt; Parser Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-124"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">long</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;library&quot;</span></span><span> </span><span class="annot"><span class="annottext">Mod FlagFields Bool -&gt; Mod FlagFields Bool -&gt; Mod FlagFields Bool
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-125"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod FlagFields Bool
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">help</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;Generate a library instead of an executable&quot;</span></span><span>
+</span><span id="line-126"></span><span>
+</span><span id="line-127"></span><span class="annot"><a href="Hachi.Compiler.Config.html#cfgEntryPointP"><span class="hs-identifier hs-type">cfgEntryPointP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span class="hs-special">)</span><span>
+</span><span id="line-128"></span><span id="cfgEntryPointP"><span class="annot"><span class="annottext">cfgEntryPointP :: Parser (Maybe FilePath)
+</span><a href="Hachi.Compiler.Config.html#cfgEntryPointP"><span class="hs-identifier hs-var hs-var">cfgEntryPointP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser FilePath -&gt; Parser (Maybe FilePath)
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">optional</span></span><span> </span><span class="annot"><span class="annottext">(Parser FilePath -&gt; Parser (Maybe FilePath))
+-&gt; Parser FilePath -&gt; Parser (Maybe FilePath)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields FilePath -&gt; Parser FilePath
+forall s. IsString s =&gt; Mod OptionFields s -&gt; Parser s
+</span><span class="hs-identifier hs-var">strOption</span></span><span> </span><span class="annot"><span class="annottext">(Mod OptionFields FilePath -&gt; Parser FilePath)
+-&gt; Mod OptionFields FilePath -&gt; Parser FilePath
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-129"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. HasName f =&gt; FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">long</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;entry-point&quot;</span></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields FilePath
+-&gt; Mod OptionFields FilePath -&gt; Mod OptionFields FilePath
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-130"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields FilePath
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">help</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;The path to a C source file which contains the entry point&quot;</span></span><span>
+</span><span id="line-131"></span><span>
+</span><span id="line-132"></span><span class="annot"><a href="Hachi.Compiler.Config.html#cfgOptimisationLevelP"><span class="hs-identifier hs-type">cfgOptimisationLevelP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word</span></span><span class="hs-special">)</span><span>
+</span><span id="line-133"></span><span id="cfgOptimisationLevelP"><span class="annot"><span class="annottext">cfgOptimisationLevelP :: Parser (Maybe Word)
+</span><a href="Hachi.Compiler.Config.html#cfgOptimisationLevelP"><span class="hs-identifier hs-var hs-var">cfgOptimisationLevelP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser Word -&gt; Parser (Maybe Word)
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f (Maybe a)
+</span><span class="hs-identifier hs-var">optional</span></span><span> </span><span class="annot"><span class="annottext">(Parser Word -&gt; Parser (Maybe Word))
+-&gt; Parser Word -&gt; Parser (Maybe Word)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ReadM Word -&gt; Mod OptionFields Word -&gt; Parser Word
+forall a. ReadM a -&gt; Mod OptionFields a -&gt; Parser a
+</span><span class="hs-identifier hs-var">option</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(FilePath -&gt; Either FilePath Word) -&gt; ReadM Word
+forall a. (FilePath -&gt; Either FilePath a) -&gt; ReadM a
+</span><span class="hs-identifier hs-var">eitherReader</span></span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; Either FilePath Word
+forall a a a.
+(Eq a, Num a, IsString a, IsString a) =&gt;
+a -&gt; Either a a
+</span><a href="#local-6989586621679259194"><span class="hs-identifier hs-var">optLevel</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Mod OptionFields Word -&gt; Parser Word)
+-&gt; Mod OptionFields Word -&gt; Parser Word
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-134"></span><span>    </span><span class="annot"><span class="annottext">Char -&gt; Mod OptionFields Word
+forall (f :: * -&gt; *) a. HasName f =&gt; Char -&gt; Mod f a
+</span><span class="hs-identifier hs-var">short</span></span><span> </span><span class="annot"><span class="annottext">Char
+</span><span class="hs-char">'O'</span></span><span> </span><span class="annot"><span class="annottext">Mod OptionFields Word
+-&gt; Mod OptionFields Word -&gt; Mod OptionFields Word
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-135"></span><span>    </span><span class="annot"><span class="annottext">FilePath -&gt; Mod OptionFields Word
+forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
+</span><span class="hs-identifier hs-var">help</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><span class="hs-string">&quot;A number (0-3) indicating what optimisations should be applied&quot;</span></span><span>
+</span><span id="line-136"></span><span>    </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679259194"><span class="annot"><span class="annottext">optLevel :: a -&gt; Either a a
+</span><a href="#local-6989586621679259194"><span class="hs-identifier hs-var hs-var">optLevel</span></a></span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;0&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either a a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-137"></span><span>          </span><span class="annot"><a href="#local-6989586621679259194"><span class="hs-identifier hs-var">optLevel</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;1&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either a a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">1</span></span><span>
+</span><span id="line-138"></span><span>          </span><span class="annot"><a href="#local-6989586621679259194"><span class="hs-identifier hs-var">optLevel</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;2&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either a a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">2</span></span><span>
+</span><span id="line-139"></span><span>          </span><span class="annot"><a href="#local-6989586621679259194"><span class="hs-identifier hs-var">optLevel</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;3&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either a a
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-number">3</span></span><span>
+</span><span id="line-140"></span><span>          </span><span class="annot"><a href="#local-6989586621679259194"><span class="hs-identifier hs-var">optLevel</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either a a
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span class="hs-string">&quot;Not a valid optimisation level&quot;</span></span><span>
+</span><span id="line-141"></span><span>
+</span><span id="line-142"></span><span class="annot"><a href="Hachi.Compiler.Config.html#cmdArgsP"><span class="hs-identifier hs-type">cmdArgsP</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parser</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span>
+</span><span id="line-143"></span><span id="cmdArgsP"><span class="annot"><span class="annottext">cmdArgsP :: Parser Config
+</span><a href="Hachi.Compiler.Config.html#cmdArgsP"><span class="hs-identifier hs-var hs-var">cmdArgsP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FilePath
+-&gt; Maybe FilePath
+-&gt; Maybe FilePath
+-&gt; Bool
+-&gt; Bool
+-&gt; Bool
+-&gt; Bool
+-&gt; Bool
+-&gt; Bool
+-&gt; Bool
+-&gt; Bool
+-&gt; Bool
+-&gt; Maybe FilePath
+-&gt; Maybe Word
+-&gt; Config
+</span><a href="Hachi.Compiler.Config.html#MkConfig"><span class="hs-identifier hs-var">MkConfig</span></a></span><span>
+</span><span id="line-144"></span><span>    </span><span class="annot"><span class="annottext">(FilePath
+ -&gt; Maybe FilePath
+ -&gt; Maybe FilePath
+ -&gt; Bool
+ -&gt; Bool
+ -&gt; Bool
+ -&gt; Bool
+ -&gt; Bool
+ -&gt; Bool
+ -&gt; Bool
+ -&gt; Bool
+ -&gt; Bool
+ -&gt; Maybe FilePath
+ -&gt; Maybe Word
+ -&gt; Config)
+-&gt; Parser FilePath
+-&gt; Parser
+     (Maybe FilePath
+      -&gt; Maybe FilePath
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Maybe FilePath
+      -&gt; Maybe Word
+      -&gt; Config)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser FilePath
+</span><a href="Hachi.Compiler.Config.html#cfgInputP"><span class="hs-identifier hs-var">cfgInputP</span></a></span><span>
+</span><span id="line-145"></span><span>    </span><span class="annot"><span class="annottext">Parser
+  (Maybe FilePath
+   -&gt; Maybe FilePath
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Maybe FilePath
+   -&gt; Maybe Word
+   -&gt; Config)
+-&gt; Parser (Maybe FilePath)
+-&gt; Parser
+     (Maybe FilePath
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Maybe FilePath
+      -&gt; Maybe Word
+      -&gt; Config)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe FilePath)
+</span><a href="Hachi.Compiler.Config.html#cfgOutputP"><span class="hs-identifier hs-var">cfgOutputP</span></a></span><span>
+</span><span id="line-146"></span><span>    </span><span class="annot"><span class="annottext">Parser
+  (Maybe FilePath
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Maybe FilePath
+   -&gt; Maybe Word
+   -&gt; Config)
+-&gt; Parser (Maybe FilePath)
+-&gt; Parser
+     (Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Maybe FilePath
+      -&gt; Maybe Word
+      -&gt; Config)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe FilePath)
+</span><a href="Hachi.Compiler.Config.html#cfgRTSP"><span class="hs-identifier hs-var">cfgRTSP</span></a></span><span>
+</span><span id="line-147"></span><span>    </span><span class="annot"><span class="annottext">Parser
+  (Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Maybe FilePath
+   -&gt; Maybe Word
+   -&gt; Config)
+-&gt; Parser Bool
+-&gt; Parser
+     (Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Maybe FilePath
+      -&gt; Maybe Word
+      -&gt; Config)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgDeserialiseP"><span class="hs-identifier hs-var">cfgDeserialiseP</span></a></span><span>
+</span><span id="line-148"></span><span>    </span><span class="annot"><span class="annottext">Parser
+  (Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Maybe FilePath
+   -&gt; Maybe Word
+   -&gt; Config)
+-&gt; Parser Bool
+-&gt; Parser
+     (Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Maybe FilePath
+      -&gt; Maybe Word
+      -&gt; Config)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgTypedP"><span class="hs-identifier hs-var">cfgTypedP</span></a></span><span>
+</span><span id="line-149"></span><span>    </span><span class="annot"><span class="annottext">Parser
+  (Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Maybe FilePath
+   -&gt; Maybe Word
+   -&gt; Config)
+-&gt; Parser Bool
+-&gt; Parser
+     (Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Maybe FilePath
+      -&gt; Maybe Word
+      -&gt; Config)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgTraceP"><span class="hs-identifier hs-var">cfgTraceP</span></a></span><span>
+</span><span id="line-150"></span><span>    </span><span class="annot"><span class="annottext">Parser
+  (Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Maybe FilePath
+   -&gt; Maybe Word
+   -&gt; Config)
+-&gt; Parser Bool
+-&gt; Parser
+     (Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Bool
+      -&gt; Maybe FilePath
+      -&gt; Maybe Word
+      -&gt; Config)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgVerboseP"><span class="hs-identifier hs-var">cfgVerboseP</span></a></span><span>
+</span><span id="line-151"></span><span>    </span><span class="annot"><span class="annottext">Parser
+  (Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Bool
+   -&gt; Maybe FilePath
+   -&gt; Maybe Word
+   -&gt; Config)
+-&gt; Parser Bool
+-&gt; Parser
+     (Bool
+      -&gt; Bool -&gt; Bool -&gt; Bool -&gt; Maybe FilePath -&gt; Maybe Word -&gt; Config)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgNoAssembleP"><span class="hs-identifier hs-var">cfgNoAssembleP</span></a></span><span>
+</span><span id="line-152"></span><span>    </span><span class="annot"><span class="annottext">Parser
+  (Bool
+   -&gt; Bool -&gt; Bool -&gt; Bool -&gt; Maybe FilePath -&gt; Maybe Word -&gt; Config)
+-&gt; Parser Bool
+-&gt; Parser
+     (Bool -&gt; Bool -&gt; Bool -&gt; Maybe FilePath -&gt; Maybe Word -&gt; Config)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgNoLinkP"><span class="hs-identifier hs-var">cfgNoLinkP</span></a></span><span>
+</span><span id="line-153"></span><span>    </span><span class="annot"><span class="annottext">Parser
+  (Bool -&gt; Bool -&gt; Bool -&gt; Maybe FilePath -&gt; Maybe Word -&gt; Config)
+-&gt; Parser Bool
+-&gt; Parser (Bool -&gt; Bool -&gt; Maybe FilePath -&gt; Maybe Word -&gt; Config)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgNoSerialiseP"><span class="hs-identifier hs-var">cfgNoSerialiseP</span></a></span><span>
+</span><span id="line-154"></span><span>    </span><span class="annot"><span class="annottext">Parser (Bool -&gt; Bool -&gt; Maybe FilePath -&gt; Maybe Word -&gt; Config)
+-&gt; Parser Bool
+-&gt; Parser (Bool -&gt; Maybe FilePath -&gt; Maybe Word -&gt; Config)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgCheckOOMP"><span class="hs-identifier hs-var">cfgCheckOOMP</span></a></span><span>
+</span><span id="line-155"></span><span>    </span><span class="annot"><span class="annottext">Parser (Bool -&gt; Maybe FilePath -&gt; Maybe Word -&gt; Config)
+-&gt; Parser Bool -&gt; Parser (Maybe FilePath -&gt; Maybe Word -&gt; Config)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser Bool
+</span><a href="Hachi.Compiler.Config.html#cfgLibraryP"><span class="hs-identifier hs-var">cfgLibraryP</span></a></span><span>
+</span><span id="line-156"></span><span>    </span><span class="annot"><span class="annottext">Parser (Maybe FilePath -&gt; Maybe Word -&gt; Config)
+-&gt; Parser (Maybe FilePath) -&gt; Parser (Maybe Word -&gt; Config)
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe FilePath)
+</span><a href="Hachi.Compiler.Config.html#cfgEntryPointP"><span class="hs-identifier hs-var">cfgEntryPointP</span></a></span><span>
+</span><span id="line-157"></span><span>    </span><span class="annot"><span class="annottext">Parser (Maybe Word -&gt; Config)
+-&gt; Parser (Maybe Word) -&gt; Parser Config
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser (Maybe Word)
+</span><a href="Hachi.Compiler.Config.html#cfgOptimisationLevelP"><span class="hs-identifier hs-var">cfgOptimisationLevelP</span></a></span><span>
+</span><span id="line-158"></span><span>
+</span><span id="line-159"></span><span class="hs-comment">-- | `parseCmdLineArgs` parses command-line arguments into a `Config` value.</span><span>
+</span><span id="line-160"></span><span class="hs-comment">-- If parsing fails, the program is terminated and a help message is shown.</span><span>
+</span><span id="line-161"></span><span class="annot"><a href="Hachi.Compiler.Config.html#parseCmdLineArgs"><span class="hs-identifier hs-type">parseCmdLineArgs</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span>
+</span><span id="line-162"></span><span id="parseCmdLineArgs"><span class="annot"><span class="annottext">parseCmdLineArgs :: IO Config
+</span><a href="Hachi.Compiler.Config.html#parseCmdLineArgs"><span class="hs-identifier hs-var hs-var">parseCmdLineArgs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-163"></span><span>    </span><span class="annot"><span class="annottext">ParserPrefs -&gt; ParserInfo Config -&gt; IO Config
+forall a. ParserPrefs -&gt; ParserInfo a -&gt; IO a
+</span><span class="hs-identifier hs-var">customExecParser</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">PrefsMod -&gt; ParserPrefs
+</span><span class="hs-identifier hs-var">prefs</span></span><span> </span><span class="annot"><span class="annottext">PrefsMod
+</span><span class="hs-identifier hs-var">showHelpOnError</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(ParserInfo Config -&gt; IO Config) -&gt; ParserInfo Config -&gt; IO Config
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-164"></span><span>    </span><span class="annot"><span class="annottext">Parser Config -&gt; InfoMod Config -&gt; ParserInfo Config
+forall a. Parser a -&gt; InfoMod a -&gt; ParserInfo a
+</span><span class="hs-identifier hs-var">info</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Parser Config
+</span><a href="Hachi.Compiler.Config.html#cmdArgsP"><span class="hs-identifier hs-var">cmdArgsP</span></a></span><span> </span><span class="annot"><span class="annottext">Parser Config -&gt; Parser (Config -&gt; Config) -&gt; Parser Config
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f a -&gt; f (a -&gt; b) -&gt; f b
+</span><span class="hs-operator hs-var">&lt;**&gt;</span></span><span> </span><span class="annot"><span class="annottext">Parser (Config -&gt; Config)
+forall a. Parser (a -&gt; a)
+</span><span class="hs-identifier hs-var">helper</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">InfoMod Config
+forall m. Monoid m =&gt; m
+</span><span class="hs-identifier hs-var">idm</span></span><span>
+</span><span id="line-165"></span><span>
+</span><span id="line-166"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
+</span><span id="line-167"></span></pre></body></html>
