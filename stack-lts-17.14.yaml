@@ -18,3 +18,10 @@ extra-deps:
       - llvm-hs-pure
   - git: https://github.com/HachiSecurity/plc-utils
     commit: a6fbc2eb9fbef5fd48d14bf69faab5c1743da61a
+
+build:
+    benchmark-opts:
+        benchmark-arguments: "--output plc-llvm.html"
+    haddock-arguments:
+        haddock-args:
+            - "--odir=./docs"

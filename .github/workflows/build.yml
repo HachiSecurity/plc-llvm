@@ -57,7 +57,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          stack --no-terminal build --only-dependencies --test --fast --system-ghc
+          stack --no-terminal build --only-dependencies --test --bench --haddock --fast --system-ghc
 
       - name: Build and install
         run: |
@@ -65,7 +65,7 @@ jobs:
           cp ./compiler/rts/rts.c ./bin/rts.c
           mkdir -p ./bin/tiny_sha3
           cp -r ./compiler/rts/tiny_sha3 ./bin/
-          stack --no-terminal build --test --bench --fast --system-ghc --no-run-tests --no-run-benchmarks --copy-bins --local-bin-path=./bin/
+          stack --no-terminal build --test --bench --haddock --fast --system-ghc --no-run-tests --no-run-benchmarks --copy-bins --local-bin-path=./bin/
           tar acvf plc-llvm.tar.gz -C bin .
 
       - name: Upload build artifact
@@ -97,6 +97,13 @@ jobs:
           asset_name: 'plc-llvm-${{ runner.os }}.tar.gz'
           tag: 'latest-plc-llvm'
           overwrite: true
+
+      - name: Publish documentation
+        if: ${{ github.ref == 'refs/heads/main' && matrix.os == 'ubuntu-latest' }}
+        uses: JamesIves/github-pages-deploy-action@v4.2.2
+        with:
+          branch: haddock
+          folder: docs
 
       # - name: Run benchmark
       #   if: ${{ matrix.os == 'ubuntu-latest' }}
