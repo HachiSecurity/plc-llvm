@@ -3,7 +3,7 @@ name: build
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - '.github/workflows/build.yml'
       - "compiler/**"
@@ -89,7 +89,7 @@ jobs:
           fail_on: 'test failures'
 
       - name: Upload release
-        if: ${{ github.ref == 'refs/heads/master' }}
+        if: ${{ github.ref == 'refs/heads/main' }}
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
