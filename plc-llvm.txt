@@ -3,7 +3,7 @@
 
 
 @package plc-llvm
-@version 0.2.0.0
+@version 0.2.0.1
 
 module Hachi.Compiler.CodeGen.Constant.String
 globalStrs :: [(String, String)]
