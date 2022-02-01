@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Clone repository
         uses: actions/checkout@v2
+        with:
+          submodules: 'true'
 
       - name: Configure Docker metadata
         id: meta
