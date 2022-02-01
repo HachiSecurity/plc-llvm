@@ -14,13 +14,13 @@
 </span><span id="line-14"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
 </span><span id="line-15"></span><span>
 </span><span id="line-16"></span><span class="hs-comment">-- | `newInteger` allocates new memory for a pointer to a gmp integer.</span><span>
-</span><span id="line-17"></span><span id="local-6989586621679260809"><span class="annot"><a href="Hachi.Compiler.CodeGen.Constant.Integer.html#newInteger"><span class="hs-identifier hs-type">newInteger</span></a></span><span>
-</span><span id="line-18"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#MonadCodeGen"><span class="hs-identifier hs-type">MonadCodeGen</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679260809"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIRBuilder</span></span><span> </span><span class="annot"><a href="#local-6989586621679260809"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-19"></span><span>    </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679260809"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Operand</span></span></span><span>
+</span><span id="line-17"></span><span id="local-6989586621679260817"><span class="annot"><a href="Hachi.Compiler.CodeGen.Constant.Integer.html#newInteger"><span class="hs-identifier hs-type">newInteger</span></a></span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#MonadCodeGen"><span class="hs-identifier hs-type">MonadCodeGen</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679260817"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIRBuilder</span></span><span> </span><span class="annot"><a href="#local-6989586621679260817"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span>    </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679260817"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Operand</span></span></span><span>
 </span><span id="line-20"></span><span id="newInteger"><span class="annot"><span class="annottext">newInteger :: m Operand
 </span><a href="Hachi.Compiler.CodeGen.Constant.Integer.html#newInteger"><span class="hs-identifier hs-var hs-var">newInteger</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-21"></span><span>    </span><span id="local-6989586621679260808"><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679260808"><span class="hs-identifier hs-var">size</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Type -&gt; m Operand
+</span><span id="line-21"></span><span>    </span><span id="local-6989586621679260816"><span class="annot"><span class="annottext">Operand
+</span><a href="#local-6989586621679260816"><span class="hs-identifier hs-var">size</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Type -&gt; m Operand
 forall (m :: * -&gt; *).
 (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) =&gt;
 Word32 -&gt; Type -&gt; m Operand
@@ -33,7 +33,7 @@ forall (m :: * -&gt; *).
 Type -&gt; Operand -&gt; m Operand
 </span><a href="Hachi.Compiler.CodeGen.Externals.html#malloc"><span class="hs-identifier hs-var">E.malloc</span></a></span><span> </span><span class="annot"><span class="annottext">Type
 </span><a href="Hachi.Compiler.CodeGen.Types.html#gmpTyPtr"><span class="hs-identifier hs-var">gmpTyPtr</span></a></span><span> </span><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679260808"><span class="hs-identifier hs-var">size</span></a></span><span>
+</span><a href="#local-6989586621679260816"><span class="hs-identifier hs-var">size</span></a></span><span>
 </span><span id="line-23"></span><span>
 </span><span id="line-24"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
 </span><span id="line-25"></span></pre></body></html>

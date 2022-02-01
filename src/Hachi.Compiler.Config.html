@@ -53,7 +53,7 @@
 </span><span id="line-40"></span><span>    </span><span class="hs-comment">-- applied to the program.</span><span>
 </span><span id="line-41"></span><span>    </span><span id="cfgOptimisationLevel"><span class="annot"><span class="annottext">Config -&gt; Maybe Word
 </span><a href="Hachi.Compiler.Config.html#cfgOptimisationLevel"><span class="hs-identifier hs-var hs-var">cfgOptimisationLevel</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word</span></span><span>
-</span><span id="line-42"></span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679259228"><span id="local-6989586621679259230"><span class="annot"><span class="annottext">Config -&gt; Config -&gt; Bool
+</span><span id="line-42"></span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679259235"><span id="local-6989586621679259237"><span class="annot"><span class="annottext">Config -&gt; Config -&gt; Bool
 (Config -&gt; Config -&gt; Bool)
 -&gt; (Config -&gt; Config -&gt; Bool) -&gt; Eq Config
 forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
@@ -61,7 +61,7 @@ forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
 $c/= :: Config -&gt; Config -&gt; Bool
 == :: Config -&gt; Config -&gt; Bool
 $c== :: Config -&gt; Config -&gt; Bool
-</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259221"><span id="local-6989586621679259223"><span id="local-6989586621679259225"><span class="annot"><span class="annottext">Int -&gt; Config -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259228"><span id="local-6989586621679259230"><span id="local-6989586621679259232"><span class="annot"><span class="annottext">Int -&gt; Config -&gt; ShowS
 [Config] -&gt; ShowS
 Config -&gt; FilePath
 (Int -&gt; Config -&gt; ShowS)
@@ -80,8 +80,8 @@ $cshowsPrec :: Int -&gt; Config -&gt; ShowS
 </span><span id="line-45"></span><span class="hs-comment">-- and using @input@ as the input source file.</span><span>
 </span><span id="line-46"></span><span class="annot"><a href="Hachi.Compiler.Config.html#mkDefaultConfig"><span class="hs-identifier hs-type">mkDefaultConfig</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Hachi.Compiler.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span>
 </span><span id="line-47"></span><span id="mkDefaultConfig"><span class="annot"><span class="annottext">mkDefaultConfig :: FilePath -&gt; Config
-</span><a href="Hachi.Compiler.Config.html#mkDefaultConfig"><span class="hs-identifier hs-var hs-var">mkDefaultConfig</span></a></span></span><span> </span><span id="local-6989586621679259219"><span class="annot"><span class="annottext">FilePath
-</span><a href="#local-6989586621679259219"><span class="hs-identifier hs-var">fp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">MkConfig :: FilePath
+</span><a href="Hachi.Compiler.Config.html#mkDefaultConfig"><span class="hs-identifier hs-var hs-var">mkDefaultConfig</span></a></span></span><span> </span><span id="local-6989586621679259226"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679259226"><span class="hs-identifier hs-var">fp</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">MkConfig :: FilePath
 -&gt; Maybe FilePath
 -&gt; Maybe FilePath
 -&gt; Bool
@@ -99,7 +99,7 @@ $cshowsPrec :: Int -&gt; Config -&gt; ShowS
 </span><a href="Hachi.Compiler.Config.html#MkConfig"><span class="hs-identifier hs-type">MkConfig</span></a></span><span class="hs-special">{</span><span>
 </span><span id="line-48"></span><span>    </span><span class="annot"><span class="annottext">cfgInput :: FilePath
 </span><a href="Hachi.Compiler.Config.html#cfgInput"><span class="hs-identifier hs-var">cfgInput</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FilePath
-</span><a href="#local-6989586621679259219"><span class="hs-identifier hs-var">fp</span></a></span><span class="hs-special">,</span><span>
+</span><a href="#local-6989586621679259226"><span class="hs-identifier hs-var">fp</span></a></span><span class="hs-special">,</span><span>
 </span><span id="line-49"></span><span>    </span><span class="annot"><span class="annottext">cfgOutput :: Maybe FilePath
 </span><a href="Hachi.Compiler.Config.html#cfgOutput"><span class="hs-identifier hs-var">cfgOutput</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe FilePath
 forall a. Maybe a
@@ -437,7 +437,7 @@ forall a. (FilePath -&gt; Either FilePath a) -&gt; ReadM a
 forall a a a.
 (Eq a, Num a, IsString a, IsString a) =&gt;
 a -&gt; Either a a
-</span><a href="#local-6989586621679259194"><span class="hs-identifier hs-var">optLevel</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Mod OptionFields Word -&gt; Parser Word)
+</span><a href="#local-6989586621679259201"><span class="hs-identifier hs-var">optLevel</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Mod OptionFields Word -&gt; Parser Word)
 -&gt; Mod OptionFields Word -&gt; Parser Word
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span>
@@ -452,28 +452,28 @@ forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 forall (f :: * -&gt; *) a. FilePath -&gt; Mod f a
 </span><span class="hs-identifier hs-var">help</span></span><span> </span><span class="annot"><span class="annottext">FilePath
 </span><span class="hs-string">&quot;A number (0-3) indicating what optimisations should be applied&quot;</span></span><span>
-</span><span id="line-136"></span><span>    </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679259194"><span class="annot"><span class="annottext">optLevel :: a -&gt; Either a a
-</span><a href="#local-6989586621679259194"><span class="hs-identifier hs-var hs-var">optLevel</span></a></span></span><span> </span><span class="annot"><span class="annottext">a
+</span><span id="line-136"></span><span>    </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679259201"><span class="annot"><span class="annottext">optLevel :: a -&gt; Either a a
+</span><a href="#local-6989586621679259201"><span class="hs-identifier hs-var hs-var">optLevel</span></a></span></span><span> </span><span class="annot"><span class="annottext">a
 </span><span class="hs-string">&quot;0&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either a a
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">a
 </span><span class="hs-number">0</span></span><span>
-</span><span id="line-137"></span><span>          </span><span class="annot"><a href="#local-6989586621679259194"><span class="hs-identifier hs-var">optLevel</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><span id="line-137"></span><span>          </span><span class="annot"><a href="#local-6989586621679259201"><span class="hs-identifier hs-var">optLevel</span></a></span><span> </span><span class="annot"><span class="annottext">a
 </span><span class="hs-string">&quot;1&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either a a
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">a
 </span><span class="hs-number">1</span></span><span>
-</span><span id="line-138"></span><span>          </span><span class="annot"><a href="#local-6989586621679259194"><span class="hs-identifier hs-var">optLevel</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><span id="line-138"></span><span>          </span><span class="annot"><a href="#local-6989586621679259201"><span class="hs-identifier hs-var">optLevel</span></a></span><span> </span><span class="annot"><span class="annottext">a
 </span><span class="hs-string">&quot;2&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either a a
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">a
 </span><span class="hs-number">2</span></span><span>
-</span><span id="line-139"></span><span>          </span><span class="annot"><a href="#local-6989586621679259194"><span class="hs-identifier hs-var">optLevel</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><span id="line-139"></span><span>          </span><span class="annot"><a href="#local-6989586621679259201"><span class="hs-identifier hs-var">optLevel</span></a></span><span> </span><span class="annot"><span class="annottext">a
 </span><span class="hs-string">&quot;3&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either a a
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">a
 </span><span class="hs-number">3</span></span><span>
-</span><span id="line-140"></span><span>          </span><span class="annot"><a href="#local-6989586621679259194"><span class="hs-identifier hs-var">optLevel</span></a></span><span> </span><span class="annot"><span class="annottext">a
+</span><span id="line-140"></span><span>          </span><span class="annot"><a href="#local-6989586621679259201"><span class="hs-identifier hs-var">optLevel</span></a></span><span> </span><span class="annot"><span class="annottext">a
 </span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">a -&gt; Either a a
 forall a b. a -&gt; Either a b
 </span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">a

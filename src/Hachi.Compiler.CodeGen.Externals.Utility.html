@@ -15,11 +15,11 @@
 </span><span id="line-15"></span><span class="hs-comment">-- @type@.</span><span>
 </span><span id="line-16"></span><span class="annot"><a href="Hachi.Compiler.CodeGen.Externals.Utility.html#globalFromType"><span class="hs-identifier hs-type">globalFromType</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Type</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Global</span></span><span>
 </span><span id="line-17"></span><span id="globalFromType"><span class="annot"><span class="annottext">globalFromType :: String -&gt; Type -&gt; Global
-</span><a href="Hachi.Compiler.CodeGen.Externals.Utility.html#globalFromType"><span class="hs-identifier hs-var hs-var">globalFromType</span></a></span></span><span> </span><span id="local-6989586621679259161"><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679259161"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">PointerType</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">FunctionType</span></span><span> </span><span id="local-6989586621679259158"><span class="annot"><span class="annottext">Type
-</span><a href="#local-6989586621679259158"><span class="hs-identifier hs-var">rt</span></a></span></span><span> </span><span id="local-6989586621679259157"><span class="annot"><span class="annottext">[Type]
-</span><a href="#local-6989586621679259157"><span class="hs-identifier hs-var">pts</span></a></span></span><span> </span><span id="local-6989586621679259156"><span class="annot"><span class="annottext">Bool
-</span><a href="#local-6989586621679259156"><span class="hs-identifier hs-var">varArgs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">AddrSpace
+</span><a href="Hachi.Compiler.CodeGen.Externals.Utility.html#globalFromType"><span class="hs-identifier hs-var hs-var">globalFromType</span></a></span></span><span> </span><span id="local-6989586621679259168"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679259168"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">PointerType</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">FunctionType</span></span><span> </span><span id="local-6989586621679259165"><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679259165"><span class="hs-identifier hs-var">rt</span></a></span></span><span> </span><span id="local-6989586621679259164"><span class="annot"><span class="annottext">[Type]
+</span><a href="#local-6989586621679259164"><span class="hs-identifier hs-var">pts</span></a></span></span><span> </span><span id="local-6989586621679259163"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679259163"><span class="hs-identifier hs-var">varArgs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">AddrSpace
 </span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
 </span><span id="line-18"></span><span>    </span><span class="annot"><span class="annottext">Linkage
 -&gt; Visibility
@@ -45,10 +45,10 @@
 forall a. Maybe a
 </span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">CallingConvention
 </span><span class="hs-identifier hs-var">C</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">Type
-</span><a href="#local-6989586621679259158"><span class="hs-identifier hs-var">rt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Name
+</span><a href="#local-6989586621679259165"><span class="hs-identifier hs-var">rt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Name
 </span><span class="hs-identifier hs-var">mkName</span></span><span> </span><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679259161"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">([Parameter], Bool)
-</span><a href="#local-6989586621679259150"><span class="hs-identifier hs-var">pTy</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><a href="#local-6989586621679259168"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">([Parameter], Bool)
+</span><a href="#local-6989586621679259157"><span class="hs-identifier hs-var">pTy</span></a></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
 </span><span id="line-19"></span><span>        </span><span class="annot"><span class="annottext">Maybe ShortByteString
 forall a. Maybe a
 </span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">Maybe ShortByteString
@@ -61,15 +61,15 @@ forall a. Maybe a
 </span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="annot"><span class="annottext">Maybe Constant
 forall a. Maybe a
 </span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
-</span><span id="line-20"></span><span>    </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679259150"><span class="annot"><span class="annottext">pTy :: ([Parameter], Bool)
-</span><a href="#local-6989586621679259150"><span class="hs-identifier hs-var hs-var">pTy</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><span class="annottext">Type -&gt; Name -&gt; [ParameterAttribute] -&gt; Parameter
+</span><span id="line-20"></span><span>    </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679259157"><span class="annot"><span class="annottext">pTy :: ([Parameter], Bool)
+</span><a href="#local-6989586621679259157"><span class="hs-identifier hs-var hs-var">pTy</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><span class="annottext">Type -&gt; Name -&gt; [ParameterAttribute] -&gt; Parameter
 </span><span class="hs-identifier hs-var">Parameter</span></span><span> </span><span class="annot"><span class="annottext">Type
-</span><a href="#local-6989586621679259148"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Name
+</span><a href="#local-6989586621679259155"><span class="hs-identifier hs-var">ty</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Name
 </span><span class="hs-identifier hs-var">mkName</span></span><span> </span><span class="annot"><span class="annottext">String
-</span><span class="hs-string">&quot;&quot;</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679259148"><span class="annot"><span class="annottext">Type
-</span><a href="#local-6989586621679259148"><span class="hs-identifier hs-var">ty</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[Type]
-</span><a href="#local-6989586621679259157"><span class="hs-identifier hs-var">pts</span></a></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Bool
-</span><a href="#local-6989586621679259156"><span class="hs-identifier hs-var">varArgs</span></a></span><span class="hs-special">)</span><span>
+</span><span class="hs-string">&quot;&quot;</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">|</span><span> </span><span id="local-6989586621679259155"><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679259155"><span class="hs-identifier hs-var">ty</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[Type]
+</span><a href="#local-6989586621679259164"><span class="hs-identifier hs-var">pts</span></a></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679259163"><span class="hs-identifier hs-var">varArgs</span></a></span><span class="hs-special">)</span><span>
 </span><span id="line-21"></span><span class="annot"><a href="Hachi.Compiler.CodeGen.Externals.Utility.html#globalFromType"><span class="hs-identifier hs-var">globalFromType</span></a></span><span> </span><span class="annot"><span class="annottext">String
 </span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Type
 </span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span>

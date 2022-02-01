@@ -20,8 +20,8 @@
 </span><span id="line-20"></span><span class="hs-comment">-- global string variables specified by @globals@.</span><span>
 </span><span id="line-21"></span><span class="annot"><a href="Hachi.Compiler.TH.html#mkGlobalStrRefs"><span class="hs-identifier hs-type">mkGlobalStrRefs</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Dec</span></span><span class="hs-special">]</span><span>
 </span><span id="line-22"></span><span id="mkGlobalStrRefs"><span class="annot"><span class="annottext">mkGlobalStrRefs :: [(String, String)] -&gt; Q [Dec]
-</span><a href="Hachi.Compiler.TH.html#mkGlobalStrRefs"><span class="hs-identifier hs-var hs-var">mkGlobalStrRefs</span></a></span></span><span> </span><span id="local-6989586621679260369"><span class="annot"><span class="annottext">[(String, String)]
-</span><a href="#local-6989586621679260369"><span class="hs-identifier hs-var">globals</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">([[Dec]] -&gt; [Dec]) -&gt; Q [[Dec]] -&gt; Q [Dec]
+</span><a href="Hachi.Compiler.TH.html#mkGlobalStrRefs"><span class="hs-identifier hs-var hs-var">mkGlobalStrRefs</span></a></span></span><span> </span><span id="local-6989586621679260377"><span class="annot"><span class="annottext">[(String, String)]
+</span><a href="#local-6989586621679260377"><span class="hs-identifier hs-var">globals</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">([[Dec]] -&gt; [Dec]) -&gt; Q [[Dec]] -&gt; Q [Dec]
 forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
 </span><span class="hs-identifier hs-var">fmap</span></span><span> </span><span class="annot"><span class="annottext">[[Dec]] -&gt; [Dec]
 forall (t :: * -&gt; *) a. Foldable t =&gt; t [a] -&gt; [a]
@@ -32,14 +32,14 @@ forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
 (Traversable t, Monad m) =&gt;
 t a -&gt; (a -&gt; m b) -&gt; m (t b)
 </span><span class="hs-identifier hs-var">forM</span></span><span> </span><span class="annot"><span class="annottext">[(String, String)]
-</span><a href="#local-6989586621679260369"><span class="hs-identifier hs-var">globals</span></a></span><span> </span><span class="annot"><span class="annottext">(((String, String) -&gt; Q [Dec]) -&gt; Q [[Dec]])
+</span><a href="#local-6989586621679260377"><span class="hs-identifier hs-var">globals</span></a></span><span> </span><span class="annot"><span class="annottext">(((String, String) -&gt; Q [Dec]) -&gt; Q [[Dec]])
 -&gt; ((String, String) -&gt; Q [Dec]) -&gt; Q [[Dec]]
 forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679260366"><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679260366"><span class="hs-identifier hs-var">name</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679260365"><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679260365"><span class="hs-identifier hs-var">val</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-23"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679260364"><span class="annot"><span class="annottext">defName :: Name
-</span><a href="#local-6989586621679260364"><span class="hs-identifier hs-var hs-var">defName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; Name
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679260374"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679260374"><span class="hs-identifier hs-var">name</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679260373"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679260373"><span class="hs-identifier hs-var">val</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679260372"><span class="annot"><span class="annottext">defName :: Name
+</span><a href="#local-6989586621679260372"><span class="hs-identifier hs-var hs-var">defName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; Name
 </span><span class="hs-identifier hs-var">TH.mkName</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Name) -&gt; String -&gt; Name
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; String -&gt; String
@@ -47,99 +47,99 @@ forall a. Int -&gt; [a] -&gt; [a]
 </span><span class="hs-identifier hs-var">take</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Int
 forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Int
 </span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679260366"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+</span><a href="#local-6989586621679260374"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
 forall a. Num a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
 </span><span class="hs-number">3</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679260366"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+</span><a href="#local-6989586621679260374"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
 forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">String
 </span><span class="hs-string">&quot;Ref&quot;</span></span><span>
-</span><span id="line-24"></span><span>    </span><span id="local-6989586621679260361"><span class="annot"><span class="annottext">Type
-</span><a href="#local-6989586621679260361"><span class="hs-identifier hs-var">ty</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[t|</span><span> </span><span class="hs-identifier">Operand</span><span> </span><span class="hs-special">|]</span><span>
-</span><span id="line-25"></span><span>    </span><span id="local-6989586621679260360"><span class="annot"><span class="annottext">Exp
-</span><a href="#local-6989586621679260360"><span class="hs-identifier hs-var">body</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[|</span><span> </span><span class="hs-identifier">ConstantOperand</span><span> </span><span class="hs-operator">$</span><span> </span><span class="hs-identifier">asStringPtr</span><span> </span><span class="hs-operator">$</span><span>
+</span><span id="line-24"></span><span>    </span><span id="local-6989586621679260369"><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679260369"><span class="hs-identifier hs-var">ty</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[t|</span><span> </span><span class="hs-identifier">Operand</span><span> </span><span class="hs-special">|]</span><span>
+</span><span id="line-25"></span><span>    </span><span id="local-6989586621679260368"><span class="annot"><span class="annottext">Exp
+</span><a href="#local-6989586621679260368"><span class="hs-identifier hs-var">body</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[|</span><span> </span><span class="hs-identifier">ConstantOperand</span><span> </span><span class="hs-operator">$</span><span> </span><span class="hs-identifier">asStringPtr</span><span> </span><span class="hs-operator">$</span><span>
 </span><span id="line-26"></span><span>                </span><span class="hs-identifier">GlobalReference</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">stringPtr</span><span> </span><span class="hs-identifier">val</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">LLVM.mkName</span><span> </span><span class="hs-identifier">name</span><span class="hs-special">)</span><span> </span><span class="hs-special">|]</span><span>
 </span><span id="line-27"></span><span>    </span><span class="annot"><span class="annottext">[Dec] -&gt; Q [Dec]
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">[</span><span>
 </span><span id="line-28"></span><span>        </span><span class="annot"><span class="annottext">Name -&gt; Type -&gt; Dec
 </span><span class="hs-identifier hs-var">SigD</span></span><span> </span><span class="annot"><span class="annottext">Name
-</span><a href="#local-6989586621679260364"><span class="hs-identifier hs-var">defName</span></a></span><span> </span><span class="annot"><span class="annottext">Type
-</span><a href="#local-6989586621679260361"><span class="hs-identifier hs-var">ty</span></a></span><span class="hs-special">,</span><span>
+</span><a href="#local-6989586621679260372"><span class="hs-identifier hs-var">defName</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679260369"><span class="hs-identifier hs-var">ty</span></a></span><span class="hs-special">,</span><span>
 </span><span id="line-29"></span><span>        </span><span class="annot"><span class="annottext">Pat -&gt; Body -&gt; [Dec] -&gt; Dec
 </span><span class="hs-identifier hs-var">ValD</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Name -&gt; Pat
 </span><span class="hs-identifier hs-var">VarP</span></span><span> </span><span class="annot"><span class="annottext">Name
-</span><a href="#local-6989586621679260364"><span class="hs-identifier hs-var">defName</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Exp -&gt; Body
+</span><a href="#local-6989586621679260372"><span class="hs-identifier hs-var">defName</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Exp -&gt; Body
 </span><span class="hs-identifier hs-var">NormalB</span></span><span> </span><span class="annot"><span class="annottext">Exp
-</span><a href="#local-6989586621679260360"><span class="hs-identifier hs-var">body</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><a href="#local-6989586621679260368"><span class="hs-identifier hs-var">body</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
 </span><span id="line-30"></span><span>     </span><span class="hs-special">]</span><span>
 </span><span id="line-31"></span><span>
 </span><span id="line-32"></span><span class="annot"><a href="Hachi.Compiler.TH.html#mkExternal"><span class="hs-identifier hs-type">mkExternal</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">TH.Name</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Q</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Dec</span></span><span class="hs-special">]</span><span>
 </span><span id="line-33"></span><span id="mkExternal"><span class="annot"><span class="annottext">mkExternal :: String -&gt; String -&gt; Name -&gt; Q [Dec]
-</span><a href="Hachi.Compiler.TH.html#mkExternal"><span class="hs-identifier hs-var hs-var">mkExternal</span></a></span></span><span> </span><span id="local-6989586621679260355"><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679260355"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span id="local-6989586621679260354"><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679260354"><span class="hs-identifier hs-var">extName</span></a></span></span><span> </span><span id="local-6989586621679260353"><span class="annot"><span class="annottext">Name
-</span><a href="#local-6989586621679260353"><span class="hs-identifier hs-var">tyDec</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-34"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679260352"><span class="annot"><span class="annottext">tyDecVar :: Q Exp
-</span><a href="#local-6989586621679260352"><span class="hs-identifier hs-var hs-var">tyDecVar</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Exp -&gt; Q Exp
+</span><a href="Hachi.Compiler.TH.html#mkExternal"><span class="hs-identifier hs-var hs-var">mkExternal</span></a></span></span><span> </span><span id="local-6989586621679260363"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679260363"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span id="local-6989586621679260362"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679260362"><span class="hs-identifier hs-var">extName</span></a></span></span><span> </span><span id="local-6989586621679260361"><span class="annot"><span class="annottext">Name
+</span><a href="#local-6989586621679260361"><span class="hs-identifier hs-var">tyDec</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679260360"><span class="annot"><span class="annottext">tyDecVar :: Q Exp
+</span><a href="#local-6989586621679260360"><span class="hs-identifier hs-var hs-var">tyDecVar</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Exp -&gt; Q Exp
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Exp -&gt; Q Exp) -&gt; Exp -&gt; Q Exp
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Name -&gt; Exp
 </span><span class="hs-identifier hs-var">VarE</span></span><span> </span><span class="annot"><span class="annottext">Name
-</span><a href="#local-6989586621679260353"><span class="hs-identifier hs-var">tyDec</span></a></span><span>
-</span><span id="line-35"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679260350"><span class="annot"><span class="annottext">globalName :: Name
-</span><a href="#local-6989586621679260350"><span class="hs-identifier hs-var hs-var">globalName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; Name
+</span><a href="#local-6989586621679260361"><span class="hs-identifier hs-var">tyDec</span></a></span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679260358"><span class="annot"><span class="annottext">globalName :: Name
+</span><a href="#local-6989586621679260358"><span class="hs-identifier hs-var hs-var">globalName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; Name
 </span><span class="hs-identifier hs-var">TH.mkName</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Name) -&gt; String -&gt; Name
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679260355"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+</span><a href="#local-6989586621679260363"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
 forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">String
 </span><span class="hs-string">&quot;Fun&quot;</span></span><span>
-</span><span id="line-36"></span><span>    </span><span id="local-6989586621679260349"><span class="annot"><span class="annottext">Type
-</span><a href="#local-6989586621679260349"><span class="hs-identifier hs-var">globalTy</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[t|</span><span> </span><span class="hs-identifier">Global</span><span> </span><span class="hs-special">|]</span><span>
-</span><span id="line-37"></span><span>    </span><span id="local-6989586621679260348"><span class="annot"><span class="annottext">Exp
-</span><a href="#local-6989586621679260348"><span class="hs-identifier hs-var">globalBody</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[|</span><span> </span><span class="hs-identifier">globalFromType</span><span> </span><span class="hs-identifier">extName</span><span> </span><span class="hs-special">$(</span><span class="hs-identifier">tyDecVar</span><span class="hs-special">)</span><span> </span><span class="hs-special">|]</span><span>
+</span><span id="line-36"></span><span>    </span><span id="local-6989586621679260357"><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679260357"><span class="hs-identifier hs-var">globalTy</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[t|</span><span> </span><span class="hs-identifier">Global</span><span> </span><span class="hs-special">|]</span><span>
+</span><span id="line-37"></span><span>    </span><span id="local-6989586621679260356"><span class="annot"><span class="annottext">Exp
+</span><a href="#local-6989586621679260356"><span class="hs-identifier hs-var">globalBody</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[|</span><span> </span><span class="hs-identifier">globalFromType</span><span> </span><span class="hs-identifier">extName</span><span> </span><span class="hs-special">$(</span><span class="hs-identifier">tyDecVar</span><span class="hs-special">)</span><span> </span><span class="hs-special">|]</span><span>
 </span><span id="line-38"></span><span>
-</span><span id="line-39"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679260347"><span class="annot"><span class="annottext">refName :: Name
-</span><a href="#local-6989586621679260347"><span class="hs-identifier hs-var hs-var">refName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; Name
+</span><span id="line-39"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679260355"><span class="annot"><span class="annottext">refName :: Name
+</span><a href="#local-6989586621679260355"><span class="hs-identifier hs-var hs-var">refName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; Name
 </span><span class="hs-identifier hs-var">TH.mkName</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Name) -&gt; String -&gt; Name
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679260355"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+</span><a href="#local-6989586621679260363"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
 forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">String
 </span><span class="hs-string">&quot;Ref&quot;</span></span><span>
-</span><span id="line-40"></span><span>    </span><span id="local-6989586621679260346"><span class="annot"><span class="annottext">Type
-</span><a href="#local-6989586621679260346"><span class="hs-identifier hs-var">refTy</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[t|</span><span> </span><span class="hs-identifier">Constant</span><span> </span><span class="hs-special">|]</span><span>
-</span><span id="line-41"></span><span>    </span><span id="local-6989586621679260345"><span class="annot"><span class="annottext">Exp
-</span><a href="#local-6989586621679260345"><span class="hs-identifier hs-var">refBody</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[|</span><span> </span><span class="hs-identifier">GlobalReference</span><span> </span><span class="hs-special">$(</span><span class="hs-identifier">tyDecVar</span><span class="hs-special">)</span><span> </span><span class="hs-operator">$</span><span> </span><span class="hs-identifier">LLVM.mkName</span><span> </span><span class="hs-identifier">extName</span><span> </span><span class="hs-special">|]</span><span>
+</span><span id="line-40"></span><span>    </span><span id="local-6989586621679260354"><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679260354"><span class="hs-identifier hs-var">refTy</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[t|</span><span> </span><span class="hs-identifier">Constant</span><span> </span><span class="hs-special">|]</span><span>
+</span><span id="line-41"></span><span>    </span><span id="local-6989586621679260353"><span class="annot"><span class="annottext">Exp
+</span><a href="#local-6989586621679260353"><span class="hs-identifier hs-var">refBody</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-special">[|</span><span> </span><span class="hs-identifier">GlobalReference</span><span> </span><span class="hs-special">$(</span><span class="hs-identifier">tyDecVar</span><span class="hs-special">)</span><span> </span><span class="hs-operator">$</span><span> </span><span class="hs-identifier">LLVM.mkName</span><span> </span><span class="hs-identifier">extName</span><span> </span><span class="hs-special">|]</span><span>
 </span><span id="line-42"></span><span>
 </span><span id="line-43"></span><span>    </span><span class="annot"><span class="annottext">[Dec] -&gt; Q [Dec]
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">[</span><span>
 </span><span id="line-44"></span><span>        </span><span class="annot"><span class="annottext">Name -&gt; Type -&gt; Dec
 </span><span class="hs-identifier hs-var">SigD</span></span><span> </span><span class="annot"><span class="annottext">Name
-</span><a href="#local-6989586621679260350"><span class="hs-identifier hs-var">globalName</span></a></span><span> </span><span class="annot"><span class="annottext">Type
-</span><a href="#local-6989586621679260349"><span class="hs-identifier hs-var">globalTy</span></a></span><span class="hs-special">,</span><span>
+</span><a href="#local-6989586621679260358"><span class="hs-identifier hs-var">globalName</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679260357"><span class="hs-identifier hs-var">globalTy</span></a></span><span class="hs-special">,</span><span>
 </span><span id="line-45"></span><span>        </span><span class="annot"><span class="annottext">Pat -&gt; Body -&gt; [Dec] -&gt; Dec
 </span><span class="hs-identifier hs-var">ValD</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Name -&gt; Pat
 </span><span class="hs-identifier hs-var">VarP</span></span><span> </span><span class="annot"><span class="annottext">Name
-</span><a href="#local-6989586621679260350"><span class="hs-identifier hs-var">globalName</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Exp -&gt; Body
+</span><a href="#local-6989586621679260358"><span class="hs-identifier hs-var">globalName</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Exp -&gt; Body
 </span><span class="hs-identifier hs-var">NormalB</span></span><span> </span><span class="annot"><span class="annottext">Exp
-</span><a href="#local-6989586621679260348"><span class="hs-identifier hs-var">globalBody</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">,</span><span>
+</span><a href="#local-6989586621679260356"><span class="hs-identifier hs-var">globalBody</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">,</span><span>
 </span><span id="line-46"></span><span>        </span><span class="annot"><span class="annottext">Name -&gt; Type -&gt; Dec
 </span><span class="hs-identifier hs-var">SigD</span></span><span> </span><span class="annot"><span class="annottext">Name
-</span><a href="#local-6989586621679260347"><span class="hs-identifier hs-var">refName</span></a></span><span> </span><span class="annot"><span class="annottext">Type
-</span><a href="#local-6989586621679260346"><span class="hs-identifier hs-var">refTy</span></a></span><span class="hs-special">,</span><span>
+</span><a href="#local-6989586621679260355"><span class="hs-identifier hs-var">refName</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679260354"><span class="hs-identifier hs-var">refTy</span></a></span><span class="hs-special">,</span><span>
 </span><span id="line-47"></span><span>        </span><span class="annot"><span class="annottext">Pat -&gt; Body -&gt; [Dec] -&gt; Dec
 </span><span class="hs-identifier hs-var">ValD</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Name -&gt; Pat
 </span><span class="hs-identifier hs-var">VarP</span></span><span> </span><span class="annot"><span class="annottext">Name
-</span><a href="#local-6989586621679260347"><span class="hs-identifier hs-var">refName</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Exp -&gt; Body
+</span><a href="#local-6989586621679260355"><span class="hs-identifier hs-var">refName</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Exp -&gt; Body
 </span><span class="hs-identifier hs-var">NormalB</span></span><span> </span><span class="annot"><span class="annottext">Exp
-</span><a href="#local-6989586621679260345"><span class="hs-identifier hs-var">refBody</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><a href="#local-6989586621679260353"><span class="hs-identifier hs-var">refBody</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
 </span><span id="line-48"></span><span>     </span><span class="hs-special">]</span><span>
 </span><span id="line-49"></span><span>
 </span><span id="line-50"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>

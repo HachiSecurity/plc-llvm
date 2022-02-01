@@ -1,4 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span id="%24con2tag_BeqRePW4MCB4KALeyFDKnY"></span><span class="hs-pragma">{-# LANGUAGE ConstraintKinds #-}</span><span>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span id="%24con2tag_7b5yHvtQNykIBBmoqLWYln"></span><span class="hs-pragma">{-# LANGUAGE ConstraintKinds #-}</span><span>
 </span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE GeneralisedNewtypeDeriving #-}</span><span>
 </span><span id="line-3"></span><span>
 </span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Hachi.Compiler.CodeGen.Monad</span><span> </span><span class="hs-special">(</span><span>
@@ -45,7 +45,7 @@
 </span><span id="line-45"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ConstData"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#ConstData"><span class="hs-identifier hs-var">ConstData</span></a></span></span><span>
 </span><span id="line-46"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ConstPair"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#ConstPair"><span class="hs-identifier hs-var">ConstPair</span></a></span></span><span>
 </span><span id="line-47"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ConstList"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#ConstList"><span class="hs-identifier hs-var">ConstList</span></a></span></span><span>
-</span><span id="line-48"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679259754"><span id="local-6989586621679259756"><span class="annot"><span class="annottext">ConstantTy -&gt; ConstantTy -&gt; Bool
+</span><span id="line-48"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679259762"><span id="local-6989586621679259764"><span class="annot"><span class="annottext">ConstantTy -&gt; ConstantTy -&gt; Bool
 (ConstantTy -&gt; ConstantTy -&gt; Bool)
 -&gt; (ConstantTy -&gt; ConstantTy -&gt; Bool) -&gt; Eq ConstantTy
 forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
@@ -53,7 +53,7 @@ forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
 $c/= :: ConstantTy -&gt; ConstantTy -&gt; Bool
 == :: ConstantTy -&gt; ConstantTy -&gt; Bool
 $c== :: ConstantTy -&gt; ConstantTy -&gt; Bool
-</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259738"><span id="local-6989586621679259740"><span id="local-6989586621679259742"><span id="local-6989586621679259744"><span id="local-6989586621679259746"><span id="local-6989586621679259748"><span id="local-6989586621679259750"><span class="annot"><span class="annottext">Eq ConstantTy
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259746"><span id="local-6989586621679259748"><span id="local-6989586621679259750"><span id="local-6989586621679259752"><span id="local-6989586621679259754"><span id="local-6989586621679259756"><span id="local-6989586621679259758"><span class="annot"><span class="annottext">Eq ConstantTy
 Eq ConstantTy
 -&gt; (ConstantTy -&gt; ConstantTy -&gt; Ordering)
 -&gt; (ConstantTy -&gt; ConstantTy -&gt; Bool)
@@ -91,7 +91,7 @@ $c&lt; :: ConstantTy -&gt; ConstantTy -&gt; Bool
 compare :: ConstantTy -&gt; ConstantTy -&gt; Ordering
 $ccompare :: ConstantTy -&gt; ConstantTy -&gt; Ordering
 $cp1Ord :: Eq ConstantTy
-</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259731"><span id="local-6989586621679259733"><span id="local-6989586621679259735"><span class="annot"><span class="annottext">Int -&gt; ConstantTy -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259739"><span id="local-6989586621679259741"><span id="local-6989586621679259743"><span class="annot"><span class="annottext">Int -&gt; ConstantTy -&gt; ShowS
 [ConstantTy] -&gt; ShowS
 ConstantTy -&gt; String
 (Int -&gt; ConstantTy -&gt; ShowS)
@@ -134,9 +134,9 @@ $cshowsPrec :: Int -&gt; ConstantTy -&gt; ShowS
 </span><span id="line-64"></span><span class="hs-special">}</span><span>
 </span><span id="line-65"></span><span>
 </span><span id="line-66"></span><span class="hs-comment">-- | The code generator monad.</span><span>
-</span><span id="line-67"></span><span class="hs-keyword">newtype</span><span> </span><span id="CodeGen"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGen"><span class="hs-identifier hs-var">CodeGen</span></a></span></span><span> </span><span id="local-6989586621679259719"><span class="annot"><a href="#local-6989586621679259719"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679259718"><span class="annot"><a href="#local-6989586621679259718"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkCodeGen"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#MkCodeGen"><span class="hs-identifier hs-var">MkCodeGen</span></a></span></span><span> </span><span class="hs-special">{</span><span> </span><span id="runCodeGen"><span class="annot"><span class="annottext">CodeGen m a -&gt; ReaderT CodeGenSt m a
-</span><a href="Hachi.Compiler.CodeGen.Monad.html#runCodeGen"><span class="hs-identifier hs-var hs-var">runCodeGen</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ReaderT</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259719"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259718"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-special">}</span><span>
-</span><span id="line-68"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679259712"><span id="local-6989586621679259714"><span class="annot"><span class="annottext">a -&gt; CodeGen m b -&gt; CodeGen m a
+</span><span id="line-67"></span><span class="hs-keyword">newtype</span><span> </span><span id="CodeGen"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGen"><span class="hs-identifier hs-var">CodeGen</span></a></span></span><span> </span><span id="local-6989586621679259727"><span class="annot"><a href="#local-6989586621679259727"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span id="local-6989586621679259726"><span class="annot"><a href="#local-6989586621679259726"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="MkCodeGen"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#MkCodeGen"><span class="hs-identifier hs-var">MkCodeGen</span></a></span></span><span> </span><span class="hs-special">{</span><span> </span><span id="runCodeGen"><span class="annot"><span class="annottext">CodeGen m a -&gt; ReaderT CodeGenSt m a
+</span><a href="Hachi.Compiler.CodeGen.Monad.html#runCodeGen"><span class="hs-identifier hs-var hs-var">runCodeGen</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ReaderT</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259727"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259726"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-68"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span> </span><span id="local-6989586621679259720"><span id="local-6989586621679259722"><span class="annot"><span class="annottext">a -&gt; CodeGen m b -&gt; CodeGen m a
 (a -&gt; b) -&gt; CodeGen m a -&gt; CodeGen m b
 (forall a b. (a -&gt; b) -&gt; CodeGen m a -&gt; CodeGen m b)
 -&gt; (forall a b. a -&gt; CodeGen m b -&gt; CodeGen m a)
@@ -160,7 +160,7 @@ fmap :: (a -&gt; b) -&gt; CodeGen m a -&gt; CodeGen m b
 $cfmap :: forall (m :: * -&gt; *) a b.
 Functor m =&gt;
 (a -&gt; b) -&gt; CodeGen m a -&gt; CodeGen m b
-</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Functor</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259700"><span id="local-6989586621679259702"><span id="local-6989586621679259704"><span id="local-6989586621679259706"><span id="local-6989586621679259708"><span class="annot"><span class="annottext">Functor (CodeGen m)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Functor</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259708"><span id="local-6989586621679259710"><span id="local-6989586621679259712"><span id="local-6989586621679259714"><span id="local-6989586621679259716"><span class="annot"><span class="annottext">Functor (CodeGen m)
 a -&gt; CodeGen m a
 Functor (CodeGen m)
 -&gt; (forall a. a -&gt; CodeGen m a)
@@ -221,7 +221,7 @@ CodeGen m (a -&gt; b) -&gt; CodeGen m a -&gt; CodeGen m b
 pure :: a -&gt; CodeGen m a
 $cpure :: forall (m :: * -&gt; *) a. Applicative m =&gt; a -&gt; CodeGen m a
 $cp1Applicative :: forall (m :: * -&gt; *). Applicative m =&gt; Functor (CodeGen m)
-</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Applicative</span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259692"><span id="local-6989586621679259694"><span id="local-6989586621679259696"><span class="annot"><span class="annottext">Applicative (CodeGen m)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Applicative</span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259700"><span id="local-6989586621679259702"><span id="local-6989586621679259704"><span class="annot"><span class="annottext">Applicative (CodeGen m)
 a -&gt; CodeGen m a
 Applicative (CodeGen m)
 -&gt; (forall a b. CodeGen m a -&gt; (a -&gt; CodeGen m b) -&gt; CodeGen m b)
@@ -258,7 +258,7 @@ $c&gt;&gt;= :: forall (m :: * -&gt; *) a b.
 Monad m =&gt;
 CodeGen m a -&gt; (a -&gt; CodeGen m b) -&gt; CodeGen m b
 $cp1Monad :: forall (m :: * -&gt; *). Monad m =&gt; Applicative (CodeGen m)
-</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Monad</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259688"><span class="annot"><span class="annottext">Monad (CodeGen m)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Monad</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259696"><span class="annot"><span class="annottext">Monad (CodeGen m)
 Monad (CodeGen m)
 -&gt; (forall a. IO a -&gt; CodeGen m a) -&gt; MonadIO (CodeGen m)
 IO a -&gt; CodeGen m a
@@ -270,7 +270,7 @@ forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; CodeGen m a
 liftIO :: IO a -&gt; CodeGen m a
 $cliftIO :: forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; CodeGen m a
 $cp1MonadIO :: forall (m :: * -&gt; *). MonadIO m =&gt; Monad (CodeGen m)
-</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadIO</span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259684"><span class="annot"><span class="annottext">Monad (CodeGen m)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadIO</span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259692"><span class="annot"><span class="annottext">Monad (CodeGen m)
 Monad (CodeGen m)
 -&gt; (forall a. (a -&gt; CodeGen m a) -&gt; CodeGen m a)
 -&gt; MonadFix (CodeGen m)
@@ -288,8 +288,8 @@ MonadFix m =&gt;
 (a -&gt; CodeGen m a) -&gt; CodeGen m a
 $cp1MonadFix :: forall (m :: * -&gt; *). MonadFix m =&gt; Monad (CodeGen m)
 </span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadFix</span></span></span><span>
-</span><span id="line-69"></span><span>             </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259676"><span id="local-6989586621679259678"><span id="local-6989586621679259680"><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span></span></span></span><span>
-</span><span id="line-70"></span><span>             </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259672"><span class="annot"><span class="annottext">Monad (CodeGen m)
+</span><span id="line-69"></span><span>             </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259684"><span id="local-6989586621679259686"><span id="local-6989586621679259688"><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span></span></span></span><span>
+</span><span id="line-70"></span><span>             </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259680"><span class="annot"><span class="annottext">Monad (CodeGen m)
 Monad (CodeGen m)
 -&gt; (forall a. State ModuleBuilderState a -&gt; CodeGen m a)
 -&gt; MonadModuleBuilder (CodeGen m)
@@ -308,7 +308,7 @@ $cliftModuleState :: forall (m :: * -&gt; *) a.
 MonadModuleBuilder m =&gt;
 State ModuleBuilderState a -&gt; CodeGen m a
 $cp1MonadModuleBuilder :: forall (m :: * -&gt; *). MonadModuleBuilder m =&gt; Monad (CodeGen m)
-</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadModuleBuilder</span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259668"><span class="annot"><span class="annottext">Monad (CodeGen m)
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadModuleBuilder</span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259676"><span class="annot"><span class="annottext">Monad (CodeGen m)
 Monad (CodeGen m)
 -&gt; (forall a. State IRBuilderState a -&gt; CodeGen m a)
 -&gt; MonadIRBuilder (CodeGen m)
@@ -327,7 +327,7 @@ MonadIRBuilder m =&gt;
 State IRBuilderState a -&gt; CodeGen m a
 $cp1MonadIRBuilder :: forall (m :: * -&gt; *). MonadIRBuilder m =&gt; Monad (CodeGen m)
 </span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var">MonadIRBuilder</span></span></span><span>
-</span><span id="line-71"></span><span>             </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259664"><span class="annot"><span class="annottext">Monad (CodeGen m)
+</span><span id="line-71"></span><span>             </span><span class="hs-special">,</span><span> </span><span id="local-6989586621679259672"><span class="annot"><span class="annottext">Monad (CodeGen m)
 Monad (CodeGen m)
 -&gt; (forall a. String -&gt; CodeGen m a) -&gt; MonadFail (CodeGen m)
 String -&gt; CodeGen m a
@@ -345,43 +345,43 @@ $cp1MonadFail :: forall (m :: * -&gt; *). MonadFail m =&gt; Monad (CodeGen m)
 </span><span id="line-74"></span><span class="hs-comment">-- | A constraint synonym for the type class constraints we usually expect our</span><span>
 </span><span id="line-75"></span><span class="hs-comment">-- code generation monad to satisfy.</span><span>
 </span><span id="line-76"></span><span class="hs-keyword">type</span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#MonadCodeGen"><span class="hs-identifier hs-type">MonadCodeGen</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-operator">*</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-operator">*</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Constraint</span></span><span>
-</span><span id="line-77"></span><span class="hs-keyword">type</span><span> </span><span id="MonadCodeGen"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#MonadCodeGen"><span class="hs-identifier hs-var">MonadCodeGen</span></a></span></span><span> </span><span id="local-6989586621679259662"><span class="annot"><a href="#local-6989586621679259662"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
-</span><span id="line-78"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIO</span></span><span> </span><span class="annot"><a href="#local-6989586621679259662"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679259662"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadModuleBuilder</span></span><span> </span><span class="annot"><a href="#local-6989586621679259662"><span class="hs-identifier hs-type">m</span></a></span><span>
-</span><span id="line-79"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259662"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679259662"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-77"></span><span class="hs-keyword">type</span><span> </span><span id="MonadCodeGen"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#MonadCodeGen"><span class="hs-identifier hs-var">MonadCodeGen</span></a></span></span><span> </span><span id="local-6989586621679259670"><span class="annot"><a href="#local-6989586621679259670"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-78"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIO</span></span><span> </span><span class="annot"><a href="#local-6989586621679259670"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFail</span></span><span> </span><span class="annot"><a href="#local-6989586621679259670"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadModuleBuilder</span></span><span> </span><span class="annot"><a href="#local-6989586621679259670"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-79"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259670"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadFix</span></span><span> </span><span class="annot"><a href="#local-6989586621679259670"><span class="hs-identifier hs-type">m</span></a></span><span>
 </span><span id="line-80"></span><span>    </span><span class="hs-special">)</span><span>
 </span><span id="line-81"></span><span>
 </span><span id="line-82"></span><span class="hs-comment">-- | `mkFresh` @prefix@ generates a fresh name starting with @prefix@.</span><span>
-</span><span id="line-83"></span><span id="local-6989586621679259661"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#mkFresh"><span class="hs-identifier hs-type">mkFresh</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259661"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIO</span></span><span> </span><span class="annot"><a href="#local-6989586621679259661"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259661"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span></span><span>
+</span><span id="line-83"></span><span id="local-6989586621679259669"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#mkFresh"><span class="hs-identifier hs-type">mkFresh</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259669"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIO</span></span><span> </span><span class="annot"><a href="#local-6989586621679259669"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259669"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span></span><span>
 </span><span id="line-84"></span><span id="mkFresh"><span class="annot"><span class="annottext">mkFresh :: String -&gt; m String
-</span><a href="Hachi.Compiler.CodeGen.Monad.html#mkFresh"><span class="hs-identifier hs-var hs-var">mkFresh</span></a></span></span><span> </span><span id="local-6989586621679259660"><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679259660"><span class="hs-identifier hs-var">prefix</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(CodeGenSt -&gt; IORef (Map String (IORef Integer)))
+</span><a href="Hachi.Compiler.CodeGen.Monad.html#mkFresh"><span class="hs-identifier hs-var hs-var">mkFresh</span></a></span></span><span> </span><span id="local-6989586621679259668"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679259668"><span class="hs-identifier hs-var">prefix</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(CodeGenSt -&gt; IORef (Map String (IORef Integer)))
 -&gt; m (IORef (Map String (IORef Integer)))
 forall r (m :: * -&gt; *) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a
 </span><span class="hs-identifier hs-var">asks</span></span><span> </span><span class="annot"><span class="annottext">CodeGenSt -&gt; IORef (Map String (IORef Integer))
 </span><a href="Hachi.Compiler.CodeGen.Monad.html#codeGenCounters"><span class="hs-identifier hs-var hs-var">codeGenCounters</span></a></span><span> </span><span class="annot"><span class="annottext">m (IORef (Map String (IORef Integer)))
 -&gt; (IORef (Map String (IORef Integer)) -&gt; m String) -&gt; m String
 forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
-</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679259658"><span class="annot"><span class="annottext">IORef (Map String (IORef Integer))
-</span><a href="#local-6989586621679259658"><span class="hs-identifier hs-var">countersRef</span></a></span></span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">IO String -&gt; m String
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679259666"><span class="annot"><span class="annottext">IORef (Map String (IORef Integer))
+</span><a href="#local-6989586621679259666"><span class="hs-identifier hs-var">countersRef</span></a></span></span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">IO String -&gt; m String
 forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
 </span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO String -&gt; m String) -&gt; IO String -&gt; m String
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-85"></span><span>    </span><span id="local-6989586621679259656"><span class="annot"><span class="annottext">Map String (IORef Integer)
-</span><a href="#local-6989586621679259656"><span class="hs-identifier hs-var">counters</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef (Map String (IORef Integer))
+</span><span id="line-85"></span><span>    </span><span id="local-6989586621679259664"><span class="annot"><span class="annottext">Map String (IORef Integer)
+</span><a href="#local-6989586621679259664"><span class="hs-identifier hs-var">counters</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IORef (Map String (IORef Integer))
 -&gt; IO (Map String (IORef Integer))
 forall a. IORef a -&gt; IO a
 </span><span class="hs-identifier hs-var">readIORef</span></span><span> </span><span class="annot"><span class="annottext">IORef (Map String (IORef Integer))
-</span><a href="#local-6989586621679259658"><span class="hs-identifier hs-var">countersRef</span></a></span><span>
+</span><a href="#local-6989586621679259666"><span class="hs-identifier hs-var">countersRef</span></a></span><span>
 </span><span id="line-86"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">String -&gt; Map String (IORef Integer) -&gt; Maybe (IORef Integer)
 forall k a. Ord k =&gt; k -&gt; Map k a -&gt; Maybe a
 </span><span class="hs-identifier hs-var">M.lookup</span></span><span> </span><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679259660"><span class="hs-identifier hs-var">prefix</span></a></span><span> </span><span class="annot"><span class="annottext">Map String (IORef Integer)
-</span><a href="#local-6989586621679259656"><span class="hs-identifier hs-var">counters</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><a href="#local-6989586621679259668"><span class="hs-identifier hs-var">prefix</span></a></span><span> </span><span class="annot"><span class="annottext">Map String (IORef Integer)
+</span><a href="#local-6989586621679259664"><span class="hs-identifier hs-var">counters</span></a></span><span> </span><span class="hs-keyword">of</span><span>
 </span><span id="line-87"></span><span>        </span><span class="annot"><span class="annottext">Maybe (IORef Integer)
 </span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-88"></span><span>            </span><span id="local-6989586621679259653"><span class="annot"><span class="annottext">IORef Integer
-</span><a href="#local-6989586621679259653"><span class="hs-identifier hs-var">ref</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; IO (IORef Integer)
+</span><span id="line-88"></span><span>            </span><span id="local-6989586621679259661"><span class="annot"><span class="annottext">IORef Integer
+</span><a href="#local-6989586621679259661"><span class="hs-identifier hs-var">ref</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Integer -&gt; IO (IORef Integer)
 forall a. a -&gt; IO (IORef a)
 </span><span class="hs-identifier hs-var">newIORef</span></span><span> </span><span class="annot"><span class="annottext">Integer
 </span><span class="hs-number">1</span></span><span>
@@ -389,7 +389,7 @@ forall a. a -&gt; IO (IORef a)
 -&gt; Map String (IORef Integer) -&gt; IO ()
 forall a. IORef a -&gt; a -&gt; IO ()
 </span><span class="hs-identifier hs-var">writeIORef</span></span><span> </span><span class="annot"><span class="annottext">IORef (Map String (IORef Integer))
-</span><a href="#local-6989586621679259658"><span class="hs-identifier hs-var">countersRef</span></a></span><span> </span><span class="annot"><span class="annottext">(Map String (IORef Integer) -&gt; IO ())
+</span><a href="#local-6989586621679259666"><span class="hs-identifier hs-var">countersRef</span></a></span><span> </span><span class="annot"><span class="annottext">(Map String (IORef Integer) -&gt; IO ())
 -&gt; Map String (IORef Integer) -&gt; IO ()
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
@@ -398,102 +398,102 @@ forall a b. (a -&gt; b) -&gt; a -&gt; b
 -&gt; Map String (IORef Integer)
 forall k a. Ord k =&gt; k -&gt; a -&gt; Map k a -&gt; Map k a
 </span><span class="hs-identifier hs-var">M.insert</span></span><span> </span><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679259660"><span class="hs-identifier hs-var">prefix</span></a></span><span> </span><span class="annot"><span class="annottext">IORef Integer
-</span><a href="#local-6989586621679259653"><span class="hs-identifier hs-var">ref</span></a></span><span> </span><span class="annot"><span class="annottext">Map String (IORef Integer)
-</span><a href="#local-6989586621679259656"><span class="hs-identifier hs-var">counters</span></a></span><span>
+</span><a href="#local-6989586621679259668"><span class="hs-identifier hs-var">prefix</span></a></span><span> </span><span class="annot"><span class="annottext">IORef Integer
+</span><a href="#local-6989586621679259661"><span class="hs-identifier hs-var">ref</span></a></span><span> </span><span class="annot"><span class="annottext">Map String (IORef Integer)
+</span><a href="#local-6989586621679259664"><span class="hs-identifier hs-var">counters</span></a></span><span>
 </span><span id="line-90"></span><span>            </span><span class="annot"><span class="annottext">String -&gt; IO String
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO String) -&gt; String -&gt; IO String
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679259660"><span class="hs-identifier hs-var">prefix</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+</span><a href="#local-6989586621679259668"><span class="hs-identifier hs-var">prefix</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
 forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">String
 </span><span class="hs-string">&quot;0&quot;</span></span><span>
-</span><span id="line-91"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679259649"><span class="annot"><span class="annottext">IORef Integer
-</span><a href="#local-6989586621679259649"><span class="hs-identifier hs-var">counter</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-92"></span><span>            </span><span id="local-6989586621679259648"><span class="annot"><span class="annottext">Integer
-</span><a href="#local-6989586621679259648"><span class="hs-identifier hs-var">val</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO Integer -&gt; IO Integer
+</span><span id="line-91"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679259657"><span class="annot"><span class="annottext">IORef Integer
+</span><a href="#local-6989586621679259657"><span class="hs-identifier hs-var">counter</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-92"></span><span>            </span><span id="local-6989586621679259656"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679259656"><span class="hs-identifier hs-var">val</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO Integer -&gt; IO Integer
 forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
 </span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO Integer -&gt; IO Integer) -&gt; IO Integer -&gt; IO Integer
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">IORef Integer -&gt; (Integer -&gt; (Integer, Integer)) -&gt; IO Integer
 forall a b. IORef a -&gt; (a -&gt; (a, b)) -&gt; IO b
 </span><span class="hs-identifier hs-var">atomicModifyIORef</span></span><span> </span><span class="annot"><span class="annottext">IORef Integer
-</span><a href="#local-6989586621679259649"><span class="hs-identifier hs-var">counter</span></a></span><span> </span><span class="annot"><span class="annottext">((Integer -&gt; (Integer, Integer)) -&gt; IO Integer)
+</span><a href="#local-6989586621679259657"><span class="hs-identifier hs-var">counter</span></a></span><span> </span><span class="annot"><span class="annottext">((Integer -&gt; (Integer, Integer)) -&gt; IO Integer)
 -&gt; (Integer -&gt; (Integer, Integer)) -&gt; IO Integer
 forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679259646"><span class="annot"><span class="annottext">Integer
-</span><a href="#local-6989586621679259646"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
-</span><a href="#local-6989586621679259646"><span class="hs-identifier hs-var">v</span></a></span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Integer
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679259654"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679259654"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679259654"><span class="hs-identifier hs-var">v</span></a></span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Integer
 forall a. Num a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">+</span></span><span class="annot"><span class="annottext">Integer
 </span><span class="hs-number">1</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">Integer
-</span><a href="#local-6989586621679259646"><span class="hs-identifier hs-var">v</span></a></span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679259654"><span class="hs-identifier hs-var">v</span></a></span><span class="hs-special">)</span><span>
 </span><span id="line-93"></span><span>            </span><span class="annot"><span class="annottext">String -&gt; IO String
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO String) -&gt; String -&gt; IO String
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
-</span><a href="#local-6989586621679259660"><span class="hs-identifier hs-var">prefix</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+</span><a href="#local-6989586621679259668"><span class="hs-identifier hs-var">prefix</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
 forall a. Semigroup a =&gt; a -&gt; a -&gt; a
 </span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; String
 forall a. Show a =&gt; a -&gt; String
 </span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Integer
-</span><a href="#local-6989586621679259648"><span class="hs-identifier hs-var">val</span></a></span><span>
+</span><a href="#local-6989586621679259656"><span class="hs-identifier hs-var">val</span></a></span><span>
 </span><span id="line-94"></span><span>
 </span><span id="line-95"></span><span class="hs-comment">-- | `extendScope` @name operand action@ adds @name@ to the scope for</span><span>
 </span><span id="line-96"></span><span class="hs-comment">-- @action@ along with @operand@ which represents the LLVM identifier.</span><span>
-</span><span id="line-97"></span><span id="local-6989586621679259642"><span id="local-6989586621679259643"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#extendScope"><span class="hs-identifier hs-type">extendScope</span></a></span><span>
-</span><span id="line-98"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259643"><span class="hs-identifier hs-type">m</span></a></span><span>
-</span><span id="line-99"></span><span>    </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">T.Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#Local"><span class="hs-identifier hs-type">Local</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259643"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259642"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259643"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259642"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
+</span><span id="line-97"></span><span id="local-6989586621679259650"><span id="local-6989586621679259651"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#extendScope"><span class="hs-identifier hs-type">extendScope</span></a></span><span>
+</span><span id="line-98"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259651"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-99"></span><span>    </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">T.Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#Local"><span class="hs-identifier hs-type">Local</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259651"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259650"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259651"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259650"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
 </span><span id="line-100"></span><span id="extendScope"><span class="annot"><span class="annottext">extendScope :: Text -&gt; Local -&gt; m a -&gt; m a
-</span><a href="Hachi.Compiler.CodeGen.Monad.html#extendScope"><span class="hs-identifier hs-var hs-var">extendScope</span></a></span></span><span> </span><span id="local-6989586621679259641"><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679259641"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span id="local-6989586621679259640"><span class="annot"><span class="annottext">Local
-</span><a href="#local-6989586621679259640"><span class="hs-identifier hs-var">val</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(CodeGenSt -&gt; CodeGenSt) -&gt; m a -&gt; m a
+</span><a href="Hachi.Compiler.CodeGen.Monad.html#extendScope"><span class="hs-identifier hs-var hs-var">extendScope</span></a></span></span><span> </span><span id="local-6989586621679259649"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679259649"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span id="local-6989586621679259648"><span class="annot"><span class="annottext">Local
+</span><a href="#local-6989586621679259648"><span class="hs-identifier hs-var">val</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(CodeGenSt -&gt; CodeGenSt) -&gt; m a -&gt; m a
 forall r (m :: * -&gt; *) a. MonadReader r m =&gt; (r -&gt; r) -&gt; m a -&gt; m a
 </span><span class="hs-identifier hs-var">local</span></span><span> </span><span class="annot"><span class="annottext">((CodeGenSt -&gt; CodeGenSt) -&gt; m a -&gt; m a)
 -&gt; (CodeGenSt -&gt; CodeGenSt) -&gt; m a -&gt; m a
 forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679259638"><span class="annot"><span class="annottext">CodeGenSt
-</span><a href="#local-6989586621679259638"><span class="hs-identifier hs-var">st</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679259646"><span class="annot"><span class="annottext">CodeGenSt
+</span><a href="#local-6989586621679259646"><span class="hs-identifier hs-var">st</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
 </span><span id="line-101"></span><span>    </span><span class="annot"><span class="annottext">CodeGenSt
-</span><a href="#local-6989586621679259638"><span class="hs-identifier hs-var">st</span></a></span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">codeGenEnv :: Map Text Local
+</span><a href="#local-6989586621679259646"><span class="hs-identifier hs-var">st</span></a></span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">codeGenEnv :: Map Text Local
 </span><a href="Hachi.Compiler.CodeGen.Monad.html#codeGenEnv"><span class="hs-identifier hs-var">codeGenEnv</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Local -&gt; Map Text Local -&gt; Map Text Local
 forall k a. Ord k =&gt; k -&gt; a -&gt; Map k a -&gt; Map k a
 </span><span class="hs-identifier hs-var">M.insert</span></span><span> </span><span class="annot"><span class="annottext">Text
-</span><a href="#local-6989586621679259641"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">Local
-</span><a href="#local-6989586621679259640"><span class="hs-identifier hs-var">val</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CodeGenSt -&gt; Map Text Local
+</span><a href="#local-6989586621679259649"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">Local
+</span><a href="#local-6989586621679259648"><span class="hs-identifier hs-var">val</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CodeGenSt -&gt; Map Text Local
 </span><a href="Hachi.Compiler.CodeGen.Monad.html#codeGenEnv"><span class="hs-identifier hs-var hs-var">codeGenEnv</span></a></span><span> </span><span class="annot"><span class="annottext">CodeGenSt
-</span><a href="#local-6989586621679259638"><span class="hs-identifier hs-var">st</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">}</span><span>
+</span><a href="#local-6989586621679259646"><span class="hs-identifier hs-var">st</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">}</span><span>
 </span><span id="line-102"></span><span>
 </span><span id="line-103"></span><span class="hs-comment">-- | `updateEnv` @names operands action@ updates the scope for @action@</span><span>
 </span><span id="line-104"></span><span class="hs-comment">-- with @operands@ which correspond to @names@. Important: the names in</span><span>
 </span><span id="line-105"></span><span class="hs-comment">-- @names@ must be in the same order as the corresponding entries in</span><span>
 </span><span id="line-106"></span><span class="hs-comment">-- @operands@.</span><span>
-</span><span id="line-107"></span><span id="local-6989586621679259636"><span id="local-6989586621679259637"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#updateEnv"><span class="hs-identifier hs-type">updateEnv</span></a></span><span>
-</span><span id="line-108"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259637"><span class="hs-identifier hs-type">m</span></a></span><span>
-</span><span id="line-109"></span><span>    </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">S.Set</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">T.Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#Local"><span class="hs-identifier hs-type">Local</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259637"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259636"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259637"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259636"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
+</span><span id="line-107"></span><span id="local-6989586621679259644"><span id="local-6989586621679259645"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#updateEnv"><span class="hs-identifier hs-type">updateEnv</span></a></span><span>
+</span><span id="line-108"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259645"><span class="hs-identifier hs-type">m</span></a></span><span>
+</span><span id="line-109"></span><span>    </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">S.Set</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">T.Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#Local"><span class="hs-identifier hs-type">Local</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259645"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259644"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259645"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259644"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
 </span><span id="line-110"></span><span id="updateEnv"><span class="annot"><span class="annottext">updateEnv :: Set Text -&gt; [Local] -&gt; m a -&gt; m a
-</span><a href="Hachi.Compiler.CodeGen.Monad.html#updateEnv"><span class="hs-identifier hs-var hs-var">updateEnv</span></a></span></span><span> </span><span id="local-6989586621679259635"><span class="annot"><span class="annottext">Set Text
-</span><a href="#local-6989586621679259635"><span class="hs-identifier hs-var">names</span></a></span></span><span> </span><span id="local-6989586621679259634"><span class="annot"><span class="annottext">[Local]
-</span><a href="#local-6989586621679259634"><span class="hs-identifier hs-var">operands</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(CodeGenSt -&gt; CodeGenSt) -&gt; m a -&gt; m a
+</span><a href="Hachi.Compiler.CodeGen.Monad.html#updateEnv"><span class="hs-identifier hs-var hs-var">updateEnv</span></a></span></span><span> </span><span id="local-6989586621679259643"><span class="annot"><span class="annottext">Set Text
+</span><a href="#local-6989586621679259643"><span class="hs-identifier hs-var">names</span></a></span></span><span> </span><span id="local-6989586621679259642"><span class="annot"><span class="annottext">[Local]
+</span><a href="#local-6989586621679259642"><span class="hs-identifier hs-var">operands</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(CodeGenSt -&gt; CodeGenSt) -&gt; m a -&gt; m a
 forall r (m :: * -&gt; *) a. MonadReader r m =&gt; (r -&gt; r) -&gt; m a -&gt; m a
 </span><span class="hs-identifier hs-var">local</span></span><span> </span><span class="annot"><span class="annottext">((CodeGenSt -&gt; CodeGenSt) -&gt; m a -&gt; m a)
 -&gt; (CodeGenSt -&gt; CodeGenSt) -&gt; m a -&gt; m a
 forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679259633"><span class="annot"><span class="annottext">CodeGenSt
-</span><a href="#local-6989586621679259633"><span class="hs-identifier hs-var">st</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679259641"><span class="annot"><span class="annottext">CodeGenSt
+</span><a href="#local-6989586621679259641"><span class="hs-identifier hs-var">st</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
 </span><span id="line-111"></span><span>    </span><span class="annot"><span class="annottext">CodeGenSt
-</span><a href="#local-6989586621679259633"><span class="hs-identifier hs-var">st</span></a></span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">codeGenEnv :: Map Text Local
+</span><a href="#local-6989586621679259641"><span class="hs-identifier hs-var">st</span></a></span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">codeGenEnv :: Map Text Local
 </span><a href="Hachi.Compiler.CodeGen.Monad.html#codeGenEnv"><span class="hs-identifier hs-var">codeGenEnv</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Map Text Local -&gt; Map Text Local -&gt; Map Text Local
 forall k a. Ord k =&gt; Map k a -&gt; Map k a -&gt; Map k a
 </span><span class="hs-identifier hs-var">M.union</span></span><span> </span><span class="annot"><span class="annottext">Map Text Local
-</span><a href="#local-6989586621679259631"><span class="hs-identifier hs-var">namedOperands</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CodeGenSt -&gt; Map Text Local
+</span><a href="#local-6989586621679259639"><span class="hs-identifier hs-var">namedOperands</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CodeGenSt -&gt; Map Text Local
 </span><a href="Hachi.Compiler.CodeGen.Monad.html#codeGenEnv"><span class="hs-identifier hs-var hs-var">codeGenEnv</span></a></span><span> </span><span class="annot"><span class="annottext">CodeGenSt
-</span><a href="#local-6989586621679259633"><span class="hs-identifier hs-var">st</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">}</span><span>
-</span><span id="line-112"></span><span>    </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679259631"><span class="annot"><span class="annottext">namedOperands :: Map Text Local
-</span><a href="#local-6989586621679259631"><span class="hs-identifier hs-var hs-var">namedOperands</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[(Text, Local)] -&gt; Map Text Local
+</span><a href="#local-6989586621679259641"><span class="hs-identifier hs-var">st</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-112"></span><span>    </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679259639"><span class="annot"><span class="annottext">namedOperands :: Map Text Local
+</span><a href="#local-6989586621679259639"><span class="hs-identifier hs-var hs-var">namedOperands</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[(Text, Local)] -&gt; Map Text Local
 forall k a. Ord k =&gt; [(k, a)] -&gt; Map k a
 </span><span class="hs-identifier hs-var">M.fromList</span></span><span>
 </span><span id="line-113"></span><span>                        </span><span class="annot"><span class="annottext">([(Text, Local)] -&gt; Map Text Local)
@@ -504,28 +504,28 @@ forall a b. [a] -&gt; [b] -&gt; [(a, b)]
 </span><span class="hs-identifier hs-var">zip</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Set Text -&gt; [Text]
 forall a. Set a -&gt; [a]
 </span><span class="hs-identifier hs-var">S.toList</span></span><span> </span><span class="annot"><span class="annottext">Set Text
-</span><a href="#local-6989586621679259635"><span class="hs-identifier hs-var">names</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[Local]
-</span><a href="#local-6989586621679259634"><span class="hs-identifier hs-var">operands</span></a></span><span>
+</span><a href="#local-6989586621679259643"><span class="hs-identifier hs-var">names</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[Local]
+</span><a href="#local-6989586621679259642"><span class="hs-identifier hs-var">operands</span></a></span><span>
 </span><span id="line-114"></span><span>
 </span><span id="line-115"></span><span class="hs-comment">-- | `localFreeVars` @freeVars@ sets the set of free variables in the current</span><span>
 </span><span id="line-116"></span><span class="hs-comment">-- compilation scope to @freeVars@.</span><span>
-</span><span id="line-117"></span><span id="local-6989586621679259627"><span id="local-6989586621679259628"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#localFreeVars"><span class="hs-identifier hs-type">localFreeVars</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259628"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">S.Set</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">T.Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259628"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259627"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259628"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259627"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
+</span><span id="line-117"></span><span id="local-6989586621679259635"><span id="local-6989586621679259636"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#localFreeVars"><span class="hs-identifier hs-type">localFreeVars</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259636"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">S.Set</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">T.Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259636"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259635"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259636"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259635"><span class="hs-identifier hs-type">a</span></a></span></span></span><span>
 </span><span id="line-118"></span><span id="localFreeVars"><span class="annot"><span class="annottext">localFreeVars :: Set (Text, Bool) -&gt; m a -&gt; m a
-</span><a href="Hachi.Compiler.CodeGen.Monad.html#localFreeVars"><span class="hs-identifier hs-var hs-var">localFreeVars</span></a></span></span><span> </span><span id="local-6989586621679259626"><span class="annot"><span class="annottext">Set (Text, Bool)
-</span><a href="#local-6989586621679259626"><span class="hs-identifier hs-var">fvs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(CodeGenSt -&gt; CodeGenSt) -&gt; m a -&gt; m a
+</span><a href="Hachi.Compiler.CodeGen.Monad.html#localFreeVars"><span class="hs-identifier hs-var hs-var">localFreeVars</span></a></span></span><span> </span><span id="local-6989586621679259634"><span class="annot"><span class="annottext">Set (Text, Bool)
+</span><a href="#local-6989586621679259634"><span class="hs-identifier hs-var">fvs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(CodeGenSt -&gt; CodeGenSt) -&gt; m a -&gt; m a
 forall r (m :: * -&gt; *) a. MonadReader r m =&gt; (r -&gt; r) -&gt; m a -&gt; m a
 </span><span class="hs-identifier hs-var">local</span></span><span> </span><span class="annot"><span class="annottext">((CodeGenSt -&gt; CodeGenSt) -&gt; m a -&gt; m a)
 -&gt; (CodeGenSt -&gt; CodeGenSt) -&gt; m a -&gt; m a
 forall a b. (a -&gt; b) -&gt; a -&gt; b
-</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679259625"><span class="annot"><span class="annottext">CodeGenSt
-</span><a href="#local-6989586621679259625"><span class="hs-identifier hs-var">st</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">CodeGenSt
-</span><a href="#local-6989586621679259625"><span class="hs-identifier hs-var">st</span></a></span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">codeGenFreeVars :: Set (Text, Bool)
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679259633"><span class="annot"><span class="annottext">CodeGenSt
+</span><a href="#local-6989586621679259633"><span class="hs-identifier hs-var">st</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">CodeGenSt
+</span><a href="#local-6989586621679259633"><span class="hs-identifier hs-var">st</span></a></span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">codeGenFreeVars :: Set (Text, Bool)
 </span><a href="Hachi.Compiler.CodeGen.Monad.html#codeGenFreeVars"><span class="hs-identifier hs-var">codeGenFreeVars</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Set (Text, Bool)
-</span><a href="#local-6989586621679259626"><span class="hs-identifier hs-var">fvs</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><a href="#local-6989586621679259634"><span class="hs-identifier hs-var">fvs</span></a></span><span> </span><span class="hs-special">}</span><span>
 </span><span id="line-119"></span><span>
 </span><span id="line-120"></span><span class="hs-comment">-- | `currentFreeVars` is a computation which retrieves the set of free</span><span>
 </span><span id="line-121"></span><span class="hs-comment">-- variables in the current compilation scope.</span><span>
-</span><span id="line-122"></span><span id="local-6989586621679259624"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#currentFreeVars"><span class="hs-identifier hs-type">currentFreeVars</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259624"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259624"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">S.Set</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">T.Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span class="hs-special">)</span></span><span>
+</span><span id="line-122"></span><span id="local-6989586621679259632"><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#currentFreeVars"><span class="hs-identifier hs-type">currentFreeVars</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadReader</span></span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#CodeGenSt"><span class="hs-identifier hs-type">CodeGenSt</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679259632"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679259632"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">S.Set</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">T.Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">)</span><span class="hs-special">)</span></span><span>
 </span><span id="line-123"></span><span id="currentFreeVars"><span class="annot"><span class="annottext">currentFreeVars :: m (Set (Text, Bool))
 </span><a href="Hachi.Compiler.CodeGen.Monad.html#currentFreeVars"><span class="hs-identifier hs-var hs-var">currentFreeVars</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(CodeGenSt -&gt; Set (Text, Bool)) -&gt; m (Set (Text, Bool))
 forall r (m :: * -&gt; *) a. MonadReader r m =&gt; (r -&gt; a) -&gt; m a

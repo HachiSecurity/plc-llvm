@@ -15,41 +15,41 @@
 </span><span id="line-15"></span><span>
 </span><span id="line-16"></span><span class="annot"><a href="Hachi.Compiler.html#compile"><span class="hs-identifier hs-type">compile</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Hachi.Compiler.Config.html#Config"><span class="hs-identifier hs-type">Config</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
 </span><span id="line-17"></span><span id="compile"><span class="annot"><span class="annottext">compile :: Config -&gt; IO ()
-</span><a href="Hachi.Compiler.html#compile"><span class="hs-identifier hs-var hs-var">compile</span></a></span></span><span> </span><span id="local-6989586621679264251"><span class="annot"><span class="annottext">Config
-</span><a href="#local-6989586621679264251"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><a href="Hachi.Compiler.html#compile"><span class="hs-identifier hs-var hs-var">compile</span></a></span></span><span> </span><span id="local-6989586621679264259"><span class="annot"><span class="annottext">Config
+</span><a href="#local-6989586621679264259"><span class="hs-identifier hs-var">cfg</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
 </span><span id="line-18"></span><span>    </span><span class="hs-comment">-- read the file contents and turn them into a UPLC AST</span><span>
-</span><span id="line-19"></span><span>    </span><span id="local-6989586621679264250"><span class="annot"><span class="annottext">Either (LoadProgramError ()) (UntypedProgram ())
-</span><a href="#local-6989586621679264250"><span class="hs-identifier hs-var">pr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span id="line-19"></span><span>    </span><span id="local-6989586621679264258"><span class="annot"><span class="annottext">Either (LoadProgramError ()) (UntypedProgram ())
+</span><a href="#local-6989586621679264258"><span class="hs-identifier hs-var">pr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Bool
 -&gt; Bool
 -&gt; FilePath
 -&gt; IO (Either (LoadProgramError ()) (UntypedProgram ()))
 </span><span class="hs-identifier hs-var">loadProgramFromFile</span></span><span>
 </span><span id="line-20"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Bool
 </span><a href="Hachi.Compiler.Config.html#cfgTyped"><span class="hs-identifier hs-var hs-var">cfgTyped</span></a></span><span> </span><span class="annot"><span class="annottext">Config
-</span><a href="#local-6989586621679264251"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Bool
+</span><a href="#local-6989586621679264259"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Bool
 </span><a href="Hachi.Compiler.Config.html#cfgDeserialise"><span class="hs-identifier hs-var hs-var">cfgDeserialise</span></a></span><span> </span><span class="annot"><span class="annottext">Config
-</span><a href="#local-6989586621679264251"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; FilePath
+</span><a href="#local-6989586621679264259"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; FilePath
 </span><a href="Hachi.Compiler.Config.html#cfgInput"><span class="hs-identifier hs-var hs-var">cfgInput</span></a></span><span> </span><span class="annot"><span class="annottext">Config
-</span><a href="#local-6989586621679264251"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span>
+</span><a href="#local-6989586621679264259"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span>
 </span><span id="line-21"></span><span>
 </span><span id="line-22"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Either (LoadProgramError ()) (UntypedProgram ())
-</span><a href="#local-6989586621679264250"><span class="hs-identifier hs-var">pr</span></a></span><span> </span><span class="hs-keyword">of</span><span>
-</span><span id="line-23"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679264245"><span class="annot"><span class="annottext">LoadProgramError ()
-</span><a href="#local-6989586621679264245"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">LoadProgramError () -&gt; IO ()
+</span><a href="#local-6989586621679264258"><span class="hs-identifier hs-var">pr</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-23"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679264253"><span class="annot"><span class="annottext">LoadProgramError ()
+</span><a href="#local-6989586621679264253"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">LoadProgramError () -&gt; IO ()
 forall a. Show a =&gt; a -&gt; IO ()
 </span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">LoadProgramError ()
-</span><a href="#local-6989586621679264245"><span class="hs-identifier hs-var">err</span></a></span><span> </span><span class="annot"><span class="annottext">IO () -&gt; IO () -&gt; IO ()
+</span><a href="#local-6989586621679264253"><span class="hs-identifier hs-var">err</span></a></span><span> </span><span class="annot"><span class="annottext">IO () -&gt; IO () -&gt; IO ()
 forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
 </span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">IO ()
 forall a. IO a
 </span><span class="hs-identifier hs-var">exitFailure</span></span><span>
-</span><span id="line-24"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679264244"><span class="annot"><span class="annottext">UntypedProgram ()
-</span><a href="#local-6989586621679264244"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-24"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679264252"><span class="annot"><span class="annottext">UntypedProgram ()
+</span><a href="#local-6989586621679264252"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
 </span><span id="line-25"></span><span>            </span><span class="annot"><span class="annottext">Bool -&gt; IO () -&gt; IO ()
 forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
 </span><span class="hs-identifier hs-var">when</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Config -&gt; Bool
 </span><a href="Hachi.Compiler.Config.html#cfgVerbose"><span class="hs-identifier hs-var hs-var">cfgVerbose</span></a></span><span> </span><span class="annot"><span class="annottext">Config
-</span><a href="#local-6989586621679264251"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; IO ()) -&gt; IO () -&gt; IO ()
+</span><a href="#local-6989586621679264259"><span class="hs-identifier hs-var">cfg</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; IO ()) -&gt; IO () -&gt; IO ()
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
 </span><span id="line-26"></span><span>                </span><span class="annot"><span class="annottext">FilePath -&gt; IO ()
@@ -58,14 +58,14 @@ forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span id="line-27"></span><span>                </span><span class="annot"><span class="annottext">UntypedProgram () -&gt; IO ()
 forall a. Show a =&gt; a -&gt; IO ()
 </span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">UntypedProgram ()
-</span><a href="#local-6989586621679264244"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><a href="#local-6989586621679264252"><span class="hs-identifier hs-var">p</span></a></span><span>
 </span><span id="line-28"></span><span>
 </span><span id="line-29"></span><span>            </span><span class="hs-comment">-- let (UPLC.Program _ _ t) = p</span><span>
 </span><span id="line-30"></span><span>            </span><span class="hs-comment">-- print $ UPLC.evaluateCekNoEmit defaultCekParameters t</span><span>
 </span><span id="line-31"></span><span>            </span><span class="annot"><span class="annottext">Config -&gt; UntypedProgram () -&gt; IO ()
 </span><a href="Hachi.Compiler.CodeGen.html#generateCode"><span class="hs-identifier hs-var">generateCode</span></a></span><span> </span><span class="annot"><span class="annottext">Config
-</span><a href="#local-6989586621679264251"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">UntypedProgram ()
-</span><a href="#local-6989586621679264244"><span class="hs-identifier hs-var">p</span></a></span><span>
+</span><a href="#local-6989586621679264259"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="annot"><span class="annottext">UntypedProgram ()
+</span><a href="#local-6989586621679264252"><span class="hs-identifier hs-var">p</span></a></span><span>
 </span><span id="line-32"></span><span>
 </span><span id="line-33"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
 </span><span id="line-34"></span></pre></body></html>

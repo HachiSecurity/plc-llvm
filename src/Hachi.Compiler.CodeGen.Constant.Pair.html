@@ -20,39 +20,39 @@
 </span><span id="line-20"></span><span>
 </span><span id="line-21"></span><span class="hs-comment">-- | `newPair` @fst snd@ generates code which constructs a new pair value,</span><span>
 </span><span id="line-22"></span><span class="hs-comment">-- where the first component is @fst@ and the second component is @snd@.</span><span>
-</span><span id="line-23"></span><span id="local-6989586621679261500"><span id="local-6989586621679261501"><span id="local-6989586621679261502"><span class="annot"><a href="Hachi.Compiler.CodeGen.Constant.Pair.html#newPair"><span class="hs-identifier hs-type">newPair</span></a></span><span>
-</span><span id="line-24"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#MonadCodeGen"><span class="hs-identifier hs-type">MonadCodeGen</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679261502"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIRBuilder</span></span><span> </span><span class="annot"><a href="#local-6989586621679261502"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-25"></span><span>    </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#ClosurePtr"><span class="hs-identifier hs-type">ClosurePtr</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679261501"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#ClosurePtr"><span class="hs-identifier hs-type">ClosurePtr</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679261500"><span class="hs-identifier hs-type">q</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679261502"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Operand</span></span></span></span></span><span>
+</span><span id="line-23"></span><span id="local-6989586621679261508"><span id="local-6989586621679261509"><span id="local-6989586621679261510"><span class="annot"><a href="Hachi.Compiler.CodeGen.Constant.Pair.html#newPair"><span class="hs-identifier hs-type">newPair</span></a></span><span>
+</span><span id="line-24"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Hachi.Compiler.CodeGen.Monad.html#MonadCodeGen"><span class="hs-identifier hs-type">MonadCodeGen</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679261510"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIRBuilder</span></span><span> </span><span class="annot"><a href="#local-6989586621679261510"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span>    </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#ClosurePtr"><span class="hs-identifier hs-type">ClosurePtr</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679261509"><span class="hs-identifier hs-type">p</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#ClosurePtr"><span class="hs-identifier hs-type">ClosurePtr</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679261508"><span class="hs-identifier hs-type">q</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679261510"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Operand</span></span></span></span></span><span>
 </span><span id="line-26"></span><span id="newPair"><span class="annot"><span class="annottext">newPair :: ClosurePtr p -&gt; ClosurePtr q -&gt; m Operand
-</span><a href="Hachi.Compiler.CodeGen.Constant.Pair.html#newPair"><span class="hs-identifier hs-var hs-var">newPair</span></a></span></span><span> </span><span id="local-6989586621679261499"><span class="annot"><span class="annottext">ClosurePtr p
-</span><a href="#local-6989586621679261499"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679261498"><span class="annot"><span class="annottext">ClosurePtr q
-</span><a href="#local-6989586621679261498"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><a href="Hachi.Compiler.CodeGen.Constant.Pair.html#newPair"><span class="hs-identifier hs-var hs-var">newPair</span></a></span></span><span> </span><span id="local-6989586621679261507"><span class="annot"><span class="annottext">ClosurePtr p
+</span><a href="#local-6989586621679261507"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679261506"><span class="annot"><span class="annottext">ClosurePtr q
+</span><a href="#local-6989586621679261506"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
 </span><span id="line-27"></span><span>    </span><span class="hs-comment">-- allocate memory for the new pair</span><span>
-</span><span id="line-28"></span><span>    </span><span id="local-6989586621679261497"><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261497"><span class="hs-identifier hs-var">size</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Type -&gt; m Operand
+</span><span id="line-28"></span><span>    </span><span id="local-6989586621679261505"><span class="annot"><span class="annottext">Operand
+</span><a href="#local-6989586621679261505"><span class="hs-identifier hs-var">size</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Type -&gt; m Operand
 forall (m :: * -&gt; *).
 (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) =&gt;
 Word32 -&gt; Type -&gt; m Operand
 </span><span class="hs-identifier hs-var">IR.sizeof</span></span><span> </span><span class="annot"><span class="annottext">Word32
 </span><span class="hs-number">64</span></span><span> </span><span class="annot"><span class="annottext">Type
 </span><a href="Hachi.Compiler.CodeGen.Types.html#pairTy"><span class="hs-identifier hs-var">pairTy</span></a></span><span>
-</span><span id="line-29"></span><span>    </span><span id="local-6989586621679261494"><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261494"><span class="hs-identifier hs-var">ptr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Type -&gt; Operand -&gt; m Operand
+</span><span id="line-29"></span><span>    </span><span id="local-6989586621679261502"><span class="annot"><span class="annottext">Operand
+</span><a href="#local-6989586621679261502"><span class="hs-identifier hs-var">ptr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Type -&gt; Operand -&gt; m Operand
 forall (m :: * -&gt; *).
 (MonadModuleBuilder m, MonadIRBuilder m, MonadCodeGen m) =&gt;
 Type -&gt; Operand -&gt; m Operand
 </span><a href="Hachi.Compiler.CodeGen.Externals.html#malloc"><span class="hs-identifier hs-var">malloc</span></a></span><span> </span><span class="annot"><span class="annottext">Type
 </span><a href="Hachi.Compiler.CodeGen.Types.html#pairTyPtr"><span class="hs-identifier hs-var">pairTyPtr</span></a></span><span> </span><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261497"><span class="hs-identifier hs-var">size</span></a></span><span>
+</span><a href="#local-6989586621679261505"><span class="hs-identifier hs-var">size</span></a></span><span>
 </span><span id="line-30"></span><span>
 </span><span id="line-31"></span><span>    </span><span class="hs-comment">-- store the two components of the pair</span><span>
-</span><span id="line-32"></span><span>    </span><span id="local-6989586621679261491"><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261491"><span class="hs-identifier hs-var">fstAddr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Operand -&gt; [Operand] -&gt; m Operand
+</span><span id="line-32"></span><span>    </span><span id="local-6989586621679261499"><span class="annot"><span class="annottext">Operand
+</span><a href="#local-6989586621679261499"><span class="hs-identifier hs-var">fstAddr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Operand -&gt; [Operand] -&gt; m Operand
 forall (m :: * -&gt; *).
 (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) =&gt;
 Operand -&gt; [Operand] -&gt; m Operand
 </span><span class="hs-identifier hs-var">gep</span></span><span> </span><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261494"><span class="hs-identifier hs-var">ptr</span></a></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Constant -&gt; Operand
+</span><a href="#local-6989586621679261502"><span class="hs-identifier hs-var">ptr</span></a></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Constant -&gt; Operand
 </span><span class="hs-identifier hs-var">ConstantOperand</span></span><span> </span><span class="annot"><span class="annottext">(Constant -&gt; Operand) -&gt; Constant -&gt; Operand
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Integer -&gt; Constant
@@ -72,21 +72,21 @@ forall (m :: * -&gt; *).
 MonadIRBuilder m =&gt;
 Operand -&gt; Word32 -&gt; Operand -&gt; m ()
 </span><span class="hs-identifier hs-var">store</span></span><span> </span><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261491"><span class="hs-identifier hs-var">fstAddr</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679261499"><span class="hs-identifier hs-var">fstAddr</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
 </span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">(Operand -&gt; m ()) -&gt; Operand -&gt; m ()
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ClosurePtr p -&gt; Operand
 forall (k :: PtrKind) to. FromClosurePtr k to =&gt; ClosurePtr k -&gt; to
 </span><a href="Hachi.Compiler.CodeGen.Types.html#closurePtr"><span class="hs-identifier hs-var">closurePtr</span></a></span><span> </span><span class="annot"><span class="annottext">ClosurePtr p
-</span><a href="#local-6989586621679261499"><span class="hs-identifier hs-var">x</span></a></span><span>
+</span><a href="#local-6989586621679261507"><span class="hs-identifier hs-var">x</span></a></span><span>
 </span><span id="line-36"></span><span>
-</span><span id="line-37"></span><span>    </span><span id="local-6989586621679261485"><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261485"><span class="hs-identifier hs-var">sndAddr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Operand -&gt; [Operand] -&gt; m Operand
+</span><span id="line-37"></span><span>    </span><span id="local-6989586621679261493"><span class="annot"><span class="annottext">Operand
+</span><a href="#local-6989586621679261493"><span class="hs-identifier hs-var">sndAddr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Operand -&gt; [Operand] -&gt; m Operand
 forall (m :: * -&gt; *).
 (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) =&gt;
 Operand -&gt; [Operand] -&gt; m Operand
 </span><span class="hs-identifier hs-var">gep</span></span><span> </span><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261494"><span class="hs-identifier hs-var">ptr</span></a></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Constant -&gt; Operand
+</span><a href="#local-6989586621679261502"><span class="hs-identifier hs-var">ptr</span></a></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Constant -&gt; Operand
 </span><span class="hs-identifier hs-var">ConstantOperand</span></span><span> </span><span class="annot"><span class="annottext">(Constant -&gt; Operand) -&gt; Constant -&gt; Operand
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Integer -&gt; Constant
@@ -106,35 +106,35 @@ forall (m :: * -&gt; *).
 MonadIRBuilder m =&gt;
 Operand -&gt; Word32 -&gt; Operand -&gt; m ()
 </span><span class="hs-identifier hs-var">store</span></span><span> </span><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261485"><span class="hs-identifier hs-var">sndAddr</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679261493"><span class="hs-identifier hs-var">sndAddr</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
 </span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">(Operand -&gt; m ()) -&gt; Operand -&gt; m ()
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ClosurePtr q -&gt; Operand
 forall (k :: PtrKind) to. FromClosurePtr k to =&gt; ClosurePtr k -&gt; to
 </span><a href="Hachi.Compiler.CodeGen.Types.html#closurePtr"><span class="hs-identifier hs-var">closurePtr</span></a></span><span> </span><span class="annot"><span class="annottext">ClosurePtr q
-</span><a href="#local-6989586621679261498"><span class="hs-identifier hs-var">y</span></a></span><span>
+</span><a href="#local-6989586621679261506"><span class="hs-identifier hs-var">y</span></a></span><span>
 </span><span id="line-41"></span><span>
 </span><span id="line-42"></span><span>    </span><span class="hs-comment">-- return the pointer to the pair</span><span>
 </span><span id="line-43"></span><span>    </span><span class="annot"><span class="annottext">Operand -&gt; m Operand
 forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
 </span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261494"><span class="hs-identifier hs-var">ptr</span></a></span><span>
+</span><a href="#local-6989586621679261502"><span class="hs-identifier hs-var">ptr</span></a></span><span>
 </span><span id="line-44"></span><span>
 </span><span id="line-45"></span><span class="hs-comment">-- | `getFst` @pairPtr@ generates code which retrieves the first component</span><span>
 </span><span id="line-46"></span><span class="hs-comment">-- from the pair pointed at by @pairPtr@.</span><span>
-</span><span id="line-47"></span><span id="local-6989586621679261484"><span class="annot"><a href="Hachi.Compiler.CodeGen.Constant.Pair.html#getFst"><span class="hs-identifier hs-type">getFst</span></a></span><span>
-</span><span id="line-48"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadModuleBuilder</span></span><span> </span><span class="annot"><a href="#local-6989586621679261484"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIRBuilder</span></span><span> </span><span class="annot"><a href="#local-6989586621679261484"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-49"></span><span>    </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Operand</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679261484"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#ClosurePtr"><span class="hs-identifier hs-type">ClosurePtr</span></a></span><span> </span><span class="hs-special">'</span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#DynamicPtr"><span class="hs-identifier hs-type">DynamicPtr</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-47"></span><span id="local-6989586621679261492"><span class="annot"><a href="Hachi.Compiler.CodeGen.Constant.Pair.html#getFst"><span class="hs-identifier hs-type">getFst</span></a></span><span>
+</span><span id="line-48"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadModuleBuilder</span></span><span> </span><span class="annot"><a href="#local-6989586621679261492"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIRBuilder</span></span><span> </span><span class="annot"><a href="#local-6989586621679261492"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span>    </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Operand</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679261492"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#ClosurePtr"><span class="hs-identifier hs-type">ClosurePtr</span></a></span><span> </span><span class="hs-special">'</span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#DynamicPtr"><span class="hs-identifier hs-type">DynamicPtr</span></a></span><span class="hs-special">)</span></span><span>
 </span><span id="line-50"></span><span id="getFst"><span class="annot"><span class="annottext">getFst :: Operand -&gt; m (ClosurePtr 'DynamicPtr)
-</span><a href="Hachi.Compiler.CodeGen.Constant.Pair.html#getFst"><span class="hs-identifier hs-var hs-var">getFst</span></a></span></span><span> </span><span id="local-6989586621679261483"><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261483"><span class="hs-identifier hs-var">ptr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-51"></span><span>    </span><span id="local-6989586621679261482"><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261482"><span class="hs-identifier hs-var">addr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Operand -&gt; [Operand] -&gt; m Operand
+</span><a href="Hachi.Compiler.CodeGen.Constant.Pair.html#getFst"><span class="hs-identifier hs-var hs-var">getFst</span></a></span></span><span> </span><span id="local-6989586621679261491"><span class="annot"><span class="annottext">Operand
+</span><a href="#local-6989586621679261491"><span class="hs-identifier hs-var">ptr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-51"></span><span>    </span><span id="local-6989586621679261490"><span class="annot"><span class="annottext">Operand
+</span><a href="#local-6989586621679261490"><span class="hs-identifier hs-var">addr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Operand -&gt; [Operand] -&gt; m Operand
 forall (m :: * -&gt; *).
 (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) =&gt;
 Operand -&gt; [Operand] -&gt; m Operand
 </span><span class="hs-identifier hs-var">gep</span></span><span> </span><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261483"><span class="hs-identifier hs-var">ptr</span></a></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Constant -&gt; Operand
+</span><a href="#local-6989586621679261491"><span class="hs-identifier hs-var">ptr</span></a></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Constant -&gt; Operand
 </span><span class="hs-identifier hs-var">ConstantOperand</span></span><span> </span><span class="annot"><span class="annottext">(Constant -&gt; Operand) -&gt; Constant -&gt; Operand
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Integer -&gt; Constant
@@ -147,13 +147,13 @@ forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-identifier hs-var">Int</span></span><span> </span><span class="annot"><span class="annottext">Word32
 </span><span class="hs-number">32</span></span><span> </span><span class="annot"><span class="annottext">Integer
 </span><span class="hs-number">0</span></span><span> </span><span class="hs-special">]</span><span>
-</span><span id="line-52"></span><span>    </span><span id="local-6989586621679261481"><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261481"><span class="hs-identifier hs-var">clsPtr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Operand -&gt; Word32 -&gt; m Operand
+</span><span id="line-52"></span><span>    </span><span id="local-6989586621679261489"><span class="annot"><span class="annottext">Operand
+</span><a href="#local-6989586621679261489"><span class="hs-identifier hs-var">clsPtr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Operand -&gt; Word32 -&gt; m Operand
 forall (m :: * -&gt; *).
 (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) =&gt;
 Operand -&gt; Word32 -&gt; m Operand
 </span><span class="hs-identifier hs-var">load</span></span><span> </span><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261482"><span class="hs-identifier hs-var">addr</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679261490"><span class="hs-identifier hs-var">addr</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
 </span><span class="hs-number">0</span></span><span>
 </span><span id="line-53"></span><span>    </span><span class="annot"><span class="annottext">Operand -&gt; ClosurePtr 'DynamicPtr
 </span><a href="Hachi.Compiler.CodeGen.Types.html#MkClosurePtr"><span class="hs-identifier hs-var">MkClosurePtr</span></a></span><span> </span><span class="annot"><span class="annottext">(Operand -&gt; ClosurePtr 'DynamicPtr)
@@ -164,24 +164,24 @@ forall (m :: * -&gt; *).
 MonadIRBuilder m =&gt;
 Operand -&gt; Type -&gt; m Operand
 </span><span class="hs-identifier hs-var">bitcast</span></span><span> </span><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261481"><span class="hs-identifier hs-var">clsPtr</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679261489"><span class="hs-identifier hs-var">clsPtr</span></a></span><span> </span><span class="annot"><span class="annottext">Type
 </span><a href="Hachi.Compiler.CodeGen.Types.html#closureTyPtr"><span class="hs-identifier hs-var">closureTyPtr</span></a></span><span>
 </span><span id="line-54"></span><span>
 </span><span id="line-55"></span><span class="hs-comment">-- | `getSnd` @pairPtr@ generates code which retrieves the second component</span><span>
 </span><span id="line-56"></span><span class="hs-comment">-- from the pair pointed at by @pairPtr@.</span><span>
-</span><span id="line-57"></span><span id="local-6989586621679261475"><span class="annot"><a href="Hachi.Compiler.CodeGen.Constant.Pair.html#getSnd"><span class="hs-identifier hs-type">getSnd</span></a></span><span>
-</span><span id="line-58"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadModuleBuilder</span></span><span> </span><span class="annot"><a href="#local-6989586621679261475"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIRBuilder</span></span><span> </span><span class="annot"><a href="#local-6989586621679261475"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span>
-</span><span id="line-59"></span><span>    </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Operand</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679261475"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#ClosurePtr"><span class="hs-identifier hs-type">ClosurePtr</span></a></span><span> </span><span class="hs-special">'</span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#DynamicPtr"><span class="hs-identifier hs-type">DynamicPtr</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-57"></span><span id="local-6989586621679261483"><span class="annot"><a href="Hachi.Compiler.CodeGen.Constant.Pair.html#getSnd"><span class="hs-identifier hs-type">getSnd</span></a></span><span>
+</span><span id="line-58"></span><span>    </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">MonadModuleBuilder</span></span><span> </span><span class="annot"><a href="#local-6989586621679261483"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">MonadIRBuilder</span></span><span> </span><span class="annot"><a href="#local-6989586621679261483"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span>    </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Operand</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679261483"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#ClosurePtr"><span class="hs-identifier hs-type">ClosurePtr</span></a></span><span> </span><span class="hs-special">'</span><span class="annot"><a href="Hachi.Compiler.CodeGen.Types.html#DynamicPtr"><span class="hs-identifier hs-type">DynamicPtr</span></a></span><span class="hs-special">)</span></span><span>
 </span><span id="line-60"></span><span id="getSnd"><span class="annot"><span class="annottext">getSnd :: Operand -&gt; m (ClosurePtr 'DynamicPtr)
-</span><a href="Hachi.Compiler.CodeGen.Constant.Pair.html#getSnd"><span class="hs-identifier hs-var hs-var">getSnd</span></a></span></span><span> </span><span id="local-6989586621679261474"><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261474"><span class="hs-identifier hs-var">ptr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
-</span><span id="line-61"></span><span>    </span><span id="local-6989586621679261473"><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261473"><span class="hs-identifier hs-var">addr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Operand -&gt; [Operand] -&gt; m Operand
+</span><a href="Hachi.Compiler.CodeGen.Constant.Pair.html#getSnd"><span class="hs-identifier hs-var hs-var">getSnd</span></a></span></span><span> </span><span id="local-6989586621679261482"><span class="annot"><span class="annottext">Operand
+</span><a href="#local-6989586621679261482"><span class="hs-identifier hs-var">ptr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-61"></span><span>    </span><span id="local-6989586621679261481"><span class="annot"><span class="annottext">Operand
+</span><a href="#local-6989586621679261481"><span class="hs-identifier hs-var">addr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Operand -&gt; [Operand] -&gt; m Operand
 forall (m :: * -&gt; *).
 (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) =&gt;
 Operand -&gt; [Operand] -&gt; m Operand
 </span><span class="hs-identifier hs-var">gep</span></span><span> </span><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261474"><span class="hs-identifier hs-var">ptr</span></a></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Constant -&gt; Operand
+</span><a href="#local-6989586621679261482"><span class="hs-identifier hs-var">ptr</span></a></span><span> </span><span class="hs-special">[</span><span> </span><span class="annot"><span class="annottext">Constant -&gt; Operand
 </span><span class="hs-identifier hs-var">ConstantOperand</span></span><span> </span><span class="annot"><span class="annottext">(Constant -&gt; Operand) -&gt; Constant -&gt; Operand
 forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Integer -&gt; Constant
@@ -194,13 +194,13 @@ forall a b. (a -&gt; b) -&gt; a -&gt; b
 </span><span class="hs-identifier hs-var">Int</span></span><span> </span><span class="annot"><span class="annottext">Word32
 </span><span class="hs-number">32</span></span><span> </span><span class="annot"><span class="annottext">Integer
 </span><span class="hs-number">1</span></span><span> </span><span class="hs-special">]</span><span>
-</span><span id="line-62"></span><span>    </span><span id="local-6989586621679261472"><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261472"><span class="hs-identifier hs-var">clsPtr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Operand -&gt; Word32 -&gt; m Operand
+</span><span id="line-62"></span><span>    </span><span id="local-6989586621679261480"><span class="annot"><span class="annottext">Operand
+</span><a href="#local-6989586621679261480"><span class="hs-identifier hs-var">clsPtr</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Operand -&gt; Word32 -&gt; m Operand
 forall (m :: * -&gt; *).
 (HasCallStack, MonadIRBuilder m, MonadModuleBuilder m) =&gt;
 Operand -&gt; Word32 -&gt; m Operand
 </span><span class="hs-identifier hs-var">load</span></span><span> </span><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261473"><span class="hs-identifier hs-var">addr</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679261481"><span class="hs-identifier hs-var">addr</span></a></span><span> </span><span class="annot"><span class="annottext">Word32
 </span><span class="hs-number">0</span></span><span>
 </span><span id="line-63"></span><span>    </span><span class="annot"><span class="annottext">Operand -&gt; ClosurePtr 'DynamicPtr
 </span><a href="Hachi.Compiler.CodeGen.Types.html#MkClosurePtr"><span class="hs-identifier hs-var">MkClosurePtr</span></a></span><span> </span><span class="annot"><span class="annottext">(Operand -&gt; ClosurePtr 'DynamicPtr)
@@ -211,7 +211,7 @@ forall (m :: * -&gt; *).
 MonadIRBuilder m =&gt;
 Operand -&gt; Type -&gt; m Operand
 </span><span class="hs-identifier hs-var">bitcast</span></span><span> </span><span class="annot"><span class="annottext">Operand
-</span><a href="#local-6989586621679261472"><span class="hs-identifier hs-var">clsPtr</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679261480"><span class="hs-identifier hs-var">clsPtr</span></a></span><span> </span><span class="annot"><span class="annottext">Type
 </span><a href="Hachi.Compiler.CodeGen.Types.html#closureTyPtr"><span class="hs-identifier hs-var">closureTyPtr</span></a></span><span>
 </span><span id="line-64"></span><span>
 </span><span id="line-65"></span><span class="hs-comment">-------------------------------------------------------------------------------</span><span>
