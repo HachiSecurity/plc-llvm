@@ -24,8 +24,8 @@ import Hachi.Compiler.Config
 
 -- | `runPkgConfig` @options packageName@ runs `pkg-config` for @packageName@
 -- with @options@ to get configuration options for the C compiler.
-runPkgConfig :: [String] -> String -> IO [String]
-runPkgConfig args pkg = do
+runPkgConfig :: Bool -> [String] -> String -> IO [String]
+runPkgConfig verbose args pkg = do
     let pkgcfg = proc "pkg-config" (pkg : args)
     (ec, stdout, _) <- readProcess pkgcfg
 
@@ -33,7 +33,8 @@ runPkgConfig args pkg = do
         ExitSuccess -> pure $
             map BS.unpack $ BS.split ' ' $ BS.strip $ LBS.toStrict stdout
         ExitFailure _ -> do
-            putStrLn $ "pkg-config failed for " ++ show pkgcfg
+            when verbose $
+                putStrLn $ "Warning: pkg-config failed for " ++ show pkgcfg
             -- if pkg-config fails, let's just try to guess
             pure ["-l" <> pkg]
 
@@ -44,8 +45,8 @@ runPkgConfig args pkg = do
 runDriver :: Config -> [String] -> [String] -> IO ()
 runDriver MkConfig{..} pkCfgArgs clangArgs = do
     -- run pkg-config for our dependencies
-    sodiumOpts <- runPkgConfig pkCfgArgs "libsodium"
-    gmpOpts <- runPkgConfig pkCfgArgs "gmp"
+    sodiumOpts <- runPkgConfig cfgVerbose pkCfgArgs "libsodium"
+    gmpOpts <- runPkgConfig cfgVerbose pkCfgArgs "gmp"
 
     let pcfg = proc "clang" $ clangArgs <> sodiumOpts <> gmpOpts
 
