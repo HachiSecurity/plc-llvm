@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+    tags:
     paths:
       - '.github/workflows/build.yml'
       - "compiler/**"
@@ -28,7 +29,7 @@ jobs:
         id: "install-haskell"
         uses: haskell/actions/setup@v1
         with:
-          ghc-version: "8.10.4"
+          ghc-version: "8.10.7"
           enable-stack: true
           stack-version: "latest"
 
@@ -60,19 +61,24 @@ jobs:
           stack --no-terminal build --only-dependencies --test --bench --haddock --fast --system-ghc
 
       - name: Build and install
+        id: build
+        env:
+          ARTIFACT_NAME: plc-llvm-${{ runner.os }}-${{ runner.arch }}.tar.gz
         run: |
           mkdir -p ./bin
           cp ./compiler/rts/rts.c ./bin/rts.c
           mkdir -p ./bin/tiny_sha3
           cp -r ./compiler/rts/tiny_sha3 ./bin/
+
           stack --no-terminal build --test --bench --haddock --fast --system-ghc --no-run-tests --no-run-benchmarks --copy-bins --local-bin-path=./bin/
-          tar acvf plc-llvm.tar.gz -C bin .
+
+          tar acvf $ARTIFACT_NAME -C bin .
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v2
         with:
-          name: plc-llvm-${{ runner.os }}.tar.gz
-          path: './plc-llvm.tar.gz'
+          name: plc-llvm-${{ runner.os }}-${{ runner.arch }}.tar.gz
+          path: plc-llvm-${{ runner.os }}-${{ runner.arch }}.tar.gz
           if-no-files-found: error
 
       - name: Run tests
@@ -89,14 +95,14 @@ jobs:
           fail_on: 'test failures'
 
       - name: Upload release
-        if: ${{ github.ref == 'refs/heads/main' }}
-        uses: svenstaro/upload-release-action@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: ncipollo/release-action@v1
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: 'plc-llvm.tar.gz'
-          asset_name: 'plc-llvm-${{ runner.os }}.tar.gz'
-          tag: 'latest-plc-llvm'
-          overwrite: true
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          artifactErrorsFailBuild: true
+          artifacts: plc-llvm-${{ runner.os }}-${{ runner.arch }}.tar.gz
+          generateReleaseNotes: true
 
       - name: Publish documentation
         if: ${{ github.ref == 'refs/heads/main' && matrix.os == 'ubuntu-latest' }}
