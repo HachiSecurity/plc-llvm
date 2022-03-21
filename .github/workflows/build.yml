@@ -49,7 +49,7 @@ jobs:
           echo "/usr/local/opt/llvm@12/bin" >> $GITHUB_PATH
 
       - name: Cache .stack
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.install-haskell.outputs.stack-root }}
           key: ${{ runner.os }}-${{ hashFiles('stack.yaml') }}-${{ hashFiles('**/*.cabal') }}
