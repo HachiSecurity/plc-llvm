@@ -12,6 +12,12 @@ on:
       - "stack*.yaml"
   pull_request:
 
+permissions:
+  checks: write
+  contents: read
+  issues: read
+  pull-requests: write
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
