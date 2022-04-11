@@ -82,7 +82,7 @@ jobs:
           tar acvf $ARTIFACT_NAME -C bin .
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: plc-llvm-${{ runner.os }}-${{ runner.arch }}.tar.gz
           path: plc-llvm-${{ runner.os }}-${{ runner.arch }}.tar.gz
