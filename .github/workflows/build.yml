@@ -34,7 +34,7 @@ jobs:
 
       - name: Install Haskell
         id: "install-haskell"
-        uses: haskell/actions/setup@v1
+        uses: haskell/actions/setup@v2
         with:
           ghc-version: "8.10.7"
           enable-stack: true
