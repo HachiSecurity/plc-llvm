@@ -113,7 +113,7 @@ jobs:
 
       - name: Publish documentation
         if: ${{ github.ref == 'refs/heads/main' && matrix.os == 'ubuntu-latest' }}
-        uses: JamesIves/github-pages-deploy-action@v4.3.4
+        uses: JamesIves/github-pages-deploy-action@v4.4.0
         with:
           branch: haddock
           folder: compiler/docs
